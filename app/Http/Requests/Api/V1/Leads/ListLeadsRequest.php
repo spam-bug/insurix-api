@@ -4,6 +4,8 @@ namespace App\Http\Requests\Api\V1\Leads;
 
 use App\DataTransferObjects\Leads\LeadFiltersData;
 use App\Enums\LeadInterest;
+use App\Enums\LeadSort;
+use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,6 +32,8 @@ class ListLeadsRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', Rule::enum(LeadStatus::class)],
             'interest' => ['nullable', Rule::enum(LeadInterest::class)],
+            'source' => ['nullable', Rule::enum(LeadSource::class)],
+            'sort' => ['nullable', Rule::enum(LeadSort::class)],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
@@ -41,6 +45,8 @@ class ListLeadsRequest extends FormRequest
             search: $this->filled('search') ? $this->string('search')->trim()->toString() : null,
             status: $this->enum('status', LeadStatus::class),
             interest: $this->enum('interest', LeadInterest::class),
+            source: $this->enum('source', LeadSource::class),
+            sort: $this->enum('sort', LeadSort::class) ?? LeadSort::Latest,
             perPage: $this->integer('per_page', 10),
         );
     }
