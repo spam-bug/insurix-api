@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'email', 'phone', 'address', 'source', 'interest', 'notes', 'status'])]
+#[Fillable(['name', 'email', 'phone', 'address', 'source', 'interest', 'notes', 'status', 'meeting_at'])]
 class Lead extends Model
 {
     /** @use HasFactory<LeadFactory> */
@@ -33,6 +34,14 @@ class Lead extends Model
     }
 
     /**
+     * @return HasMany<LeadActivity, $this>
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(LeadActivity::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, mixed>
@@ -43,6 +52,7 @@ class Lead extends Model
             'source' => LeadSource::class,
             'interest' => LeadInterest::class,
             'status' => LeadStatus::class,
+            'meeting_at' => 'immutable_datetime',
         ];
     }
 }
