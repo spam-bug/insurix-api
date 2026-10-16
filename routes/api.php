@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
+use App\Http\Controllers\Api\V1\LeadController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
@@ -13,5 +14,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/auth/user', CurrentUserController::class)->name('auth.user');
         Route::post('/auth/logout', LogoutController::class)->name('auth.logout');
+
+        Route::apiResource('leads', LeadController::class);
+        Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.status');
     });
 });
