@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\LeadInterest;
+use App\Enums\LeadSource;
+use App\Enums\LeadStatus;
+use Database\Factories\LeadFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+#[Fillable(['name', 'email', 'phone', 'address', 'source', 'interest', 'notes', 'status'])]
+class Lead extends Model
+{
+    /** @use HasFactory<LeadFactory> */
+    use HasFactory;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'status' => 'prospect',
+    ];
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, mixed>
+     */
+    protected function casts(): array
+    {
+        return [
+            'source' => LeadSource::class,
+            'interest' => LeadInterest::class,
+            'status' => LeadStatus::class,
+        ];
+    }
+}
