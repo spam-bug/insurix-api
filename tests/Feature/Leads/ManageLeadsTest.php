@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
@@ -30,7 +31,24 @@ it('creates a lead as a prospect owned by the agent', function () {
 
     $lead = Lead::findOrFail($response->json('data.id'));
     expect($lead->user_id)->toBe($agent->id)
-        ->and($lead->status)->toBe(LeadStatus::Prospect);
+        ->and($lead->status)->toBe(LeadStatus::Prospect)
+        ->and($lead->activities()->sole())
+        ->type->toBe(LeadActivityType::Created)
+        ->user_id->toBe($agent->id)
+        ->properties->toBe(['source' => 'referral']);
+});
+
+it('logs which fields an edit changed, and nothing for a no-op edit', function () {
+    $agent = User::factory()->create();
+    $lead = Lead::factory()->for($agent)->create(validLeadPayload(['email' => 'ana@example.com']));
+
+    $this->actingAs($agent)->putJson(route('api.v1.leads.update', $lead), validLeadPayload())->assertOk();
+    expect($lead->activities()->count())->toBe(0);
+
+    $this->putJson(route('api.v1.leads.update', $lead), validLeadPayload(['name' => 'Ana R. Santos', 'notes' => null]))->assertOk();
+    expect($lead->activities()->sole())
+        ->type->toBe(LeadActivityType::Updated)
+        ->properties->toBe(['fields' => ['name', 'notes']]);
 });
 
 it('validates lead details', function (array $overrides, string|array $invalidFields) {
@@ -86,7 +104,12 @@ it('changes a lead’s status', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors('status');
 
-    expect($lead->fresh()->status)->toBe(LeadStatus::MeetingScheduled);
+    $this->patchJson(route('api.v1.leads.status', $lead), ['status' => 'meeting_scheduled'])->assertOk();
+
+    expect($lead->fresh()->status)->toBe(LeadStatus::MeetingScheduled)
+        ->and($lead->activities()->sole())
+        ->type->toBe(LeadActivityType::StatusChanged)
+        ->properties->toBe(['from' => 'prospect', 'to' => 'meeting_scheduled']);
 });
 
 it('forbids access to another agent’s lead', function (string $method, string $routeName, array $payload) {

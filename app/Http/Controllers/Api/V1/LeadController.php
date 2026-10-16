@@ -44,18 +44,18 @@ class LeadController extends Controller
         return LeadResource::make($lead);
     }
 
-    public function update(UpdateLeadRequest $request, Lead $lead, UpdateLead $updateLead): LeadResource
+    public function update(UpdateLeadRequest $request, Lead $lead, #[CurrentUser] User $agent, UpdateLead $updateLead): LeadResource
     {
         Gate::authorize('update', $lead);
 
-        return LeadResource::make($updateLead->handle($lead, $request->toData()));
+        return LeadResource::make($updateLead->handle($lead, $request->toData(), $agent));
     }
 
-    public function updateStatus(UpdateLeadStatusRequest $request, Lead $lead, UpdateLeadStatus $updateLeadStatus): LeadResource
+    public function updateStatus(UpdateLeadStatusRequest $request, Lead $lead, #[CurrentUser] User $agent, UpdateLeadStatus $updateLeadStatus): LeadResource
     {
         Gate::authorize('update', $lead);
 
-        return LeadResource::make($updateLeadStatus->handle($lead, $request->status()));
+        return LeadResource::make($updateLeadStatus->handle($lead, $request->status(), $agent));
     }
 
     public function destroy(Lead $lead, DeleteLead $deleteLead): Response
