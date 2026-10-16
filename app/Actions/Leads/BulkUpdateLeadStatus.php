@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Actions\Leads;
+
+use App\Enums\LeadStatus;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
+class BulkUpdateLeadStatus
+{
+    public function __construct(private UpdateLeadStatus $updateLeadStatus) {}
+
+    /**
+     * Changes the status of the agent's own leads among $leadIds, logging each change.
+     *
+     * @param  array<int, int>  $leadIds
+     * @return int how many leads were changed
+     */
+    public function handle(User $agent, array $leadIds, LeadStatus $status): int
+    {
+        return DB::transaction(function () use ($agent, $leadIds, $status) {
+            $leads = $agent->leads()->whereKey($leadIds)->where('status', '!=', $status)->get();
+
+            foreach ($leads as $lead) {
+                $this->updateLeadStatus->handle($lead, $status, $agent);
+            }
+
+            return $leads->count();
+        });
+    }
+}
