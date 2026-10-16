@@ -31,8 +31,8 @@ class StoreLeadRequest extends FormRequest
             'email' => ['nullable', 'required_without:phone', 'string', 'email', 'max:255'],
             'phone' => ['nullable', 'required_without:email', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
-            'source' => ['required', Rule::enum(LeadSource::class)],
-            'interest' => ['required', Rule::enum(LeadInterest::class)],
+            'source' => ['nullable', Rule::enum(LeadSource::class)],
+            'interest' => ['nullable', Rule::enum(LeadInterest::class)],
             'notes' => ['nullable', 'string', 'max:5000'],
         ];
     }
@@ -56,7 +56,7 @@ class StoreLeadRequest extends FormRequest
             phone: $this->filled('phone') ? $this->string('phone')->toString() : null,
             address: $this->filled('address') ? $this->string('address')->toString() : null,
             source: $this->enum('source', LeadSource::class) ?? LeadSource::Manual,
-            interest: $this->enum('interest', LeadInterest::class) ?? LeadInterest::Life,
+            interest: $this->enum('interest', LeadInterest::class),
             notes: $this->filled('notes') ? $this->string('notes')->toString() : null,
         );
     }

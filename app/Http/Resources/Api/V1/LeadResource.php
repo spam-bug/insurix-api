@@ -25,7 +25,7 @@ class LeadResource extends JsonResource
             'phone' => $this->phone,
             'address' => $this->address,
             'source' => ['value' => $this->source->value, 'label' => $this->source->label()],
-            'interest' => ['value' => $this->interest->value, 'label' => $this->interest->label()],
+            'interest' => $this->interest ? ['value' => $this->interest->value, 'label' => $this->interest->label()] : null,
             'status' => ['value' => $this->status->value, 'label' => $this->status->label()],
             'notes' => $this->notes,
             'meeting_at' => $this->meeting_at?->toIso8601String(),
