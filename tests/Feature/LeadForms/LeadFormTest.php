@@ -32,7 +32,7 @@ it('shows only the agent’s name on the public form', function () {
 
     $this->getJson(route('api.v1.public.lead-forms.show', 'abc123'))
         ->assertOk()
-        ->assertExactJson(['data' => ['agent' => ['name' => 'Jane Agent']]]);
+        ->assertExactJson(['data' => ['agent' => ['name' => 'Jane Agent', 'bio' => null, 'avatar_url' => null, 'logo_url' => null]]]);
 });
 
 it('turns a public submission into a prospect for that agent', function () {
