@@ -66,6 +66,37 @@ it('validates lead details', function (array $overrides, string|array $invalidFi
     'unknown interest' => [['interest' => 'pet'], 'interest'],
 ]);
 
+it('creates a lead from just a name and contact details', function () {
+    $this->actingAs(User::factory()->create())
+        ->postJson(route('api.v1.leads.store'), ['name' => 'Ben Cruz', 'email' => 'ben@example.com', 'phone' => '0917 555 0100'])
+        ->assertCreated()
+        ->assertJsonPath('data.source', ['value' => 'manual', 'label' => 'Manual entry'])
+        ->assertJsonPath('data.interest', null)
+        ->assertJsonPath('data.status.value', 'prospect');
+});
+
+it('requires the source when editing, so it is never reset by accident', function () {
+    $agent = User::factory()->create();
+    $lead = Lead::factory()->for($agent)->create(['source' => 'shareable_form']);
+
+    $this->actingAs($agent)
+        ->putJson(route('api.v1.leads.update', $lead), validLeadPayload(['source' => null]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('source');
+
+    expect($lead->fresh()->source->value)->toBe('shareable_form');
+});
+
+it('lets an edit clear the interest', function () {
+    $agent = User::factory()->create();
+    $lead = Lead::factory()->for($agent)->create(['interest' => 'life']);
+
+    $this->actingAs($agent)
+        ->putJson(route('api.v1.leads.update', $lead), validLeadPayload(['interest' => null]))
+        ->assertOk()
+        ->assertJsonPath('data.interest', null);
+});
+
 it('accepts a lead with only a phone number', function () {
     $this->actingAs(User::factory()->create())
         ->postJson(route('api.v1.leads.store'), validLeadPayload(['email' => null]))

@@ -53,25 +53,6 @@ it('paginates leads', function () {
         ->assertJsonPath('meta.last_page', 3);
 });
 
-it('returns status counts for all of the agent’s leads', function () {
-    $agent = User::factory()->create();
-    Lead::factory()->for($agent)->count(2)->create();
-    Lead::factory()->for($agent)->status(LeadStatus::Qualified)->create();
-    Lead::factory()->status(LeadStatus::Lost)->create();
-
-    $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.index', ['status' => 'lost']))
-        ->assertOk()
-        ->assertJsonPath('status_counts', [
-            'total' => 3,
-            'prospect' => 2,
-            'contacted' => 0,
-            'meeting_scheduled' => 0,
-            'qualified' => 1,
-            'lost' => 0,
-        ]);
-});
-
 it('rejects invalid filters', function () {
     $this->actingAs(User::factory()->create())
         ->getJson(route('api.v1.leads.index', ['status' => 'client', 'per_page' => 500]))

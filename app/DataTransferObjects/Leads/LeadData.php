@@ -13,12 +13,12 @@ class LeadData
         public readonly ?string $phone,
         public readonly ?string $address,
         public readonly LeadSource $source,
-        public readonly LeadInterest $interest,
+        public readonly ?LeadInterest $interest,
         public readonly ?string $notes,
     ) {}
 
     /**
-     * @return array{name: string, email: string|null, phone: string|null, address: string|null, source: LeadSource, interest: LeadInterest, notes: string|null}
+     * @return array{name: string, email: string|null, phone: string|null, address: string|null, source: LeadSource, interest: LeadInterest|null, notes: string|null}
      */
     public function toAttributes(): array
     {
