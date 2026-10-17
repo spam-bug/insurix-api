@@ -12,7 +12,6 @@ use Illuminate\Support\Carbon;
 function policyPayload(array $overrides = []): array
 {
     return [
-        'insurer' => 'Sun Life',
         'product_name' => 'Sun MaxiLink Prime',
         'policy_number' => 'SL-0012345',
         'type' => 'life',
@@ -69,21 +68,21 @@ it('validates a policy', function () {
 
     $this->actingAs($agent)
         ->postJson(route('api.v1.clients.policies.store', $client), policyPayload([
-            'insurer' => '',
+            'product_name' => '',
             'premium' => '0',
             'commission_rate' => '120',
             'payment_frequency' => 'weekly',
             'renewal_date' => '2026-01-01',
         ]))
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['insurer', 'premium', 'commission_rate', 'payment_frequency', 'renewal_date']);
+        ->assertJsonValidationErrors(['product_name', 'premium', 'commission_rate', 'payment_frequency', 'renewal_date']);
 });
 
 it('lists, filters and searches the agent’s policies', function () {
     $agent = User::factory()->create();
     $client = Client::factory()->for($agent)->create(['name' => 'Teodora Alonso']);
-    $inForce = Policy::factory()->for($client)->create(['insurer' => 'Pru Life UK']);
-    $pending = Policy::factory()->for($client)->status(PolicyStatus::Pending)->create(['insurer' => 'AXA Philippines']);
+    $inForce = Policy::factory()->for($client)->create(['product_name' => 'PRULink Assurance']);
+    $pending = Policy::factory()->for($client)->status(PolicyStatus::Pending)->create(['product_name' => 'AXA Global Health']);
     Policy::factory()->create();
     $this->actingAs($agent);
 

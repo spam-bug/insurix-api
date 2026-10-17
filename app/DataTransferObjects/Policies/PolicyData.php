@@ -10,12 +10,13 @@ use Carbon\CarbonImmutable;
 class PolicyData
 {
     public function __construct(
-        public readonly string $insurer,
+        public readonly ?int $productId,
         public readonly string $productName,
         public readonly ?string $policyNumber,
         public readonly PolicyType $type,
         public readonly PolicyStatus $status,
         public readonly string $premium,
+        public readonly ?string $coverageAmount,
         public readonly PaymentFrequency $paymentFrequency,
         public readonly string $commissionRate,
         public readonly ?CarbonImmutable $effectiveDate,
@@ -30,12 +31,13 @@ class PolicyData
     public function toAttributes(): array
     {
         return [
-            'insurer' => $this->insurer,
+            'product_id' => $this->productId,
             'product_name' => $this->productName,
             'policy_number' => $this->policyNumber,
             'type' => $this->type,
             'status' => $this->status,
             'premium' => $this->premium,
+            'coverage_amount' => $this->coverageAmount,
             'payment_frequency' => $this->paymentFrequency,
             'commission_rate' => $this->commissionRate,
             'effective_date' => $this->effectiveDate,

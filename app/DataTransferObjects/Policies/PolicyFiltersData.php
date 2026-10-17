@@ -10,6 +10,7 @@ class PolicyFiltersData
         public readonly ?string $search = null,
         public readonly ?PolicyStatus $status = null,
         public readonly ?int $clientId = null,
+        public readonly ?int $productId = null,
         public readonly int $perPage = 10,
     ) {}
 }
