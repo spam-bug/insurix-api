@@ -10,4 +10,5 @@ enum LeadActivityType: string
     case MeetingScheduled = 'meeting_scheduled';
     case Note = 'note';
     case Promoted = 'promoted';
+    case FollowUpCompleted = 'follow_up_completed';
 }

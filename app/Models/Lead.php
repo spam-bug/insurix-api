@@ -43,6 +43,14 @@ class Lead extends Model
     }
 
     /**
+     * @return HasMany<FollowUp, $this>
+     */
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class);
+    }
+
+    /**
      * The client this lead was promoted to.
      *
      * @return HasOne<Client, $this>

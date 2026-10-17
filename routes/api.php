@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\ClientController;
+use App\Http\Controllers\Api\V1\FollowUpController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadFormController;
@@ -41,5 +42,13 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('/leads/{lead}/promote', PromoteLeadController::class)->name('leads.promote');
 
         Route::apiResource('clients', ClientController::class)->only(['index', 'show', 'update']);
+
+        Route::get('/follow-ups', [FollowUpController::class, 'index'])->name('follow-ups.index');
+        Route::get('/follow-ups/summary', [FollowUpController::class, 'summary'])->name('follow-ups.summary');
+        Route::post('/leads/{lead}/follow-ups', [FollowUpController::class, 'store'])->name('leads.follow-ups.store');
+        Route::put('/follow-ups/{followUp}', [FollowUpController::class, 'update'])->name('follow-ups.update');
+        Route::delete('/follow-ups/{followUp}', [FollowUpController::class, 'destroy'])->name('follow-ups.destroy');
+        Route::post('/follow-ups/{followUp}/complete', [FollowUpController::class, 'complete'])->name('follow-ups.complete');
+        Route::post('/follow-ups/{followUp}/reopen', [FollowUpController::class, 'reopen'])->name('follow-ups.reopen');
     });
 });

@@ -2,8 +2,11 @@
 
 namespace App\Actions\LeadForms;
 
+use App\Actions\FollowUps\CreateFollowUp;
 use App\Actions\Leads\RecordLeadActivity;
+use App\DataTransferObjects\FollowUps\FollowUpData;
 use App\DataTransferObjects\Leads\LeadData;
+use App\Enums\FollowUpType;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
@@ -13,11 +16,15 @@ use Illuminate\Support\Facades\DB;
 
 class SubmitLeadForm
 {
-    public function __construct(private RecordLeadActivity $recordLeadActivity) {}
+    public function __construct(
+        private RecordLeadActivity $recordLeadActivity,
+        private CreateFollowUp $createFollowUp,
+    ) {}
 
     /**
      * A prospective client filled in the agent's shareable form: create a prospect owned by
-     * that agent. Nobody is signed in, so the activity has no actor.
+     * that agent, and a follow-up due now so it tops the agent's list for today. Nobody is
+     * signed in, so the activity has no actor.
      */
     public function handle(User $agent, LeadData $data): Lead
     {
@@ -29,6 +36,13 @@ class SubmitLeadForm
             ]);
 
             $this->recordLeadActivity->handle($lead, LeadActivityType::Created, properties: ['source' => LeadSource::ShareableForm->value]);
+
+            $this->createFollowUp->handle($lead, new FollowUpData(
+                type: $lead->phone ? FollowUpType::Call : FollowUpType::Email,
+                title: "Reach out to {$lead->name}: sent your form",
+                dueAt: now()->toImmutable(),
+                notes: null,
+            ));
 
             return $lead;
         });
