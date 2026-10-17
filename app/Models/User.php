@@ -45,6 +45,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<Policy, $this>
+     */
+    public function policies(): HasMany
+    {
+        return $this->hasMany(Policy::class);
+    }
+
+    /**
      * @return HasMany<FollowUp, $this>
      */
     public function followUps(): HasMany
