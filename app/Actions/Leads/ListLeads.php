@@ -34,6 +34,7 @@ class ListLeads
             LeadSort::Oldest => $query->oldest()->oldest('id'),
             LeadSort::NameAsc => $query->orderBy('name')->orderBy('id'),
             LeadSort::NameDesc => $query->orderByDesc('name')->orderByDesc('id'),
+            LeadSort::Score => $query->orderByRaw('score is null')->orderByDesc('score')->latest('id'),
         };
 
         return $query->paginate($filters->perPage)->withQueryString();
