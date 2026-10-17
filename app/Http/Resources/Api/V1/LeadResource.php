@@ -30,6 +30,14 @@ class LeadResource extends JsonResource
             'notes' => $this->notes,
             'meeting_at' => $this->meeting_at?->toIso8601String(),
             'client_id' => $this->client?->id,
+            'score' => $this->score,
+            'score_band' => match (true) {
+                $this->score === null => null,
+                $this->score >= 70 => 'hot',
+                $this->score >= 40 => 'warm',
+                default => 'cold',
+            },
+            'score_reasons' => $this->score_reasons ?? [],
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

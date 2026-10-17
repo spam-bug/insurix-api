@@ -72,6 +72,7 @@ class Lead extends Model
             'interest' => LeadInterest::class,
             'status' => LeadStatus::class,
             'meeting_at' => 'immutable_datetime',
+            'score_reasons' => 'array',
         ];
     }
 }
