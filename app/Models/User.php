@@ -20,6 +20,15 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
+     * Agents are in the Philippines for now; the timezone sets where their day starts.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'timezone' => 'Asia/Manila',
+    ];
+
+    /**
      * @return HasMany<Lead, $this>
      */
     public function leads(): HasMany
@@ -33,6 +42,14 @@ class User extends Authenticatable
     public function clients(): HasMany
     {
         return $this->hasMany(Client::class);
+    }
+
+    /**
+     * @return HasMany<FollowUp, $this>
+     */
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class);
     }
 
     /**
