@@ -17,6 +17,7 @@ class ListLeads
     public function handle(User $agent, LeadFiltersData $filters): LengthAwarePaginator
     {
         $query = $agent->leads()
+            ->with('client:id,lead_id')
             ->when($filters->search, function (Builder $query, string $search) {
                 $query->where(function (Builder $query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")

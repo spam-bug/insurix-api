@@ -5,10 +5,12 @@ use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
+use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadFormController;
 use App\Http\Controllers\Api\V1\LeadStatusCountController;
+use App\Http\Controllers\Api\V1\PromoteLeadController;
 use App\Http\Controllers\Api\V1\PublicLeadFormController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,5 +38,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/leads/{lead}/activities', [LeadActivityController::class, 'index'])->name('leads.activities.index');
         Route::post('/leads/{lead}/notes', [LeadActivityController::class, 'storeNote'])->name('leads.notes.store');
         Route::post('/leads/{lead}/meeting', [LeadActivityController::class, 'scheduleMeeting'])->name('leads.meeting.store');
+        Route::post('/leads/{lead}/promote', PromoteLeadController::class)->name('leads.promote');
+
+        Route::apiResource('clients', ClientController::class)->only(['index', 'show', 'update']);
     });
 });
