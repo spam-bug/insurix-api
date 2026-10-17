@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
+use App\Enums\RenewalTerm;
 use Carbon\CarbonImmutable;
 use Database\Factories\PolicyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 #[Fillable([
     'user_id', 'client_id', 'product_id', 'product_name', 'policy_number', 'type', 'status', 'premium', 'coverage_amount', 'payment_frequency',
-    'commission_rate', 'effective_date', 'renewal_date', 'commission_received_at', 'notes',
+    'commission_rate', 'effective_date', 'renewal_term', 'renewal_date', 'commission_received_at', 'notes',
 ])]
 class Policy extends Model
 {
@@ -90,15 +91,38 @@ class Policy extends Model
             return null;
         }
 
-        $today ??= CarbonImmutable::today();
-        $due = $this->effective_date;
+        return $this->nextFromEffectiveDate($months, $today ?? CarbonImmutable::today(), includeStart: true);
+    }
 
-        // Step from the effective date itself each time, so month-end dates don't drift.
-        for ($period = 1; $due->lessThan($today); $period++) {
-            $due = $this->effective_date->addMonthsNoOverflow($period * $months);
+    /**
+     * The next renewal on or after $today. Set terms count from the effective date (the first
+     * renewal is one term after it); a custom term is its fixed date, even once it has passed.
+     */
+    public function nextRenewalDate(?CarbonImmutable $today = null): ?CarbonImmutable
+    {
+        $months = $this->renewal_term?->months();
+
+        if ($months === null || $this->effective_date === null) {
+            return $this->renewal_term === RenewalTerm::Custom ? $this->renewal_date : null;
         }
 
-        return $due;
+        return $this->nextFromEffectiveDate($months, $today ?? CarbonImmutable::today(), includeStart: false);
+    }
+
+    /**
+     * The first date on or after $today that is a whole number of $months after the effective
+     * date. Steps from the effective date itself each time, so month-end dates don't drift.
+     */
+    private function nextFromEffectiveDate(int $months, CarbonImmutable $today, bool $includeStart): CarbonImmutable
+    {
+        $period = $includeStart ? 0 : 1;
+        $date = $this->effective_date->addMonthsNoOverflow($period * $months);
+
+        while ($date->lessThan($today)) {
+            $date = $this->effective_date->addMonthsNoOverflow(++$period * $months);
+        }
+
+        return $date;
     }
 
     /**
@@ -116,6 +140,7 @@ class Policy extends Model
             'coverage_amount' => 'decimal:2',
             'commission_rate' => 'decimal:2',
             'effective_date' => 'immutable_date',
+            'renewal_term' => RenewalTerm::class,
             'renewal_date' => 'immutable_date',
             'commission_received_at' => 'immutable_date',
         ];

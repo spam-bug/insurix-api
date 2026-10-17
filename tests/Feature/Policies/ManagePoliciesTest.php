@@ -20,6 +20,7 @@ function policyPayload(array $overrides = []): array
         'payment_frequency' => 'monthly',
         'commission_rate' => '30',
         'effective_date' => '2026-07-15',
+        'renewal_term' => 'custom',
         'renewal_date' => '2027-07-15',
         ...$overrides,
     ];
