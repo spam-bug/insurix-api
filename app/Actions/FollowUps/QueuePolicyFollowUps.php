@@ -2,6 +2,7 @@
 
 namespace App\Actions\FollowUps;
 
+use App\Actions\Notifications\NotifyAgent;
 use App\Actions\Policies\ListPoliciesNeedingAttention;
 use App\DataTransferObjects\FollowUps\FollowUpData;
 use App\Enums\FollowUpType;
@@ -25,7 +26,10 @@ class QueuePolicyFollowUps
     /** A premium reminder comes up this many days before the premium is due. */
     private const PREMIUM_LEAD_DAYS = 2;
 
-    public function __construct(private CreateFollowUp $createFollowUp) {}
+    public function __construct(
+        private CreateFollowUp $createFollowUp,
+        private NotifyAgent $notifyAgent,
+    ) {}
 
     /**
      * @return int how many follow-ups were created
@@ -58,6 +62,10 @@ class QueuePolicyFollowUps
                 );
                 $created++;
             }
+        }
+
+        if ($created > 0) {
+            $this->notifyAgent->handle($agent->id, 'follow-ups');
         }
 
         return $created;
