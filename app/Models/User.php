@@ -10,14 +10,29 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token', 'lead_form_token'])]
+#[Fillable(['name', 'email', 'phone', 'password', 'timezone', 'bio'])]
+#[Hidden(['password', 'remember_token', 'lead_form_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    /** Uploaded photos and logos live on this disk, served from /storage. */
+    public const UPLOADS_DISK = 'public';
+
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? Storage::disk(self::UPLOADS_DISK)->url($this->avatar_path) : null;
+    }
+
+    public function logoUrl(): ?string
+    {
+        return $this->logo_path ? Storage::disk(self::UPLOADS_DISK)->url($this->logo_path) : null;
+    }
 
     /**
      * Agents are in the Philippines for now; the timezone sets where their day starts.
@@ -78,6 +93,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 }
