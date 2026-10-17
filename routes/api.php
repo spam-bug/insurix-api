@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadFormController;
 use App\Http\Controllers\Api\V1\LeadStatusCountController;
 use App\Http\Controllers\Api\V1\PolicyController;
+use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\PromoteLeadController;
 use App\Http\Controllers\Api\V1\PublicLeadFormController;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('/leads/{lead}/promote', PromoteLeadController::class)->name('leads.promote');
 
         Route::apiResource('clients', ClientController::class)->only(['index', 'show', 'update']);
+
+        Route::apiResource('products', ProductController::class);
 
         Route::get('/policies/attention', [PolicyController::class, 'attention'])->name('policies.attention');
         Route::post('/clients/{client}/policies', [PolicyController::class, 'store'])->name('clients.policies.store');

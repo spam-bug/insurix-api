@@ -21,6 +21,7 @@ class ListPolicies
         return $agent->policies()
             ->with('client:id,name')
             ->when($filters->clientId, fn (Builder $query, int $clientId) => $query->where('client_id', $clientId))
+            ->when($filters->productId, fn (Builder $query, int $productId) => $query->where('product_id', $productId))
             ->when($filters->status, fn (Builder $query, $status) => $query->where('status', $status))
             ->when($filters->search, function (Builder $query, string $search) {
                 $query->where(function (Builder $query) use ($search) {

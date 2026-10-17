@@ -29,6 +29,7 @@ class ListPoliciesRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', Rule::enum(PolicyStatus::class)],
             'client_id' => ['nullable', 'integer'],
+            'product_id' => ['nullable', 'integer'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
@@ -40,6 +41,7 @@ class ListPoliciesRequest extends FormRequest
             search: $this->filled('search') ? $this->string('search')->trim()->toString() : null,
             status: $this->enum('status', PolicyStatus::class),
             clientId: $this->filled('client_id') ? $this->integer('client_id') : null,
+            productId: $this->filled('product_id') ? $this->integer('product_id') : null,
             perPage: $this->integer('per_page', 10),
         );
     }

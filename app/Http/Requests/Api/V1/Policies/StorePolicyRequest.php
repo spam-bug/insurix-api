@@ -6,13 +6,22 @@ use App\DataTransferObjects\Policies\PolicyData;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
+use App\Models\Policy;
+use App\Models\Product;
+use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
-/** Used for recording and editing a policy; an edit sends every field. */
+/**
+ * Used for recording and editing a policy; an edit sends every field. Picking a catalog
+ * product supplies the insurer, product name and type; without one they're typed in.
+ */
 class StorePolicyRequest extends FormRequest
 {
+    private ?Product $product = null;
+
     /**
      * Ownership is checked in the controller with the client and policy policies.
      */
@@ -29,18 +38,39 @@ class StorePolicyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'insurer' => ['required', 'string', 'max:255'],
-            'product_name' => ['required', 'string', 'max:255'],
+            'product_id' => ['nullable', 'integer', Rule::exists(Product::class, 'id')->where('user_id', $this->user()?->id)],
+            'insurer' => ['required_without:product_id', 'nullable', 'string', 'max:255'],
+            'product_name' => ['required_without:product_id', 'nullable', 'string', 'max:255'],
             'policy_number' => ['nullable', 'string', 'max:100'],
-            'type' => ['required', Rule::enum(PolicyType::class)],
+            'type' => ['required_without:product_id', 'nullable', Rule::enum(PolicyType::class)],
             'status' => ['required', Rule::enum(PolicyStatus::class)],
             'premium' => ['required', 'numeric', 'gt:0', 'max:9999999999.99', 'decimal:0,2'],
+            'coverage_amount' => ['nullable', 'numeric', 'gt:0', 'max:999999999999.99', 'decimal:0,2'],
             'payment_frequency' => ['required', Rule::enum(PaymentFrequency::class)],
             'commission_rate' => ['required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'effective_date' => ['nullable', 'date'],
             'renewal_date' => ['nullable', 'date', 'after_or_equal:effective_date'],
             'commission_received_at' => ['nullable', 'date', 'before_or_equal:today'],
             'notes' => ['nullable', 'string', 'max:2000'],
+        ];
+    }
+
+    /**
+     * An inactive product can't be picked for a policy, though a policy already on it keeps it.
+     *
+     * @return array<int, Closure(Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                $product = $this->product();
+                $current = $this->route('policy');
+
+                if ($product && ! $product->is_active && ! ($current instanceof Policy && $current->product_id === $product->id)) {
+                    $validator->errors()->add('product_id', 'This product is inactive. Reactivate it in your catalog to use it.');
+                }
+            },
         ];
     }
 
@@ -52,18 +82,24 @@ class StorePolicyRequest extends FormRequest
         return [
             'premium.gt' => 'Enter the premium per payment.',
             'renewal_date.after_or_equal' => 'The renewal date can’t be before the policy takes effect.',
+            'insurer.required_without' => 'Pick a product or enter the insurer.',
+            'product_name.required_without' => 'Pick a product or enter the product name.',
         ];
     }
 
     public function toData(): PolicyData
     {
+        $product = $this->product();
+
         return new PolicyData(
-            insurer: $this->string('insurer')->trim()->toString(),
-            productName: $this->string('product_name')->trim()->toString(),
+            productId: $product?->id,
+            insurer: $product?->insurer ?? $this->string('insurer')->trim()->toString(),
+            productName: $product?->name ?? $this->string('product_name')->trim()->toString(),
             policyNumber: $this->filled('policy_number') ? $this->string('policy_number')->trim()->toString() : null,
-            type: $this->enum('type', PolicyType::class) ?? PolicyType::Other,
+            type: $product?->type ?? $this->enum('type', PolicyType::class) ?? PolicyType::Other,
             status: $this->enum('status', PolicyStatus::class) ?? PolicyStatus::Pending,
             premium: (string) $this->input('premium'),
+            coverageAmount: $this->filled('coverage_amount') ? (string) $this->input('coverage_amount') : null,
             paymentFrequency: $this->enum('payment_frequency', PaymentFrequency::class) ?? PaymentFrequency::Annual,
             commissionRate: (string) $this->input('commission_rate'),
             effectiveDate: $this->filled('effective_date') ? $this->date('effective_date')?->toImmutable() : null,
@@ -71,5 +107,17 @@ class StorePolicyRequest extends FormRequest
             commissionReceivedAt: $this->filled('commission_received_at') ? $this->date('commission_received_at')?->toImmutable() : null,
             notes: $this->filled('notes') ? $this->string('notes')->trim()->toString() : null,
         );
+    }
+
+    /**
+     * The picked catalog product, scoped to the agent. Validation has already checked it exists.
+     */
+    private function product(): ?Product
+    {
+        if (! $this->filled('product_id')) {
+            return null;
+        }
+
+        return $this->product ??= $this->user()?->products()->find($this->integer('product_id'));
     }
 }

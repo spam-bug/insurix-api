@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Amounts are in pesos.
  */
 #[Fillable([
-    'user_id', 'client_id', 'insurer', 'product_name', 'policy_number', 'type', 'status', 'premium', 'payment_frequency',
+    'user_id', 'client_id', 'product_id', 'insurer', 'product_name', 'policy_number', 'type', 'status', 'premium', 'coverage_amount', 'payment_frequency',
     'commission_rate', 'effective_date', 'renewal_date', 'commission_received_at', 'notes',
 ])]
 class Policy extends Model
@@ -39,6 +39,16 @@ class Policy extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * The catalog product this policy is for, when it was picked from the catalog.
+     *
+     * @return BelongsTo<Product, $this>
+     */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 
     /**
@@ -92,6 +102,7 @@ class Policy extends Model
             'status' => PolicyStatus::class,
             'payment_frequency' => PaymentFrequency::class,
             'premium' => 'decimal:2',
+            'coverage_amount' => 'decimal:2',
             'commission_rate' => 'decimal:2',
             'effective_date' => 'immutable_date',
             'renewal_date' => 'immutable_date',
