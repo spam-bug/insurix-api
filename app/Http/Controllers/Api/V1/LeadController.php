@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Actions\Leads\CountLeadsByStatus;
 use App\Actions\Leads\CreateLead;
 use App\Actions\Leads\DeleteLead;
 use App\Actions\Leads\ListLeads;
@@ -24,10 +23,9 @@ use Illuminate\Support\Facades\Gate;
 
 class LeadController extends Controller
 {
-    public function index(ListLeadsRequest $request, #[CurrentUser] User $agent, ListLeads $listLeads, CountLeadsByStatus $countLeadsByStatus): AnonymousResourceCollection
+    public function index(ListLeadsRequest $request, #[CurrentUser] User $agent, ListLeads $listLeads): AnonymousResourceCollection
     {
-        return LeadResource::collection($listLeads->handle($agent, $request->toData()))
-            ->additional(['status_counts' => $countLeadsByStatus->handle($agent)]);
+        return LeadResource::collection($listLeads->handle($agent, $request->toData()));
     }
 
     public function store(StoreLeadRequest $request, #[CurrentUser] User $agent, CreateLead $createLead): JsonResponse
