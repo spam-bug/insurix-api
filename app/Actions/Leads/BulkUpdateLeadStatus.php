@@ -12,6 +12,7 @@ class BulkUpdateLeadStatus
 
     /**
      * Changes the status of the agent's own leads among $leadIds, logging each change.
+     * Leads already promoted to clients are left as they are.
      *
      * @param  array<int, int>  $leadIds
      * @return int how many leads were changed
@@ -19,7 +20,7 @@ class BulkUpdateLeadStatus
     public function handle(User $agent, array $leadIds, LeadStatus $status): int
     {
         return DB::transaction(function () use ($agent, $leadIds, $status) {
-            $leads = $agent->leads()->whereKey($leadIds)->where('status', '!=', $status)->get();
+            $leads = $agent->leads()->whereKey($leadIds)->whereNotIn('status', [$status, LeadStatus::Converted])->get();
 
             foreach ($leads as $lead) {
                 $this->updateLeadStatus->handle($lead, $status, $agent);

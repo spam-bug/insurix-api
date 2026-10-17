@@ -28,6 +28,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<Client, $this>
+     */
+    public function clients(): HasMany
+    {
+        return $this->hasMany(Client::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

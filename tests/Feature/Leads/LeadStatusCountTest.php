@@ -20,6 +20,7 @@ it('counts every status for the agent’s own leads', function () {
             'meeting_scheduled' => 0,
             'qualified' => 1,
             'lost' => 0,
+            'converted' => 0,
         ]]);
 });
 

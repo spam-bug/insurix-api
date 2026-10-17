@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable(['name', 'email', 'phone', 'address', 'source', 'interest', 'notes', 'status', 'meeting_at'])]
 class Lead extends Model
@@ -39,6 +40,16 @@ class Lead extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(LeadActivity::class);
+    }
+
+    /**
+     * The client this lead was promoted to.
+     *
+     * @return HasOne<Client, $this>
+     */
+    public function client(): HasOne
+    {
+        return $this->hasOne(Client::class);
     }
 
     /**
