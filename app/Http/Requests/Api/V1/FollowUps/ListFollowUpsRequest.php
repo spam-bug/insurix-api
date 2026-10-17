@@ -38,7 +38,7 @@ class ListFollowUpsRequest extends FormRequest
         return new FollowUpFiltersData(
             window: $this->enum('window', FollowUpWindow::class) ?? FollowUpWindow::Open,
             leadId: $this->filled('lead_id') ? $this->integer('lead_id') : null,
-            perPage: $this->integer('per_page', 20),
+            perPage: $this->integer('per_page', 10),
         );
     }
 }
