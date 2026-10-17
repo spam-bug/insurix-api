@@ -8,7 +8,6 @@ use App\Enums\PolicyType;
 class ProductData
 {
     public function __construct(
-        public readonly string $insurer,
         public readonly string $name,
         public readonly PolicyType $type,
         public readonly ?string $description,
@@ -23,7 +22,6 @@ class ProductData
     public function toAttributes(): array
     {
         return [
-            'insurer' => $this->insurer,
             'name' => $this->name,
             'type' => $this->type,
             'description' => $this->description,

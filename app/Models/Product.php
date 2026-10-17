@@ -12,9 +12,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * An insurer's product the agent sells, with the agent's usual commission rate for it.
+ * A product the agent sells, with the agent's usual commission rate for it.
  */
-#[Fillable(['user_id', 'insurer', 'name', 'type', 'description', 'commission_rate', 'payment_frequency', 'is_active'])]
+#[Fillable(['user_id', 'name', 'type', 'description', 'commission_rate', 'payment_frequency', 'is_active'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */

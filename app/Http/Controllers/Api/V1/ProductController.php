@@ -20,7 +20,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 
-/** The agent's product catalog: the insurers' products they sell. */
+/** The agent's product catalog: the products they sell. */
 class ProductController extends Controller
 {
     public function index(ListProductsRequest $request, #[CurrentUser] User $agent, ListProducts $listProducts): AnonymousResourceCollection

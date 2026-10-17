@@ -22,7 +22,6 @@ class PolicyResource extends JsonResource
             'id' => $this->id,
             'client' => $this->whenLoaded('client', fn () => ['id' => $this->client->id, 'name' => $this->client->name]),
             'product_id' => $this->product_id,
-            'insurer' => $this->insurer,
             'product_name' => $this->product_name,
             'policy_number' => $this->policy_number,
             'type' => ['value' => $this->type->value, 'label' => $this->type->label()],

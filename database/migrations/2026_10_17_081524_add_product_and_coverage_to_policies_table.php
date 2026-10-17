@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * A policy can point to a catalog product. The insurer and product name stay on the
+     * A policy can point to a catalog product. The product name stays on the
      * policy as recorded, so older policies and deleted products still read correctly.
      */
     public function up(): void

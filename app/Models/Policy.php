@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Amounts are in pesos.
  */
 #[Fillable([
-    'user_id', 'client_id', 'product_id', 'insurer', 'product_name', 'policy_number', 'type', 'status', 'premium', 'coverage_amount', 'payment_frequency',
+    'user_id', 'client_id', 'product_id', 'product_name', 'policy_number', 'type', 'status', 'premium', 'coverage_amount', 'payment_frequency',
     'commission_rate', 'effective_date', 'renewal_date', 'commission_received_at', 'notes',
 ])]
 class Policy extends Model

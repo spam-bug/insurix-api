@@ -11,7 +11,6 @@ class PolicyData
 {
     public function __construct(
         public readonly ?int $productId,
-        public readonly string $insurer,
         public readonly string $productName,
         public readonly ?string $policyNumber,
         public readonly PolicyType $type,
@@ -33,7 +32,6 @@ class PolicyData
     {
         return [
             'product_id' => $this->productId,
-            'insurer' => $this->insurer,
             'product_name' => $this->productName,
             'policy_number' => $this->policyNumber,
             'type' => $this->type,

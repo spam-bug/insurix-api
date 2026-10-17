@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 class ListPolicies
 {
     /**
-     * The agent's policies, newest first. Search matches the policy number, insurer,
+     * The agent's policies, newest first. Search matches the policy number,
      * product or client name.
      *
      * @return LengthAwarePaginator<int, Policy>
@@ -26,7 +26,6 @@ class ListPolicies
             ->when($filters->search, function (Builder $query, string $search) {
                 $query->where(function (Builder $query) use ($search) {
                     $query->where('policy_number', 'like', "%{$search}%")
-                        ->orWhere('insurer', 'like', "%{$search}%")
                         ->orWhere('product_name', 'like', "%{$search}%")
                         ->orWhereHas('client', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"));
                 });

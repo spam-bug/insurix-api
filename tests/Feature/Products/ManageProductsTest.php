@@ -12,7 +12,6 @@ use App\Models\User;
 function productPayload(array $overrides = []): array
 {
     return [
-        'insurer' => 'Sun Life',
         'name' => 'Sun FitandWell',
         'type' => 'health',
         'description' => 'Health plan with critical illness cover.',
@@ -28,7 +27,7 @@ it('adds a product to the agent’s catalog', function () {
     $this->actingAs($agent)
         ->postJson(route('api.v1.products.store'), productPayload())
         ->assertCreated()
-        ->assertJsonPath('data.insurer', 'Sun Life')
+        ->assertJsonPath('data.name', 'Sun FitandWell')
         ->assertJsonPath('data.type', ['value' => 'health', 'label' => 'Health'])
         ->assertJsonPath('data.commission_rate', 35)
         ->assertJsonPath('data.payment_frequency.value', 'monthly')
@@ -37,27 +36,27 @@ it('adds a product to the agent’s catalog', function () {
     expect(Product::sole()->user_id)->toBe($agent->id);
 });
 
-it('keeps product names unique per insurer in a catalog', function () {
+it('keeps product names unique within a catalog', function () {
     $agent = User::factory()->create();
-    Product::factory()->for($agent)->create(['insurer' => 'Sun Life', 'name' => 'Sun FitandWell']);
-    Product::factory()->create(['insurer' => 'AXA Philippines', 'name' => 'Sun FitandWell']);
+    Product::factory()->for($agent)->create(['name' => 'Sun FitandWell']);
+    Product::factory()->create(['name' => 'Sun MaxiLink Prime']);
     $this->actingAs($agent);
 
     $this->postJson(route('api.v1.products.store'), productPayload())->assertJsonValidationErrors(['name' => 'already have']);
-    $this->postJson(route('api.v1.products.store'), productPayload(['insurer' => 'AXA Philippines']))->assertCreated();
+    $this->postJson(route('api.v1.products.store'), productPayload(['name' => 'Sun MaxiLink Prime']))->assertCreated();
 });
 
 it('validates a product', function () {
     $this->actingAs(User::factory()->create())
         ->postJson(route('api.v1.products.store'), ['commission_rate' => '150', 'type' => 'pet'])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['insurer', 'name', 'type', 'commission_rate']);
+        ->assertJsonValidationErrors(['name', 'type', 'commission_rate']);
 });
 
 it('lists the catalog with how many clients hold each product', function () {
     $agent = User::factory()->create();
-    $sold = Product::factory()->for($agent)->create(['insurer' => 'AXA Philippines']);
-    Product::factory()->for($agent)->inactive()->create(['insurer' => 'AIA Philam Life']);
+    $sold = Product::factory()->for($agent)->create(['name' => 'AXA Global Health']);
+    Product::factory()->for($agent)->inactive()->create(['name' => 'Philam Vitality Plan']);
     Product::factory()->create();
     $client = Client::factory()->for($agent)->create();
     Policy::factory()->for($client)->count(2)->create(['product_id' => $sold->id]);
@@ -109,7 +108,7 @@ it('forbids another agent’s products', function () {
 
 it('records a policy from a catalog product', function () {
     $agent = User::factory()->create();
-    $product = Product::factory()->for($agent)->create(['insurer' => 'Pru Life UK', 'name' => 'PRULink Assurance', 'type' => 'life']);
+    $product = Product::factory()->for($agent)->create(['name' => 'PRULink Assurance', 'type' => 'life']);
     $client = Client::factory()->for($agent)->create();
 
     $this->actingAs($agent)
@@ -123,7 +122,6 @@ it('records a policy from a catalog product', function () {
         ])
         ->assertCreated()
         ->assertJsonPath('data.product_id', $product->id)
-        ->assertJsonPath('data.insurer', 'Pru Life UK')
         ->assertJsonPath('data.product_name', 'PRULink Assurance')
         ->assertJsonPath('data.type.value', 'life')
         ->assertJsonPath('data.coverage_amount', 1000000);
@@ -137,7 +135,7 @@ it('still records a policy without a catalog product', function () {
     $this->actingAs($agent);
 
     $this->postJson(route('api.v1.clients.policies.store', $client), ['status' => 'pending', 'premium' => '100', 'payment_frequency' => 'annual', 'commission_rate' => '10'])
-        ->assertJsonValidationErrors(['insurer', 'product_name', 'type']);
+        ->assertJsonValidationErrors(['product_name', 'type']);
 });
 
 it('refuses another agent’s or an inactive product for a new policy', function () {

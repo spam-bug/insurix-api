@@ -16,7 +16,7 @@ use Illuminate\Validation\Validator;
 
 /**
  * Used for recording and editing a policy; an edit sends every field. Picking a catalog
- * product supplies the insurer, product name and type; without one they're typed in.
+ * product supplies the product name and type; without one they're typed in.
  */
 class StorePolicyRequest extends FormRequest
 {
@@ -39,7 +39,6 @@ class StorePolicyRequest extends FormRequest
     {
         return [
             'product_id' => ['nullable', 'integer', Rule::exists(Product::class, 'id')->where('user_id', $this->user()?->id)],
-            'insurer' => ['required_without:product_id', 'nullable', 'string', 'max:255'],
             'product_name' => ['required_without:product_id', 'nullable', 'string', 'max:255'],
             'policy_number' => ['nullable', 'string', 'max:100'],
             'type' => ['required_without:product_id', 'nullable', Rule::enum(PolicyType::class)],
@@ -82,7 +81,6 @@ class StorePolicyRequest extends FormRequest
         return [
             'premium.gt' => 'Enter the premium per payment.',
             'renewal_date.after_or_equal' => 'The renewal date can’t be before the policy takes effect.',
-            'insurer.required_without' => 'Pick a product or enter the insurer.',
             'product_name.required_without' => 'Pick a product or enter the product name.',
         ];
     }
@@ -93,7 +91,6 @@ class StorePolicyRequest extends FormRequest
 
         return new PolicyData(
             productId: $product?->id,
-            insurer: $product?->insurer ?? $this->string('insurer')->trim()->toString(),
             productName: $product?->name ?? $this->string('product_name')->trim()->toString(),
             policyNumber: $this->filled('policy_number') ? $this->string('policy_number')->trim()->toString() : null,
             type: $product?->type ?? $this->enum('type', PolicyType::class) ?? PolicyType::Other,

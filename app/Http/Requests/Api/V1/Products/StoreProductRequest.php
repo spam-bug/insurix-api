@@ -22,7 +22,7 @@ class StoreProductRequest extends FormRequest
     }
 
     /**
-     * A product name is unique per insurer within the agent's catalog.
+     * A product name is unique within the agent's catalog.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -31,14 +31,12 @@ class StoreProductRequest extends FormRequest
         $product = $this->route('product');
 
         return [
-            'insurer' => ['required', 'string', 'max:255'],
             'name' => [
                 'required',
                 'string',
                 'max:255',
                 Rule::unique(Product::class)
                     ->where('user_id', $this->user()?->id)
-                    ->where('insurer', $this->string('insurer')->trim()->toString())
                     ->ignore($product instanceof Product ? $product->id : null),
             ],
             'type' => ['required', Rule::enum(PolicyType::class)],
@@ -55,14 +53,13 @@ class StoreProductRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.unique' => 'You already have this product for that insurer.',
+            'name.unique' => 'You already have a product with this name.',
         ];
     }
 
     public function toData(): ProductData
     {
         return new ProductData(
-            insurer: $this->string('insurer')->trim()->toString(),
             name: $this->string('name')->trim()->toString(),
             type: $this->enum('type', PolicyType::class) ?? PolicyType::Other,
             description: $this->filled('description') ? $this->string('description')->trim()->toString() : null,

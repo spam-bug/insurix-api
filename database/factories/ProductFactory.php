@@ -22,7 +22,6 @@ class ProductFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'insurer' => fake()->randomElement(['Sun Life', 'AIA Philam Life', 'Pru Life UK', 'AXA Philippines', 'Manulife']),
             'name' => fake()->unique()->words(3, true),
             'type' => PolicyType::Life,
             'description' => fake()->optional()->sentence(),
