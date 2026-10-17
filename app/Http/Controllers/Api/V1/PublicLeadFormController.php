@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\LeadForms\SubmitLeadFormRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 /** The public side of a shareable form: no sign-in, identified only by the link's token. */
 class PublicLeadFormController extends Controller
@@ -23,7 +24,9 @@ class PublicLeadFormController extends Controller
         $agent = $this->agentFor($token);
 
         // Answer bots exactly like people, so the honeypot doesn't give itself away.
-        if (! $request->isLikelySpam()) {
+        if ($request->isLikelySpam()) {
+            Log::info('Dropped a lead form submission that filled in the honeypot.', ['agent_id' => $agent->id]);
+        } else {
             $submitLeadForm->handle($agent, $request->toData());
         }
 
