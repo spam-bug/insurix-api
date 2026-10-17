@@ -19,7 +19,7 @@ class QueuePolicyFollowUps
     /** Reminders are due at this hour, in the agent's timezone. */
     private const DUE_HOUR = 9;
 
-    /** A renewal reminder comes up this many days before the renewal date. */
+    /** A renewal reminder comes up this many days before the renewal date, or less for short terms. */
     private const RENEWAL_LEAD_DAYS = 14;
 
     /** A premium reminder comes up this many days before the premium is due. */
@@ -69,14 +69,14 @@ class QueuePolicyFollowUps
     private function remindersFor(Policy $policy, CarbonImmutable $today): array
     {
         $reminders = [];
-        $renewal = $policy->renewal_date;
+        $renewal = $policy->nextRenewalDate($today);
 
-        if ($renewal && $renewal->greaterThanOrEqualTo($today) && $renewal->lessThanOrEqualTo($today->addDays(ListPoliciesNeedingAttention::RENEWAL_WINDOW_DAYS))) {
+        if ($renewal && $renewal->greaterThanOrEqualTo($today) && $renewal->lessThanOrEqualTo($today->addDays($policy->renewal_term->attentionDays()))) {
             $reminders[] = [
                 "renewal:{$renewal->toDateString()}",
                 FollowUpType::Call,
                 "Renewal: {$policy->product_name} renews {$renewal->format('M j')}",
-                $renewal->subDays(self::RENEWAL_LEAD_DAYS),
+                $renewal->subDays(min(self::RENEWAL_LEAD_DAYS, $policy->renewal_term->attentionDays())),
             ];
         }
 
