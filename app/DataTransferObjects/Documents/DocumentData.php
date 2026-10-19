@@ -3,7 +3,6 @@
 namespace App\DataTransferObjects\Documents;
 
 use App\Enums\DocumentCategory;
-use Carbon\CarbonImmutable;
 
 class DocumentData
 {
@@ -11,7 +10,6 @@ class DocumentData
         public readonly ?string $name,
         public readonly DocumentCategory $category,
         public readonly ?int $policyId,
-        public readonly ?CarbonImmutable $expiresOn,
         public readonly ?string $notes,
     ) {}
 
@@ -27,7 +25,6 @@ class DocumentData
             ...($this->name === null ? [] : ['name' => $this->name]),
             'category' => $this->category,
             'policy_id' => $this->policyId,
-            'expires_on' => $this->expiresOn,
             'notes' => $this->notes,
         ];
     }

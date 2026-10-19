@@ -3,7 +3,6 @@
 use App\Enums\DocumentCategory;
 use App\Models\Client;
 use App\Models\Document;
-use App\Models\Lead;
 use App\Models\Policy;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -55,12 +54,10 @@ it('uses the given name over the file name', function () {
             'file' => UploadedFile::fake()->image('IMG_2041.jpg'),
             'name' => 'Driver’s license',
             'category' => 'valid_id',
-            'expires_on' => '2027-02-01',
         ])
         ->assertCreated()
         ->assertJsonPath('data.name', 'Driver’s license')
-        ->assertJsonPath('data.expires_on', '2027-02-01')
-        ->assertJsonPath('data.expiry_status', null);
+        ->assertJsonMissingPath('data.expires_on');
 });
 
 it('rejects files that are too big or of the wrong type, and policies of other clients', function () {
@@ -132,7 +129,6 @@ it('edits the details and deletes the document with its file', function () {
         'name' => 'October receipt',
         'category' => 'receipt',
         'policy_id' => $policy->id,
-        'expires_on' => null,
     ])
         ->assertOk()
         ->assertJsonPath('data.name', 'October receipt')
@@ -157,31 +153,4 @@ it('lists documents by client, category and search, newest first', function () {
         ->and($this->getJson(route('api.v1.documents.index', ['client_id' => $ana->id]))->json('data.*.id'))->toBe([$newer->id, $older->id])
         ->and($this->getJson(route('api.v1.documents.index', ['category' => 'valid_id']))->json('data.*.id'))->toBe([$older->id])
         ->and($this->getJson(route('api.v1.documents.index', ['search' => 'ben']))->json('data.*.id'))->toBe([$bens->id]);
-});
-
-it('lists expired and expiring documents, soonest first', function () {
-    $client = Client::factory()->create();
-    $expired = Document::factory()->for($client)->expiresOn('2026-10-01')->create();
-    $soon = Document::factory()->for($client)->expiresOn('2026-11-10')->create();
-    Document::factory()->for($client)->expiresOn('2027-06-01')->create();
-    Document::factory()->for($client)->create();
-
-    $response = $this->actingAs($client->user)->getJson(route('api.v1.documents.index', ['expiring' => 1]))->assertOk();
-
-    expect($response->json('data.*.id'))->toBe([$expired->id, $soon->id])
-        ->and($response->json('data.*.expiry_status'))->toBe(['expired', 'expiring']);
-});
-
-it('suggests asking for new copies of documents that expire', function () {
-    $client = Client::factory()->create(['name' => 'Ana Reyes']);
-    Lead::factory()->for($client->user)->create();
-    Document::factory()->for($client)->expiresOn('2026-11-02')->create(['name' => 'Valid ID']);
-
-    $suggestion = collect($this->actingAs($client->user)->getJson(route('api.v1.insights.next-actions'))->json('data'))->firstWhere('code', 'documents_expiring');
-
-    expect($suggestion)->toMatchArray([
-        'title' => '1 client document expires in the next 30 days',
-        'detail' => "Ana Reyes's Valid ID (Nov 2). Ask for new copies.",
-        'count' => 1,
-    ]);
 });

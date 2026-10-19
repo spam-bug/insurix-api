@@ -30,8 +30,6 @@ class DocumentResource extends JsonResource
             'original_name' => $this->original_name,
             'mime_type' => $this->mime_type,
             'size' => $this->size,
-            'expires_on' => $this->expires_on?->toDateString(),
-            'expiry_status' => $this->expiryStatus(),
             'notes' => $this->notes,
             'download_path' => "/documents/{$this->id}/download",
             'created_at' => $this->created_at?->toIso8601String(),

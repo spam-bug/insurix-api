@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\DocumentCategory;
-use Carbon\CarbonImmutable;
 use Database\Factories\DocumentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * A file the agent keeps for a client, such as a policy contract or a valid ID.
  */
-#[Fillable(['user_id', 'client_id', 'policy_id', 'category', 'name', 'original_name', 'path', 'mime_type', 'size', 'expires_on', 'notes'])]
+#[Fillable(['user_id', 'client_id', 'policy_id', 'category', 'name', 'original_name', 'path', 'mime_type', 'size', 'notes'])]
 class Document extends Model
 {
     /** @use HasFactory<DocumentFactory> */
@@ -21,9 +20,6 @@ class Document extends Model
 
     /** Client documents hold personal details, so they're kept off the public disk. */
     public const DISK = 'local';
-
-    /** A document expiring within this many days needs replacing soon. */
-    public const EXPIRING_DAYS = 30;
 
     /**
      * @return BelongsTo<User, $this>
@@ -52,24 +48,6 @@ class Document extends Model
     }
 
     /**
-     * "expired", "expiring" within EXPIRING_DAYS, or null when it doesn't expire soon.
-     */
-    public function expiryStatus(?CarbonImmutable $today = null): ?string
-    {
-        if ($this->expires_on === null) {
-            return null;
-        }
-
-        $today ??= CarbonImmutable::today();
-
-        return match (true) {
-            $this->expires_on->lessThan($today) => 'expired',
-            $this->expires_on->lessThanOrEqualTo($today->addDays(self::EXPIRING_DAYS)) => 'expiring',
-            default => null,
-        };
-    }
-
-    /**
      * The name to save the file as: the document's name with the uploaded file's extension.
      */
     public function downloadName(): string
@@ -91,7 +69,6 @@ class Document extends Model
         return [
             'category' => DocumentCategory::class,
             'size' => 'integer',
-            'expires_on' => 'immutable_date',
         ];
     }
 }

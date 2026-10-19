@@ -30,7 +30,6 @@ class ListDocumentsRequest extends FormRequest
             'category' => ['nullable', Rule::enum(DocumentCategory::class)],
             'client_id' => ['nullable', 'integer'],
             'policy_id' => ['nullable', 'integer'],
-            'expiring' => ['nullable', 'boolean'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
@@ -43,7 +42,6 @@ class ListDocumentsRequest extends FormRequest
             category: $this->enum('category', DocumentCategory::class),
             clientId: $this->filled('client_id') ? $this->integer('client_id') : null,
             policyId: $this->filled('policy_id') ? $this->integer('policy_id') : null,
-            expiring: $this->boolean('expiring'),
             perPage: $this->integer('per_page', 10),
         );
     }

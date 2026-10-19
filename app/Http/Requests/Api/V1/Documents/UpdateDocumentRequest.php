@@ -35,7 +35,6 @@ class UpdateDocumentRequest extends FormRequest
             'name' => [$this->nameRule(), 'nullable', 'string', 'max:255'],
             'category' => ['required', Rule::enum(DocumentCategory::class)],
             'policy_id' => ['nullable', 'integer', Rule::exists(Policy::class, 'id')->where('client_id', $this->clientId())],
-            'expires_on' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }
@@ -56,7 +55,6 @@ class UpdateDocumentRequest extends FormRequest
             name: $this->filled('name') ? $this->string('name')->trim()->toString() : null,
             category: $this->enum('category', DocumentCategory::class) ?? DocumentCategory::Other,
             policyId: $this->filled('policy_id') ? $this->integer('policy_id') : null,
-            expiresOn: $this->filled('expires_on') ? $this->date('expires_on')?->toImmutable() : null,
             notes: $this->filled('notes') ? $this->string('notes')->trim()->toString() : null,
         );
     }

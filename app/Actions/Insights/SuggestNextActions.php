@@ -7,7 +7,6 @@ use App\Actions\Leads\ScoreLead;
 use App\Actions\Policies\ListPoliciesNeedingAttention;
 use App\Enums\LeadSource;
 use App\Enums\PolicyStatus;
-use App\Models\Document;
 use App\Models\Lead;
 use App\Models\Policy;
 use App\Models\User;
@@ -60,7 +59,6 @@ class SuggestNextActions
             $this->renewalsAwaitingOutcome($agent, $today),
             $this->renewalsWithoutFollowUp($agent, $today),
             $this->stuckApplications($agent, $today),
-            $this->documentsExpiring($agent, $today),
             $this->bestSource($agent),
             $this->stalledLeads($stalled),
             $this->newLeads($agent),
@@ -200,39 +198,6 @@ class SuggestNextActions
             'stuck_applications',
             $count === 1 ? "1 application hasn't moved in {$days}+ days" : "{$count} applications haven't moved in {$days}+ days",
             'Check with the insurer for missing requirements.',
-            $count,
-        );
-    }
-
-    /**
-     * Client documents, such as IDs, that have expired or expire within Document::EXPIRING_DAYS.
-     *
-     * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}|null
-     */
-    private function documentsExpiring(User $agent, CarbonImmutable $today): ?array
-    {
-        $documents = $agent->documents()
-            ->with('client:id,name')
-            ->whereNotNull('expires_on')
-            ->where('expires_on', '<=', $today->addDays(Document::EXPIRING_DAYS)->toDateString())
-            ->orderBy('expires_on')
-            ->get();
-
-        if ($documents->isEmpty()) {
-            return null;
-        }
-
-        $count = $documents->count();
-        $expired = $documents->filter(fn (Document $document) => $document->expires_on->lessThan($today))->count();
-
-        return $this->suggestion(
-            'documents_expiring',
-            match (true) {
-                $expired === $count => $count === 1 ? '1 client document has expired' : "{$count} client documents have expired",
-                $count === 1 => '1 client document expires in the next '.Document::EXPIRING_DAYS.' days',
-                default => "{$count} client documents have expired or expire soon",
-            },
-            $this->names($documents->map(fn (Document $document) => "{$document->client->name}'s {$document->name} ({$document->expires_on->format('M j')})")).'. Ask for new copies.',
             $count,
         );
     }
