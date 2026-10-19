@@ -84,6 +84,14 @@ class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<Document, $this>
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
