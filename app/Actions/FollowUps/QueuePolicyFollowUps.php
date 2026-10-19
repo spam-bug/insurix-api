@@ -40,7 +40,7 @@ class QueuePolicyFollowUps
         $created = 0;
 
         $policies = $agent->policies()
-            ->with('client.lead', 'followUps:id,policy_id,reminder_key')
+            ->with('client.lead', 'followUps:id,policy_id,reminder_key', 'renewals:id,policy_id,due_on')
             ->where('status', PolicyStatus::InForce)
             ->get();
 
@@ -78,8 +78,9 @@ class QueuePolicyFollowUps
     {
         $reminders = [];
         $renewal = $policy->nextRenewalDate($today);
+        $alreadyRecorded = $renewal && $policy->renewals->contains(fn ($recorded) => $recorded->due_on->equalTo($renewal));
 
-        if ($renewal && $renewal->greaterThanOrEqualTo($today) && $renewal->lessThanOrEqualTo($today->addDays($policy->renewal_term->attentionDays()))) {
+        if ($renewal && ! $alreadyRecorded && $renewal->greaterThanOrEqualTo($today) && $renewal->lessThanOrEqualTo($today->addDays($policy->renewal_term->attentionDays()))) {
             $reminders[] = [
                 "renewal:{$renewal->toDateString()}",
                 FollowUpType::Call,

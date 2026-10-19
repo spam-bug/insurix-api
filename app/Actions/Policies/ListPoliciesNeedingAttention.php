@@ -27,7 +27,8 @@ class ListPoliciesNeedingAttention
         $today = CarbonImmutable::now($agent->timezone)->startOfDay();
 
         return $agent->policies()
-            ->with('client:id,name')
+            ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
+            ->withCount(['requirements as outstanding_requirements' => fn ($query) => $query->whereNull('received_on')])
             ->whereIn('status', [PolicyStatus::InForce, PolicyStatus::Lapsed, PolicyStatus::Pending])
             ->get()
             ->map(fn (Policy $policy) => $this->assess($policy, $today))
@@ -49,16 +50,25 @@ class ListPoliciesNeedingAttention
             $dates[] = $today;
         }
 
-        if ($policy->status === PolicyStatus::Pending && $policy->created_at->lessThan($today->subDays(self::PENDING_DAYS))) {
-            $days = (int) $policy->created_at->diffInDays($today);
-            $reasons[] = ['code' => 'pending', 'label' => "Pending for {$days} days: check with the insurer", 'date' => null];
+        // Counted in whole days in the agent's timezone, from the day it moved.
+        $stageSince = ($policy->stage_changed_at ?? $policy->created_at)->toImmutable()->setTimezone($today->timezone)->startOfDay();
+        if ($policy->status === PolicyStatus::Pending && $stageSince->lessThan($today->subDays(self::PENDING_DAYS))) {
+            $days = (int) $stageSince->diffInDays($today);
+            $stage = $policy->application_stage?->label() ?? 'Pending';
+            $outstanding = (int) $policy->outstanding_requirements;
+            $reasons[] = [
+                'code' => 'pending',
+                'label' => "{$stage} for {$days} days".($outstanding > 0 ? " with {$outstanding} ".($outstanding === 1 ? 'requirement' : 'requirements').' outstanding' : '').': check with the insurer',
+                'date' => null,
+            ];
             $dates[] = $today;
         }
 
-        $renewal = $policy->nextRenewalDate($today);
+        // Annual and custom terms wait for the agent to record each outcome; shorter terms roll over.
+        $renewal = $policy->tracksRenewalOutcomes() ? $policy->renewalAwaitingOutcome($today) : $policy->nextRenewalDate($today);
         if ($policy->status === PolicyStatus::InForce && $renewal) {
             if ($renewal->lessThan($today)) {
-                $reasons[] = ['code' => 'renewal_overdue', 'label' => 'Renewal date has passed', 'date' => $renewal->toDateString()];
+                $reasons[] = ['code' => 'renewal_overdue', 'label' => 'Renewal date has passed: record how it went', 'date' => $renewal->toDateString()];
                 $dates[] = $renewal;
             } elseif ($renewal->lessThanOrEqualTo($today->addDays($policy->renewal_term->attentionDays()))) {
                 $reasons[] = ['code' => 'renewal_due', 'label' => 'Renewal coming up', 'date' => $renewal->toDateString()];

@@ -14,6 +14,9 @@ enum PolicyStatus: string
     case Lapsed = 'lapsed';
     case Cancelled = 'cancelled';
 
+    /** The insurer turned the application down. */
+    case Declined = 'declined';
+
     public function label(): string
     {
         return match ($this) {
@@ -21,6 +24,7 @@ enum PolicyStatus: string
             self::InForce => 'In force',
             self::Lapsed => 'Lapsed',
             self::Cancelled => 'Cancelled',
+            self::Declined => 'Declined',
         };
     }
 }
