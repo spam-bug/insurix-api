@@ -32,4 +32,14 @@ enum LeadStatus: string
     {
         return array_values(array_filter(self::cases(), fn (self $status) => $status !== self::Converted));
     }
+
+    /**
+     * Still in the pipeline: not a client yet and not lost.
+     *
+     * @return array<int, self>
+     */
+    public static function open(): array
+    {
+        return [self::Prospect, self::Contacted, self::MeetingScheduled, self::Qualified];
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Actions\Leads\ScoreLead;
 use App\Models\Lead;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -33,8 +34,8 @@ class LeadResource extends JsonResource
             'score' => $this->score,
             'score_band' => match (true) {
                 $this->score === null => null,
-                $this->score >= 70 => 'hot',
-                $this->score >= 40 => 'warm',
+                $this->score >= ScoreLead::HOT_SCORE => 'hot',
+                $this->score >= ScoreLead::WARM_SCORE => 'warm',
                 default => 'cold',
             },
             'score_reasons' => $this->score_reasons ?? [],

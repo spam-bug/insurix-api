@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\FollowUpController;
+use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadFormController;
@@ -86,6 +87,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('/clients/{client}/policies', [PolicyController::class, 'store'])->name('clients.policies.store');
         Route::apiResource('policies', PolicyController::class)->except(['store']);
         Route::get('/commissions/summary', CommissionSummaryController::class)->name('commissions.summary');
+
+        Route::get('/insights/reports', [InsightController::class, 'reports'])->name('insights.reports');
+        Route::get('/insights/next-actions', [InsightController::class, 'nextActions'])->name('insights.next-actions');
 
         Route::get('/follow-ups', [FollowUpController::class, 'index'])->name('follow-ups.index');
         Route::get('/follow-ups/summary', [FollowUpController::class, 'summary'])->name('follow-ups.summary');
