@@ -83,6 +83,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('/leads/{lead}/promote', PromoteLeadController::class)->name('leads.promote');
 
         Route::apiResource('clients', ClientController::class)->only(['index', 'show', 'update']);
+        Route::get('/clients/{client}/history', [ClientController::class, 'history'])->name('clients.history');
 
         Route::apiResource('products', ProductController::class);
 
