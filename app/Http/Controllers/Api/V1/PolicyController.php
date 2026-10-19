@@ -44,7 +44,7 @@ class PolicyController extends Controller
     {
         Gate::authorize('update', $client);
 
-        return PolicyResource::make($createPolicy->handle($client, $request->toData())->load('client:id,name'))
+        return PolicyResource::make($createPolicy->handle($client, $request->toData(), $request->user())->load('client:id,name'))
             ->response()
             ->setStatusCode(201);
     }
@@ -53,7 +53,7 @@ class PolicyController extends Controller
     {
         Gate::authorize('view', $policy);
 
-        return PolicyResource::make($policy->load('client:id,name'));
+        return PolicyResource::make($policy->load(PolicyResource::DETAIL_RELATIONS));
     }
 
     public function update(StorePolicyRequest $request, Policy $policy, UpdatePolicy $updatePolicy): PolicyResource
