@@ -29,13 +29,7 @@ class DocumentFactory extends Factory
             'path' => fn () => 'documents/'.fake()->uuid().'.pdf',
             'mime_type' => 'application/pdf',
             'size' => 120_000,
-            'expires_on' => null,
             'notes' => null,
         ];
-    }
-
-    public function expiresOn(?string $date): static
-    {
-        return $this->state(fn (array $attributes) => ['expires_on' => $date]);
     }
 }
