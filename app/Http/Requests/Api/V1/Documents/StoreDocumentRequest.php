@@ -42,7 +42,7 @@ class StoreDocumentRequest extends UpdateDocumentRequest
         return 'sometimes';
     }
 
-    protected function clientId(): ?int
+    protected function clientId(): ?string
     {
         return $this->routeClient()?->id;
     }

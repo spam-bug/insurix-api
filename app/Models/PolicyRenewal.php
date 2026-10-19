@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\RenewalOutcome;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['user_id', 'due_on', 'outcome', 'notes'])]
 class PolicyRenewal extends Model
 {
+    use HasUuids;
+
     /**
      * @return BelongsTo<Policy, $this>
      */

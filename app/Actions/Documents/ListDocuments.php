@@ -19,8 +19,8 @@ class ListDocuments
     {
         return $agent->documents()
             ->with(['client:id,name', 'policy:id,product_name,policy_number'])
-            ->when($filters->clientId, fn (Builder $query, int $clientId) => $query->where('client_id', $clientId))
-            ->when($filters->policyId, fn (Builder $query, int $policyId) => $query->where('policy_id', $policyId))
+            ->when($filters->clientId, fn (Builder $query, string $clientId) => $query->where('client_id', $clientId))
+            ->when($filters->policyId, fn (Builder $query, string $policyId) => $query->where('policy_id', $policyId))
             ->when($filters->category, fn (Builder $query, $category) => $query->where('category', $category))
             ->when($filters->search, function (Builder $query, string $search) {
                 $query->where(function (Builder $query) use ($search) {

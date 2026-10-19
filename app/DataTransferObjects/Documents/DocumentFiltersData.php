@@ -9,8 +9,8 @@ class DocumentFiltersData
     public function __construct(
         public readonly ?string $search = null,
         public readonly ?DocumentCategory $category = null,
-        public readonly ?int $clientId = null,
-        public readonly ?int $policyId = null,
+        public readonly ?string $clientId = null,
+        public readonly ?string $policyId = null,
         public readonly int $perPage = 10,
     ) {}
 }

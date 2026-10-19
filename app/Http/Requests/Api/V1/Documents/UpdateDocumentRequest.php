@@ -34,7 +34,7 @@ class UpdateDocumentRequest extends FormRequest
         return [
             'name' => [$this->nameRule(), 'nullable', 'string', 'max:255'],
             'category' => ['required', Rule::enum(DocumentCategory::class)],
-            'policy_id' => ['nullable', 'integer', Rule::exists(Policy::class, 'id')->where('client_id', $this->clientId())],
+            'policy_id' => ['nullable', 'uuid', Rule::exists(Policy::class, 'id')->where('client_id', $this->clientId())],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }
@@ -54,7 +54,7 @@ class UpdateDocumentRequest extends FormRequest
         return new DocumentData(
             name: $this->filled('name') ? $this->string('name')->trim()->toString() : null,
             category: $this->enum('category', DocumentCategory::class) ?? DocumentCategory::Other,
-            policyId: $this->filled('policy_id') ? $this->integer('policy_id') : null,
+            policyId: $this->filled('policy_id') ? $this->string('policy_id')->toString() : null,
             notes: $this->filled('notes') ? $this->string('notes')->trim()->toString() : null,
         );
     }
@@ -70,7 +70,7 @@ class UpdateDocumentRequest extends FormRequest
     /**
      * The client the document is (or will be) kept for.
      */
-    protected function clientId(): ?int
+    protected function clientId(): ?string
     {
         $document = $this->route('document');
 

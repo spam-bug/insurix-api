@@ -13,7 +13,7 @@ class ListSessions
      *
      * @return Collection<int, array{id: int, device: string, last_used_at: string|null, created_at: string|null, current: bool}>
      */
-    public function handle(User $agent, ?int $currentTokenId): Collection
+    public function handle(User $agent, ?string $currentTokenId): Collection
     {
         return $agent->tokens()
             ->orderByDesc('last_used_at')

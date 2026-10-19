@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\FollowUpType;
 use Database\Factories\FollowUpFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class FollowUp extends Model
 {
     /** @use HasFactory<FollowUpFactory> */
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     /**
      * @return BelongsTo<User, $this>

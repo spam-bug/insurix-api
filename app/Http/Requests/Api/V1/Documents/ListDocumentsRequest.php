@@ -28,8 +28,8 @@ class ListDocumentsRequest extends FormRequest
         return [
             'search' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', Rule::enum(DocumentCategory::class)],
-            'client_id' => ['nullable', 'integer'],
-            'policy_id' => ['nullable', 'integer'],
+            'client_id' => ['nullable', 'uuid'],
+            'policy_id' => ['nullable', 'uuid'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
@@ -40,8 +40,8 @@ class ListDocumentsRequest extends FormRequest
         return new DocumentFiltersData(
             search: $this->filled('search') ? $this->string('search')->trim()->toString() : null,
             category: $this->enum('category', DocumentCategory::class),
-            clientId: $this->filled('client_id') ? $this->integer('client_id') : null,
-            policyId: $this->filled('policy_id') ? $this->integer('policy_id') : null,
+            clientId: $this->filled('client_id') ? $this->string('client_id')->toString() : null,
+            policyId: $this->filled('policy_id') ? $this->string('policy_id')->toString() : null,
             perPage: $this->integer('per_page', 10),
         );
     }

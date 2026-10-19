@@ -308,7 +308,7 @@ class SuggestNextActions
     /**
      * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}
      */
-    private function suggestion(string $code, string $title, string $detail, int $count, ?int $leadId = null, ?string $source = null): array
+    private function suggestion(string $code, string $title, string $detail, int $count, ?string $leadId = null, ?string $source = null): array
     {
         return ['code' => $code, 'title' => $title, 'detail' => $detail, 'count' => $count, 'lead_id' => $leadId, 'source' => $source];
     }

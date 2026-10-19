@@ -27,17 +27,17 @@ class BulkLeadRequest extends FormRequest
     {
         return [
             'ids' => ['required', 'array', 'min:1', 'max:100'],
-            'ids.*' => ['integer', 'distinct', Rule::exists(Lead::class, 'id')->where('user_id', $this->user()?->id)],
+            'ids.*' => ['uuid', 'distinct', Rule::exists(Lead::class, 'id')->where('user_id', $this->user()?->id)],
             'status' => [Rule::requiredIf($this->routeIs('api.v1.leads.bulk.status')), Rule::enum(LeadStatus::class)->only(LeadStatus::manual())],
         ];
     }
 
     /**
-     * @return array<int, int>
+     * @return array<int, string>
      */
     public function leadIds(): array
     {
-        return array_map('intval', $this->array('ids'));
+        return array_map('strval', $this->array('ids'));
     }
 
     public function status(): LeadStatus
