@@ -96,6 +96,8 @@ it('measures retention and counts renewals coming up', function () {
         'cancelled' => 0,
         'retention_percent' => 75,
         'renewals_coming_up' => 1,
+        'renewals_recorded' => 0,
+        'renewal_rate_percent' => null,
     ]);
 });
 

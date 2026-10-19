@@ -57,6 +57,7 @@ class SuggestNextActions
         $suggestions = array_filter([
             $this->overdueFollowUps($agent),
             $this->hotLeadsWaiting($hot),
+            $this->renewalsAwaitingOutcome($agent, $today),
             $this->renewalsWithoutFollowUp($agent, $today),
             $this->stuckApplications($agent, $today),
             $this->documentsExpiring($agent, $today),
@@ -117,17 +118,48 @@ class SuggestNextActions
     }
 
     /**
+     * Renewal dates that have passed without the agent recording how they went.
+     *
+     * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}|null
+     */
+    private function renewalsAwaitingOutcome(User $agent, CarbonImmutable $today): ?array
+    {
+        $waiting = $agent->policies()
+            ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
+            ->where('status', PolicyStatus::InForce)
+            ->get()
+            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $policy->renewalAwaitingOutcome($today)])
+            ->filter(fn (array $renewal) => $renewal['date'] !== null && $renewal['date']->lessThan($today))
+            ->sortBy(fn (array $renewal) => $renewal['date']->timestamp)
+            ->values();
+
+        if ($waiting->isEmpty()) {
+            return null;
+        }
+
+        $count = $waiting->count();
+
+        return $this->suggestion(
+            'renewals_awaiting_outcome',
+            $count === 1 ? '1 renewal is waiting for its outcome' : "{$count} renewals are waiting for their outcome",
+            $this->names($waiting->map(fn (array $renewal) => "{$renewal['client']} ({$renewal['date']->format('M j')})")).'. Record whether they renewed or lapsed.',
+            $count,
+        );
+    }
+
+    /**
      * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}|null
      */
     private function renewalsWithoutFollowUp(User $agent, CarbonImmutable $today): ?array
     {
         $renewals = $agent->policies()
-            ->with('client:id,name')
+            ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
             ->where('status', PolicyStatus::InForce)
             ->whereDoesntHave('followUps', fn (Builder $query) => $query->whereNull('completed_at'))
             ->get()
-            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $policy->renewalWithin($today, self::RENEWAL_WINDOW_DAYS)])
-            ->filter(fn (array $renewal) => $renewal['date'] !== null)
+            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $policy->renewalWithin($today, self::RENEWAL_WINDOW_DAYS), 'policy' => $policy])
+            // A renewal already recorded early doesn't need a follow-up.
+            ->filter(fn (array $renewal) => $renewal['date'] !== null && ! $renewal['policy']->renewals->contains(fn ($recorded) => $recorded->due_on->equalTo($renewal['date'])))
             ->sortBy(fn (array $renewal) => $renewal['date']->timestamp)
             ->values();
 
@@ -155,7 +187,9 @@ class SuggestNextActions
         $days = ListPoliciesNeedingAttention::PENDING_DAYS;
         $count = $agent->policies()
             ->where('status', PolicyStatus::Pending)
-            ->where('created_at', '<', $today->subDays($days)->utc())
+            ->where(fn (Builder $query) => $query
+                ->where('stage_changed_at', '<', $today->subDays($days)->utc())
+                ->orWhere(fn (Builder $query) => $query->whereNull('stage_changed_at')->where('created_at', '<', $today->subDays($days)->utc())))
             ->count();
 
         if ($count === 0) {
@@ -164,7 +198,7 @@ class SuggestNextActions
 
         return $this->suggestion(
             'stuck_applications',
-            $count === 1 ? "1 application has been pending {$days}+ days" : "{$count} applications have been pending {$days}+ days",
+            $count === 1 ? "1 application hasn't moved in {$days}+ days" : "{$count} applications haven't moved in {$days}+ days",
             'Check with the insurer for missing requirements.',
             $count,
         );
