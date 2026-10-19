@@ -14,7 +14,7 @@ class NotifyAgent
      *
      * @param  'leads'|'follow-ups'  $topic
      */
-    public function handle(int $agentId, string $topic, ?string $message = null): void
+    public function handle(string $agentId, string $topic, ?string $message = null): void
     {
         DB::afterCommit(fn () => rescue(fn () => AgentDataChanged::dispatch($agentId, $topic, $message)));
     }

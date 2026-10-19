@@ -20,7 +20,7 @@ class AgentDataChanged implements ShouldBroadcastNow
      * @param  string|null  $message  a short note worth showing the agent, if any
      */
     public function __construct(
-        public readonly int $agentId,
+        public readonly string $agentId,
         public readonly string $topic,
         public readonly ?string $message = null,
     ) {}

@@ -23,7 +23,7 @@ class ListFollowUps
 
         $query = $agent->followUps()
             ->with(['lead:id,name,status', 'lead.client:id,lead_id'])
-            ->when($filters->leadId, fn (Builder $query, int $leadId) => $query->where('lead_id', $leadId));
+            ->when($filters->leadId, fn (Builder $query, string $leadId) => $query->where('lead_id', $leadId));
 
         match ($filters->window) {
             FollowUpWindow::Today => $query->whereNull('completed_at')->where('due_at', '<=', $endOfToday),

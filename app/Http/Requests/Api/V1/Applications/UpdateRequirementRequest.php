@@ -31,7 +31,7 @@ class UpdateRequirementRequest extends FormRequest
 
         return [
             'received' => ['required', 'boolean'],
-            'document_id' => ['nullable', 'integer', Rule::exists(Document::class, 'id')->where('client_id', $clientId)],
+            'document_id' => ['nullable', 'uuid', Rule::exists(Document::class, 'id')->where('client_id', $clientId)],
         ];
     }
 
@@ -47,6 +47,6 @@ class UpdateRequirementRequest extends FormRequest
 
     public function document(): ?Document
     {
-        return $this->filled('document_id') ? Document::find($this->integer('document_id')) : null;
+        return $this->filled('document_id') ? Document::find($this->string('document_id')->toString()) : null;
     }
 }

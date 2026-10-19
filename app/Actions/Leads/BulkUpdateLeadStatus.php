@@ -14,7 +14,7 @@ class BulkUpdateLeadStatus
      * Changes the status of the agent's own leads among $leadIds, logging each change.
      * Leads already promoted to clients are left as they are.
      *
-     * @param  array<int, int>  $leadIds
+     * @param  array<int, string>  $leadIds
      * @return int how many leads were changed
      */
     public function handle(User $agent, array $leadIds, LeadStatus $status): int

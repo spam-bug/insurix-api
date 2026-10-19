@@ -66,7 +66,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
             Route::get('/sessions', [SessionController::class, 'index'])->name('sessions.index');
             Route::delete('/sessions', [SessionController::class, 'destroyOthers'])->name('sessions.destroy-others');
-            Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->whereNumber('session')->name('sessions.destroy');
+            Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->whereUuid('session')->name('sessions.destroy');
         });
 
         Route::get('/lead-form', [LeadFormController::class, 'show'])->name('lead-form.show');

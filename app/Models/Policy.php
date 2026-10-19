@@ -10,6 +10,7 @@ use App\Enums\RenewalTerm;
 use Carbon\CarbonImmutable;
 use Database\Factories\PolicyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Policy extends Model
 {
     /** @use HasFactory<PolicyFactory> */
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     /** Renewal dates this far back still wait for an outcome; older ones are let go. */
     public const RENEWAL_LOOKBACK_DAYS = 90;

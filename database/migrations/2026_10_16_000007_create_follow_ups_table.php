@@ -7,14 +7,18 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Things the agent means to do for a lead (or the client it became) by a due time.
+     * Follow-ups created for a policy (a renewal or a premium due) point to it; the reminder
+     * key, such as "renewal:2027-08-01", keeps the same reminder from being created twice.
      */
     public function up(): void
     {
         Schema::create('follow_ups', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('lead_id')->constrained()->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('lead_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('policy_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('reminder_key', 60)->nullable();
             $table->string('type', 30);
             $table->string('title');
             $table->text('notes')->nullable();
@@ -24,6 +28,7 @@ return new class extends Migration
 
             $table->index(['user_id', 'completed_at', 'due_at']);
             $table->index(['lead_id', 'completed_at']);
+            $table->unique(['policy_id', 'reminder_key']);
         });
     }
 

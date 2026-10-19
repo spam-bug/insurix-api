@@ -9,7 +9,7 @@ class DocumentData
     public function __construct(
         public readonly ?string $name,
         public readonly DocumentCategory $category,
-        public readonly ?int $policyId,
+        public readonly ?string $policyId,
         public readonly ?string $notes,
     ) {}
 

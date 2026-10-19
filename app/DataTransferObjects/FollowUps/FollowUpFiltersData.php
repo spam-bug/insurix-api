@@ -8,7 +8,7 @@ class FollowUpFiltersData
 {
     public function __construct(
         public readonly FollowUpWindow $window = FollowUpWindow::Open,
-        public readonly ?int $leadId = null,
+        public readonly ?string $leadId = null,
         public readonly int $perPage = 10,
     ) {}
 }

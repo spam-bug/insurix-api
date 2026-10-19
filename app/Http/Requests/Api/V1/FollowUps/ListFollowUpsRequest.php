@@ -27,7 +27,7 @@ class ListFollowUpsRequest extends FormRequest
     {
         return [
             'window' => ['nullable', Rule::enum(FollowUpWindow::class)],
-            'lead_id' => ['nullable', 'integer'],
+            'lead_id' => ['nullable', 'uuid'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];
@@ -37,7 +37,7 @@ class ListFollowUpsRequest extends FormRequest
     {
         return new FollowUpFiltersData(
             window: $this->enum('window', FollowUpWindow::class) ?? FollowUpWindow::Open,
-            leadId: $this->filled('lead_id') ? $this->integer('lead_id') : null,
+            leadId: $this->filled('lead_id') ? $this->string('lead_id')->toString() : null,
             perPage: $this->integer('per_page', 10),
         );
     }

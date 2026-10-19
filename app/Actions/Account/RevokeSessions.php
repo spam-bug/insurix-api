@@ -11,7 +11,7 @@ class RevokeSessions
      *
      * @return int how many sessions were signed out
      */
-    public function handle(User $agent, ?int $tokenId, ?int $currentTokenId): int
+    public function handle(User $agent, ?string $tokenId, ?string $currentTokenId): int
     {
         return $agent->tokens()
             ->when($tokenId, fn ($query, $id) => $query->whereKey($id))

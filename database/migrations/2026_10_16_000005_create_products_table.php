@@ -7,14 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * The insurance products an agent sells, set up once and picked when recording a policy.
+     * The products an agent sells, with their usual commission rate and payment terms.
      */
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('insurer');
+            $table->uuid('id')->primary();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('type', 30);
             $table->text('description')->nullable();
@@ -23,7 +22,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->unique(['user_id', 'insurer', 'name']);
+            $table->unique(['user_id', 'name']);
         });
     }
 

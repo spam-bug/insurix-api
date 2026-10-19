@@ -39,7 +39,7 @@ class StorePolicyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => ['nullable', 'integer', Rule::exists(Product::class, 'id')->where('user_id', $this->user()?->id)],
+            'product_id' => ['nullable', 'uuid', Rule::exists(Product::class, 'id')->where('user_id', $this->user()?->id)],
             'product_name' => ['required_without:product_id', 'nullable', 'string', 'max:255'],
             'policy_number' => ['nullable', 'string', 'max:100'],
             'type' => ['required_without:product_id', 'nullable', Rule::enum(PolicyType::class)],
@@ -124,6 +124,6 @@ class StorePolicyRequest extends FormRequest
             return null;
         }
 
-        return $this->product ??= $this->user()?->products()->find($this->integer('product_id'));
+        return $this->product ??= $this->user()?->products()->find($this->string('product_id')->toString());
     }
 }

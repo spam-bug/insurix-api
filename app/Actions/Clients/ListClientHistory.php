@@ -62,7 +62,7 @@ class ListClientHistory
      * @param  array<string, mixed>  $extra
      * @return array<string, mixed>
      */
-    private function entry(string $source, int $id, string $type, mixed $createdAt, mixed $actor, array $extra): array
+    private function entry(string $source, string $id, string $type, mixed $createdAt, mixed $actor, array $extra): array
     {
         return [
             'id' => "{$source}-{$id}",

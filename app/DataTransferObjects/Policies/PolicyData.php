@@ -11,7 +11,7 @@ use Carbon\CarbonImmutable;
 class PolicyData
 {
     public function __construct(
-        public readonly ?int $productId,
+        public readonly ?string $productId,
         public readonly string $productName,
         public readonly ?string $policyNumber,
         public readonly PolicyType $type,

@@ -9,7 +9,7 @@ class BulkDeleteLeads
     /**
      * Deletes the agent's own leads among $leadIds.
      *
-     * @param  array<int, int>  $leadIds
+     * @param  array<int, string>  $leadIds
      * @return int how many leads were deleted
      */
     public function handle(User $agent, array $leadIds): int

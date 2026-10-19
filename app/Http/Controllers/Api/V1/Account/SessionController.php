@@ -21,7 +21,7 @@ class SessionController extends Controller
     /**
      * Signs out one other device. The current one signs out with the normal log-out.
      */
-    public function destroy(int $session, #[CurrentUser] User $agent, RevokeSessions $revokeSessions): JsonResponse
+    public function destroy(string $session, #[CurrentUser] User $agent, RevokeSessions $revokeSessions): JsonResponse
     {
         $revoked = $revokeSessions->handle($agent, $session, $this->currentTokenId($agent));
 
@@ -35,7 +35,7 @@ class SessionController extends Controller
         return response()->json(['data' => ['revoked' => $revokeSessions->handle($agent, null, $this->currentTokenId($agent))]]);
     }
 
-    private function currentTokenId(User $agent): ?int
+    private function currentTokenId(User $agent): ?string
     {
         $token = $agent->currentAccessToken();
 
