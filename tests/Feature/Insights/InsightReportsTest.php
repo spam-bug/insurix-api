@@ -5,6 +5,7 @@ use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
+use App\Enums\RenewalTerm;
 use App\Models\Client;
 use App\Models\Lead;
 use App\Models\LeadActivity;
@@ -96,6 +97,24 @@ it('measures retention and counts renewals coming up', function () {
         'retention_percent' => 75,
         'renewals_coming_up' => 1,
     ]);
+});
+
+it('works out renewals from set terms, with a shorter window for short terms', function () {
+    $agent = User::factory()->create();
+    $client = Client::factory()->for($agent)->create();
+    $term = fn (RenewalTerm $term, string $effective) => ['renewal_term' => $term, 'effective_date' => $effective, 'renewal_date' => null];
+
+    $annual = Policy::factory()->for($client)->create($term(RenewalTerm::Annual, '2025-12-01'));
+    Policy::factory()->for($client)->create($term(RenewalTerm::Annual, '2026-03-01'));
+    Policy::factory()->for($client)->create($term(RenewalTerm::Monthly, '2026-01-20'));
+    Policy::factory()->for($client)->create($term(RenewalTerm::Monthly, '2026-01-01'));
+    Policy::factory()->for($client)->create($term(RenewalTerm::Quarterly, '2026-08-01'));
+
+    expect(reports($agent)['retention']['renewals_coming_up'])->toBe(2);
+
+    $suggestion = collect(test()->getJson(route('api.v1.insights.next-actions'))->json('data'))->firstWhere('code', 'renewals_without_follow_up');
+    expect($suggestion['title'])->toBe('2 renewals in the next 60 days have no follow-up yet')
+        ->and($suggestion['detail'])->toBe("{$client->name} (Oct 20) and {$client->name} (Dec 1). Reach out early to keep them.");
 });
 
 it('ranks products by the commission their policies earn', function () {

@@ -95,6 +95,23 @@ class Policy extends Model
     }
 
     /**
+     * The next renewal, when it falls between $today and $days from now. Monthly and quarterly
+     * terms use their own shorter window instead, so they don't count as coming up all the time.
+     */
+    public function renewalWithin(CarbonImmutable $today, int $days): ?CarbonImmutable
+    {
+        $renewal = $this->nextRenewalDate($today);
+        if ($renewal === null || $renewal->lessThan($today)) {
+            return null;
+        }
+
+        $months = $this->renewal_term->months();
+        $window = $months !== null && $months < 12 ? min($days, $this->renewal_term->attentionDays()) : $days;
+
+        return $renewal->lessThanOrEqualTo($today->addDays($window)) ? $renewal : null;
+    }
+
+    /**
      * The next renewal on or after $today. Set terms count from the effective date (the first
      * renewal is one term after it); a custom term is its fixed date, even once it has passed.
      */

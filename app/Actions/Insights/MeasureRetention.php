@@ -3,6 +3,7 @@
 namespace App\Actions\Insights;
 
 use App\Enums\PolicyStatus;
+use App\Models\Policy;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
@@ -40,7 +41,8 @@ class MeasureRetention
             'retention_percent' => $everInForce === 0 ? null : (int) round($inForce / $everInForce * 100),
             'renewals_coming_up' => $agent->policies()
                 ->where('status', PolicyStatus::InForce)
-                ->whereBetween('renewal_date', [$today->toDateString(), $today->addDays(self::RENEWAL_WINDOW_DAYS)->toDateString()])
+                ->get()
+                ->filter(fn (Policy $policy) => $policy->renewalWithin($today, self::RENEWAL_WINDOW_DAYS))
                 ->count(),
         ];
     }
