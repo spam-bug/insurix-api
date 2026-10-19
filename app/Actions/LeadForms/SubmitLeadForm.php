@@ -4,6 +4,7 @@ namespace App\Actions\LeadForms;
 
 use App\Actions\FollowUps\CreateFollowUp;
 use App\Actions\Leads\RecordLeadActivity;
+use App\Actions\Notifications\NotifyAgent;
 use App\DataTransferObjects\FollowUps\FollowUpData;
 use App\DataTransferObjects\Leads\LeadData;
 use App\Enums\FollowUpType;
@@ -19,6 +20,7 @@ class SubmitLeadForm
     public function __construct(
         private RecordLeadActivity $recordLeadActivity,
         private CreateFollowUp $createFollowUp,
+        private NotifyAgent $notifyAgent,
     ) {}
 
     /**
@@ -43,6 +45,8 @@ class SubmitLeadForm
                 dueAt: now()->toImmutable(),
                 notes: null,
             ));
+
+            $this->notifyAgent->handle($agent->id, 'leads', "{$lead->name} just filled in your form");
 
             return $lead;
         });

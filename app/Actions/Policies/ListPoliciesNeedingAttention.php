@@ -10,9 +10,6 @@ use Illuminate\Support\Collection;
 
 class ListPoliciesNeedingAttention
 {
-    /** Renewals this many days out start showing. */
-    public const RENEWAL_WINDOW_DAYS = 30;
-
     /** Premiums this many days out start showing. */
     public const PAYMENT_WINDOW_DAYS = 7;
 
@@ -58,13 +55,14 @@ class ListPoliciesNeedingAttention
             $dates[] = $today;
         }
 
-        if ($policy->status === PolicyStatus::InForce && $policy->renewal_date) {
-            if ($policy->renewal_date->lessThan($today)) {
-                $reasons[] = ['code' => 'renewal_overdue', 'label' => 'Renewal date has passed', 'date' => $policy->renewal_date->toDateString()];
-                $dates[] = $policy->renewal_date;
-            } elseif ($policy->renewal_date->lessThanOrEqualTo($today->addDays(self::RENEWAL_WINDOW_DAYS))) {
-                $reasons[] = ['code' => 'renewal_due', 'label' => 'Renewal coming up', 'date' => $policy->renewal_date->toDateString()];
-                $dates[] = $policy->renewal_date;
+        $renewal = $policy->nextRenewalDate($today);
+        if ($policy->status === PolicyStatus::InForce && $renewal) {
+            if ($renewal->lessThan($today)) {
+                $reasons[] = ['code' => 'renewal_overdue', 'label' => 'Renewal date has passed', 'date' => $renewal->toDateString()];
+                $dates[] = $renewal;
+            } elseif ($renewal->lessThanOrEqualTo($today->addDays($policy->renewal_term->attentionDays()))) {
+                $reasons[] = ['code' => 'renewal_due', 'label' => 'Renewal coming up', 'date' => $renewal->toDateString()];
+                $dates[] = $renewal;
             }
         }
 
