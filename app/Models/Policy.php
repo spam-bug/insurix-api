@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationStage;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
@@ -19,13 +20,34 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Amounts are in pesos.
  */
 #[Fillable([
-    'user_id', 'client_id', 'product_id', 'product_name', 'policy_number', 'type', 'status', 'premium', 'coverage_amount', 'payment_frequency',
-    'commission_rate', 'effective_date', 'renewal_term', 'renewal_date', 'commission_received_at', 'notes',
+    'user_id', 'client_id', 'product_id', 'product_name', 'policy_number', 'type', 'status', 'application_stage', 'stage_changed_at',
+    'premium', 'coverage_amount', 'payment_frequency', 'commission_rate', 'effective_date', 'renewal_term', 'renewal_date',
+    'commission_received_at', 'notes',
 ])]
 class Policy extends Model
 {
     /** @use HasFactory<PolicyFactory> */
     use HasFactory;
+
+    /** Renewal dates this far back still wait for an outcome; older ones are let go. */
+    public const RENEWAL_LOOKBACK_DAYS = 90;
+
+    /**
+     * Only a pending application has a stage. One that becomes pending starts at Submitted,
+     * counting from when it was recorded; any other status clears the stage.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Policy $policy) {
+            if ($policy->status !== PolicyStatus::Pending) {
+                $policy->application_stage = null;
+                $policy->stage_changed_at = null;
+            } elseif ($policy->application_stage === null) {
+                $policy->application_stage = ApplicationStage::Submitted;
+                $policy->stage_changed_at = $policy->created_at ?? now();
+            }
+        });
+    }
 
     /**
      * @return BelongsTo<User, $this>
@@ -71,6 +93,91 @@ class Policy extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class);
+    }
+
+    /**
+     * What the insurer still needs before deciding on the application.
+     *
+     * @return HasMany<ApplicationRequirement, $this>
+     */
+    public function requirements(): HasMany
+    {
+        return $this->hasMany(ApplicationRequirement::class);
+    }
+
+    /**
+     * The outcome recorded for each renewal date.
+     *
+     * @return HasMany<PolicyRenewal, $this>
+     */
+    public function renewals(): HasMany
+    {
+        return $this->hasMany(PolicyRenewal::class);
+    }
+
+    /**
+     * @return HasMany<PolicyEvent, $this>
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(PolicyEvent::class);
+    }
+
+    /**
+     * Whether the agent records an outcome for each renewal. Annual and custom-date terms
+     * only: monthly and quarterly ones roll over like payments and aren't tracked one by one.
+     */
+    public function tracksRenewalOutcomes(): bool
+    {
+        return in_array($this->renewal_term, [RenewalTerm::Annual, RenewalTerm::Custom], true);
+    }
+
+    /**
+     * The earliest renewal date that's due for an outcome and doesn't have one yet: from
+     * RENEWAL_LOOKBACK_DAYS ago up to the term's attention window ahead. Needs the renewals
+     * relation; loads it when missing.
+     */
+    public function renewalAwaitingOutcome(?CarbonImmutable $today = null): ?CarbonImmutable
+    {
+        if ($this->status !== PolicyStatus::InForce || ! $this->tracksRenewalOutcomes()) {
+            return null;
+        }
+
+        $today ??= CarbonImmutable::today();
+        $recorded = $this->renewals->map(fn (PolicyRenewal $renewal) => $renewal->due_on->toDateString())->all();
+
+        foreach ($this->renewalDatesBetween($today->subDays(self::RENEWAL_LOOKBACK_DAYS), $today->addDays($this->renewal_term->attentionDays())) as $date) {
+            if (! in_array($date->toDateString(), $recorded, true)) {
+                return $date;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Every renewal date from $from to $to, oldest first.
+     *
+     * @return array<int, CarbonImmutable>
+     */
+    public function renewalDatesBetween(CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $months = $this->renewal_term?->months();
+
+        if ($months === null || $this->effective_date === null) {
+            $date = $this->renewal_term === RenewalTerm::Custom ? $this->renewal_date : null;
+
+            return $date && $date->betweenIncluded($from, $to) ? [$date] : [];
+        }
+
+        $dates = [];
+        for ($period = 1; ($date = $this->effective_date->addMonthsNoOverflow($period * $months))->lessThanOrEqualTo($to); $period++) {
+            if ($date->greaterThanOrEqualTo($from)) {
+                $dates[] = $date;
+            }
+        }
+
+        return $dates;
     }
 
     /**
@@ -162,6 +269,8 @@ class Policy extends Model
         return [
             'type' => PolicyType::class,
             'status' => PolicyStatus::class,
+            'application_stage' => ApplicationStage::class,
+            'stage_changed_at' => 'immutable_datetime',
             'payment_frequency' => PaymentFrequency::class,
             'premium' => 'decimal:2',
             'coverage_amount' => 'decimal:2',
