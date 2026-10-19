@@ -121,26 +121,28 @@ class SuggestNextActions
      */
     private function renewalsWithoutFollowUp(User $agent, CarbonImmutable $today): ?array
     {
-        $policies = $agent->policies()
+        $renewals = $agent->policies()
             ->with('client:id,name')
             ->where('status', PolicyStatus::InForce)
-            ->whereBetween('renewal_date', [$today->toDateString(), $today->addDays(self::RENEWAL_WINDOW_DAYS)->toDateString()])
             ->whereDoesntHave('followUps', fn (Builder $query) => $query->whereNull('completed_at'))
-            ->orderBy('renewal_date')
-            ->get();
+            ->get()
+            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $policy->renewalWithin($today, self::RENEWAL_WINDOW_DAYS)])
+            ->filter(fn (array $renewal) => $renewal['date'] !== null)
+            ->sortBy(fn (array $renewal) => $renewal['date']->timestamp)
+            ->values();
 
-        if ($policies->isEmpty()) {
+        if ($renewals->isEmpty()) {
             return null;
         }
 
-        $count = $policies->count();
+        $count = $renewals->count();
 
         return $this->suggestion(
             'renewals_without_follow_up',
             $count === 1
                 ? '1 renewal in the next '.self::RENEWAL_WINDOW_DAYS.' days has no follow-up yet'
                 : "{$count} renewals in the next ".self::RENEWAL_WINDOW_DAYS.' days have no follow-up yet',
-            $this->names($policies->map(fn (Policy $policy) => "{$policy->client->name} ({$policy->renewal_date->format('M j')})")).'. Reach out early to keep them.',
+            $this->names($renewals->map(fn (array $renewal) => "{$renewal['client']} ({$renewal['date']->format('M j')})")).'. Reach out early to keep them.',
             $count,
         );
     }
