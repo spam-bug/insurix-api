@@ -1,9 +1,16 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Account\LeadFormBrandingController;
+use App\Http\Controllers\Api\V1\Account\PasswordController;
+use App\Http\Controllers\Api\V1\Account\ProfileController;
+use App\Http\Controllers\Api\V1\Account\SessionController;
+use App\Http\Controllers\Api\V1\Account\TwoFactorController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
+use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
+use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
@@ -23,6 +30,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::post('/auth/register', RegisterController::class)->name('auth.register');
     Route::post('/auth/login', LoginController::class)->name('auth.login');
 
+    Route::middleware('throttle:6,1')->group(function () {
+        Route::post('/auth/two-factor-challenge', TwoFactorChallengeController::class)->name('auth.two-factor-challenge');
+        Route::post('/auth/forgot-password', [PasswordResetController::class, 'sendLink'])->name('auth.password.email');
+        Route::post('/auth/reset-password', [PasswordResetController::class, 'reset'])->name('auth.password.reset');
+    });
+
     Route::get('/public/lead-forms/{token}', [PublicLeadFormController::class, 'show'])->name('public.lead-forms.show');
     Route::post('/public/lead-forms/{token}', [PublicLeadFormController::class, 'submit'])
         ->middleware('throttle:lead-form')
@@ -31,6 +44,27 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/auth/user', CurrentUserController::class)->name('auth.user');
         Route::post('/auth/logout', LogoutController::class)->name('auth.logout');
+
+        Route::prefix('account')->name('account.')->group(function () {
+            Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+            Route::post('/photo', [ProfileController::class, 'storePhoto'])->name('photo.store');
+            Route::delete('/photo', [ProfileController::class, 'destroyPhoto'])->name('photo.destroy');
+
+            Route::put('/lead-form', [LeadFormBrandingController::class, 'updateBio'])->name('lead-form.update');
+            Route::post('/logo', [LeadFormBrandingController::class, 'storeLogo'])->name('logo.store');
+            Route::delete('/logo', [LeadFormBrandingController::class, 'destroyLogo'])->name('logo.destroy');
+
+            Route::put('/password', [PasswordController::class, 'update'])->name('password.update');
+
+            Route::post('/two-factor', [TwoFactorController::class, 'store'])->name('two-factor.store');
+            Route::post('/two-factor/confirm', [TwoFactorController::class, 'confirm'])->name('two-factor.confirm');
+            Route::delete('/two-factor', [TwoFactorController::class, 'destroy'])->name('two-factor.destroy');
+            Route::post('/two-factor/recovery-codes', [TwoFactorController::class, 'regenerateRecoveryCodes'])->name('two-factor.recovery-codes');
+
+            Route::get('/sessions', [SessionController::class, 'index'])->name('sessions.index');
+            Route::delete('/sessions', [SessionController::class, 'destroyOthers'])->name('sessions.destroy-others');
+            Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->whereNumber('session')->name('sessions.destroy');
+        });
 
         Route::get('/lead-form', [LeadFormController::class, 'show'])->name('lead-form.show');
         Route::post('/lead-form/regenerate', [LeadFormController::class, 'regenerate'])->name('lead-form.regenerate');

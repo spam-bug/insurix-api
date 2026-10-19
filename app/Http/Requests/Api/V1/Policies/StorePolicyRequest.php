@@ -6,6 +6,7 @@ use App\DataTransferObjects\Policies\PolicyData;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
+use App\Enums\RenewalTerm;
 use App\Models\Policy;
 use App\Models\Product;
 use Closure;
@@ -47,8 +48,10 @@ class StorePolicyRequest extends FormRequest
             'coverage_amount' => ['nullable', 'numeric', 'gt:0', 'max:999999999999.99', 'decimal:0,2'],
             'payment_frequency' => ['required', Rule::enum(PaymentFrequency::class)],
             'commission_rate' => ['required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
-            'effective_date' => ['nullable', 'date'],
-            'renewal_date' => ['nullable', 'date', 'after_or_equal:effective_date'],
+            'renewal_term' => ['nullable', Rule::enum(RenewalTerm::class)],
+            // Set terms count from the effective date, so it's needed for them; a custom term needs its date.
+            'effective_date' => ['nullable', 'required_if:renewal_term,monthly,quarterly,annual', 'date'],
+            'renewal_date' => ['nullable', 'required_if:renewal_term,custom', 'date', 'after_or_equal:effective_date'],
             'commission_received_at' => ['nullable', 'date', 'before_or_equal:today'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
@@ -81,6 +84,8 @@ class StorePolicyRequest extends FormRequest
         return [
             'premium.gt' => 'Enter the premium per payment.',
             'renewal_date.after_or_equal' => 'The renewal date can’t be before the policy takes effect.',
+            'renewal_date.required_if' => 'Pick the date it renews.',
+            'effective_date.required_if' => 'Add the effective date so renewals can be worked out from it.',
             'product_name.required_without' => 'Pick a product or enter the product name.',
         ];
     }
@@ -100,7 +105,11 @@ class StorePolicyRequest extends FormRequest
             paymentFrequency: $this->enum('payment_frequency', PaymentFrequency::class) ?? PaymentFrequency::Annual,
             commissionRate: (string) $this->input('commission_rate'),
             effectiveDate: $this->filled('effective_date') ? $this->date('effective_date')?->toImmutable() : null,
-            renewalDate: $this->filled('renewal_date') ? $this->date('renewal_date')?->toImmutable() : null,
+            renewalTerm: $this->enum('renewal_term', RenewalTerm::class),
+            // Only a custom term keeps a fixed date; set terms are worked out from the effective date.
+            renewalDate: $this->enum('renewal_term', RenewalTerm::class) === RenewalTerm::Custom && $this->filled('renewal_date')
+                ? $this->date('renewal_date')?->toImmutable()
+                : null,
             commissionReceivedAt: $this->filled('commission_received_at') ? $this->date('commission_received_at')?->toImmutable() : null,
             notes: $this->filled('notes') ? $this->string('notes')->trim()->toString() : null,
         );

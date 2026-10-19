@@ -16,7 +16,12 @@ class PublicLeadFormController extends Controller
     {
         $agent = $this->agentFor($token);
 
-        return response()->json(['data' => ['agent' => ['name' => $agent->name]]]);
+        return response()->json(['data' => ['agent' => [
+            'name' => $agent->name,
+            'bio' => $agent->bio,
+            'avatar_url' => $agent->avatarUrl(),
+            'logo_url' => $agent->logoUrl(),
+        ]]]);
     }
 
     public function submit(SubmitLeadFormRequest $request, string $token, SubmitLeadForm $submitLeadForm): JsonResponse

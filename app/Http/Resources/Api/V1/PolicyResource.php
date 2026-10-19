@@ -33,7 +33,9 @@ class PolicyResource extends JsonResource
             'commission_rate' => (float) $this->commission_rate,
             'commission' => $this->commission(),
             'effective_date' => $this->effective_date?->toDateString(),
-            'renewal_date' => $this->renewal_date?->toDateString(),
+            'renewal_term' => $this->renewal_term ? ['value' => $this->renewal_term->value, 'label' => $this->renewal_term->label()] : null,
+            // The next renewal: worked out for set terms, the fixed date for a custom one.
+            'renewal_date' => $this->nextRenewalDate()?->toDateString(),
             'next_payment_due' => $this->nextPaymentDue()?->toDateString(),
             'commission_received_at' => $this->commission_received_at?->toDateString(),
             'notes' => $this->notes,
