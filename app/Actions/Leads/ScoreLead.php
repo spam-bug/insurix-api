@@ -13,6 +13,12 @@ use Carbon\CarbonImmutable;
  */
 class ScoreLead
 {
+    /** A score from here up is "hot". */
+    public const HOT_SCORE = 70;
+
+    /** A score from here up (and below hot) is "warm". */
+    public const WARM_SCORE = 40;
+
     /** @var array<string, int> */
     private const STAGE_POINTS = [
         'prospect' => 10,
@@ -106,14 +112,14 @@ class ScoreLead
     }
 
     /**
-     * When the agent last did something with the lead: a note, a meeting, a status change or a
-     * completed follow-up. A lead nobody has touched yet counts from when it was added.
+     * When the agent was last in touch with the lead (see LeadActivityType::touches()). A lead
+     * nobody has touched yet counts from when it was added.
      */
     private function lastTouch(Lead $lead): CarbonImmutable
     {
         $touched = $lead->activities()
             ->whereNotNull('user_id')
-            ->whereIn('type', [LeadActivityType::Note, LeadActivityType::MeetingScheduled, LeadActivityType::StatusChanged, LeadActivityType::FollowUpCompleted])
+            ->whereIn('type', LeadActivityType::touches())
             ->max('created_at');
 
         return CarbonImmutable::parse($touched ?? $lead->created_at);
