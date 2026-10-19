@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
+use App\Enums\RenewalTerm;
 use App\Models\Client;
 use App\Models\Policy;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -32,6 +33,7 @@ class PolicyFactory extends Factory
             'payment_frequency' => PaymentFrequency::Monthly,
             'commission_rate' => 30,
             'effective_date' => now()->subMonths(3)->toDateString(),
+            'renewal_term' => RenewalTerm::Custom,
             'renewal_date' => now()->addMonths(9)->toDateString(),
             'commission_received_at' => null,
             'notes' => null,
