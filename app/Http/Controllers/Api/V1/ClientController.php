@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Clients\ListClientHistory;
 use App\Actions\Clients\ListClients;
 use App\Actions\Clients\UpdateClient;
 use App\Http\Controllers\Controller;
@@ -11,6 +12,7 @@ use App\Http\Resources\Api\V1\ClientResource;
 use App\Models\Client;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 
@@ -27,6 +29,16 @@ class ClientController extends Controller
         Gate::authorize('view', $client);
 
         return ClientResource::make($client);
+    }
+
+    /**
+     * The client's notes, meetings, policy changes and documents as one timeline, newest first.
+     */
+    public function history(Client $client, ListClientHistory $listClientHistory): JsonResponse
+    {
+        Gate::authorize('view', $client);
+
+        return response()->json(['data' => $listClientHistory->handle($client)]);
     }
 
     public function update(UpdateClientRequest $request, Client $client, UpdateClient $updateClient): ClientResource
