@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
+use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\FollowUpController;
 use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
@@ -87,6 +88,10 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::post('/clients/{client}/policies', [PolicyController::class, 'store'])->name('clients.policies.store');
         Route::apiResource('policies', PolicyController::class)->except(['store']);
         Route::get('/commissions/summary', CommissionSummaryController::class)->name('commissions.summary');
+
+        Route::post('/clients/{client}/documents', [DocumentController::class, 'store'])->name('clients.documents.store');
+        Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+        Route::apiResource('documents', DocumentController::class)->except(['store']);
 
         Route::get('/insights/reports', [InsightController::class, 'reports'])->name('insights.reports');
         Route::get('/insights/next-actions', [InsightController::class, 'nextActions'])->name('insights.next-actions');

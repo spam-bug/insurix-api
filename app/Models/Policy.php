@@ -64,6 +64,16 @@ class Policy extends Model
     }
 
     /**
+     * Files kept for this policy, such as its contract.
+     *
+     * @return HasMany<Document, $this>
+     */
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
+
+    /**
      * What the client pays in a policy year: the premium times the payments in a year.
      */
     public function annualPremium(): float
