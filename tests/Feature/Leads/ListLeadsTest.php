@@ -38,8 +38,23 @@ it('filters leads by search, status and interest', function (array $query, array
     'search by phone' => [['search' => '555 0100'], ['Ben Cruz']],
     'status' => [['status' => 'qualified'], ['Ben Cruz']],
     'interest' => [['interest' => 'health'], ['Carla Diaz']],
+    'open leads only' => [['open' => 1], ['Ana Reyes', 'Ben Cruz']],
+    'a status wins over open' => [['open' => 1, 'status' => 'lost'], ['Carla Diaz']],
     'no match' => [['search' => 'zzz'], []],
 ]);
+
+it('leaves clients out of the open leads', function () {
+    $agent = User::factory()->create();
+    Lead::factory()->for($agent)->create(['name' => 'Ana Reyes']);
+    Lead::factory()->for($agent)->status(LeadStatus::Converted)->create(['name' => 'Ben Cruz']);
+
+    $names = $this->actingAs($agent)
+        ->getJson(route('api.v1.leads.index', ['open' => 1]))
+        ->assertOk()
+        ->json('data.*.name');
+
+    expect($names)->toBe(['Ana Reyes']);
+});
 
 it('paginates leads', function () {
     $agent = User::factory()->create();
