@@ -41,6 +41,6 @@ class ListLeads
             LeadSort::Score => $query->orderByRaw('score is null')->orderByDesc('score')->latest('id'),
         };
 
-        return $query->paginate($filters->perPage)->withQueryString();
+        return $query->paginate($filters->perPage, page: $filters->page)->withQueryString();
     }
 }

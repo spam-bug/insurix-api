@@ -22,7 +22,7 @@ class CreateLead
     {
         return DB::transaction(function () use ($agent, $data) {
             $lead = $agent->leads()->create([
-                ...$data->toAttributes(),
+                ...$data->toArray(),
                 'status' => LeadStatus::Prospect,
             ]);
 

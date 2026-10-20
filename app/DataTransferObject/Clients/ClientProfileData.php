@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\DataTransferObject\Clients;
 
+use App\DataTransferObject\Data;
 use App\Enums\CivilStatus;
 use Carbon\CarbonImmutable;
 
-/** The details a client has that a lead doesn't, asked for when promoting. */
-class ClientProfileData
+class ClientProfileData extends Data
 {
     public function __construct(
-        public readonly ?CarbonImmutable $birthdate,
-        public readonly ?CivilStatus $civilStatus,
-        public readonly ?string $occupation,
+        public readonly ?CarbonImmutable $birthdate = null,
+        public readonly ?CivilStatus $civilStatus = null,
+        public readonly ?string $occupation = null,
     ) {}
 
     /**
@@ -21,10 +21,6 @@ class ClientProfileData
      */
     public function toAttributes(): array
     {
-        return [
-            'birthdate' => $this->birthdate,
-            'civil_status' => $this->civilStatus,
-            'occupation' => $this->occupation,
-        ];
+        return $this->toArray();
     }
 }

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
+use App\Http\Controllers\Api\V1\BulkLeadStatusController;
 use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\DocumentController;
@@ -23,11 +24,14 @@ use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadFormController;
+use App\Http\Controllers\Api\V1\LeadMeetingController;
+use App\Http\Controllers\Api\V1\LeadNoteController;
+use App\Http\Controllers\Api\V1\LeadPromotionController;
+use App\Http\Controllers\Api\V1\LeadStatusController;
 use App\Http\Controllers\Api\V1\LeadStatusCountController;
 use App\Http\Controllers\Api\V1\PolicyController;
 use App\Http\Controllers\Api\V1\PolicyRenewalController;
 use App\Http\Controllers\Api\V1\ProductController;
-use App\Http\Controllers\Api\V1\PromoteLeadController;
 use App\Http\Controllers\Api\V1\PublicLeadFormController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,8 +45,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/reset-password', [PasswordResetController::class, 'reset']);
     });
 
-    Route::get('/public/lead-forms/{token}', [PublicLeadFormController::class, 'show']);
-    Route::post('/public/lead-forms/{token}', [PublicLeadFormController::class, 'submit'])
+    Route::get('/public/lead-forms/{agent:lead_form_token}', [PublicLeadFormController::class, 'show']);
+    Route::post('/public/lead-forms/{agent:lead_form_token}', [PublicLeadFormController::class, 'store'])
         ->middleware('throttle:lead-form');
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -73,19 +77,19 @@ Route::prefix('v1')->group(function () {
         Route::get('/lead-form', [LeadFormController::class, 'show']);
         Route::post('/lead-form/regenerate', [LeadFormController::class, 'regenerate']);
 
-        Route::get('/leads/status-counts', LeadStatusCountController::class);
-        Route::post('/leads/bulk/status', [BulkLeadController::class, 'updateStatus']);
+        Route::get('/leads/status-counts', [LeadStatusCountController::class, 'index']);
+        Route::post('/leads/bulk/status', [BulkLeadStatusController::class, 'update']);
         Route::post('/leads/bulk/delete', [BulkLeadController::class, 'destroy']);
         Route::get('/leads', [LeadController::class, 'index']);
         Route::post('/leads', [LeadController::class, 'store']);
-        Route::get('/leads/{lead}', [LeadController::class, 'show']);
+        Route::get('/leads/{lead}', [LeadController::class, 'show'])->can('view', 'lead');
         Route::put('/leads/{lead}', [LeadController::class, 'update']);
-        Route::delete('/leads/{lead}', [LeadController::class, 'destroy']);
-        Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus']);
-        Route::get('/leads/{lead}/activities', [LeadActivityController::class, 'index']);
-        Route::post('/leads/{lead}/notes', [LeadActivityController::class, 'storeNote']);
-        Route::post('/leads/{lead}/meeting', [LeadActivityController::class, 'scheduleMeeting']);
-        Route::post('/leads/{lead}/promote', PromoteLeadController::class);
+        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->can('delete', 'lead');
+        Route::patch('/leads/{lead}/status', [LeadStatusController::class, 'update']);
+        Route::get('/leads/{lead}/activities', [LeadActivityController::class, 'index'])->can('view', 'lead');
+        Route::post('/leads/{lead}/notes', [LeadNoteController::class, 'store']);
+        Route::post('/leads/{lead}/meeting', [LeadMeetingController::class, 'store']);
+        Route::post('/leads/{lead}/promote', [LeadPromotionController::class, 'store']);
 
         Route::get('/clients', [ClientController::class, 'index']);
         Route::get('/clients/{client}', [ClientController::class, 'show']);

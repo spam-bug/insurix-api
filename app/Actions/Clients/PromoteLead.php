@@ -12,6 +12,7 @@ use App\Models\Client;
 use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PromoteLead
 {
@@ -23,6 +24,10 @@ class PromoteLead
      */
     public function handle(Lead $lead, ClientProfileData $profile, User $actor): Client
     {
+        if ($lead->status === LeadStatus::Converted) {
+            throw ValidationException::withMessages(['lead' => 'This lead is already a client.']);
+        }
+
         return DB::transaction(function () use ($lead, $profile, $actor) {
             $previousStatus = $lead->status;
 
@@ -33,7 +38,7 @@ class PromoteLead
                 'phone' => $lead->phone,
                 'address' => $lead->address,
                 'notes' => $lead->notes,
-                ...$profile->toAttributes(),
+                ...$profile->toArray(),
             ]);
 
             $lead->update(['status' => LeadStatus::Converted]);

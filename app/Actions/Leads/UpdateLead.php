@@ -16,7 +16,7 @@ class UpdateLead
 
     public function handle(Lead $lead, LeadData $data, User $actor): Lead
     {
-        $lead->fill($data->toAttributes());
+        $lead->fill($data->toArray());
         $changedFields = array_keys($lead->getDirty());
 
         if ($changedFields === []) {

@@ -4,34 +4,19 @@ declare(strict_types=1);
 
 namespace App\DataTransferObject\Leads;
 
+use App\DataTransferObject\Data;
 use App\Enums\LeadInterest;
 use App\Enums\LeadSource;
 
-class LeadData
+class LeadData extends Data
 {
     public function __construct(
         public readonly string $name,
-        public readonly ?string $email,
-        public readonly ?string $phone,
-        public readonly ?string $address,
-        public readonly LeadSource $source,
-        public readonly ?LeadInterest $interest,
-        public readonly ?string $notes,
+        public readonly ?string $email = null,
+        public readonly ?string $phone = null,
+        public readonly ?string $address = null,
+        public readonly LeadSource $source = LeadSource::Manual,
+        public readonly ?LeadInterest $interest = null,
+        public readonly ?string $notes = null,
     ) {}
-
-    /**
-     * @return array{name: string, email: string|null, phone: string|null, address: string|null, source: LeadSource, interest: LeadInterest|null, notes: string|null}
-     */
-    public function toAttributes(): array
-    {
-        return [
-            'name' => $this->name,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'address' => $this->address,
-            'source' => $this->source,
-            'interest' => $this->interest,
-            'notes' => $this->notes,
-        ];
-    }
 }
