@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Products;
 
-use App\DataTransferObjects\Products\ProductData;
+use App\DataTransferObject\Products\ProductData;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyType;
 use App\Models\Product;

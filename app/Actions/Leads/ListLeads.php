@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Leads;
 
-use App\DataTransferObjects\Leads\LeadFiltersData;
+use App\DataTransferObject\Leads\LeadFiltersData;
 use App\Enums\LeadSort;
 use App\Enums\LeadStatus;
 use App\Models\Lead;

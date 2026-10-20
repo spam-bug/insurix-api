@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DataTransferObjects\Documents;
+namespace App\DataTransferObject\Documents;
 
 use App\Enums\DocumentCategory;
 

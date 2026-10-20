@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Documents;
 
-use App\DataTransferObjects\Documents\DocumentData;
+use App\DataTransferObject\Documents\DocumentData;
 use App\Models\Client;
 use App\Models\Document;
 use Illuminate\Http\UploadedFile;

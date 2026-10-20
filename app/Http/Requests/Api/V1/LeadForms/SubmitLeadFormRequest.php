@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\LeadForms;
 
-use App\DataTransferObjects\Leads\LeadData;
+use App\DataTransferObject\Leads\LeadData;
 use App\Enums\LeadInterest;
 use App\Enums\LeadSource;
 use Illuminate\Contracts\Validation\ValidationRule;

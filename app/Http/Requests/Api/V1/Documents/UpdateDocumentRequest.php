@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Documents;
 
-use App\DataTransferObjects\Documents\DocumentData;
+use App\DataTransferObject\Documents\DocumentData;
 use App\Enums\DocumentCategory;
 use App\Models\Client;
 use App\Models\Document;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DataTransferObjects\Account;
+namespace App\DataTransferObject\Account;
 
 class ProfileData
 {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Leads;
 
-use App\DataTransferObjects\Leads\LeadFiltersData;
+use App\DataTransferObject\Leads\LeadFiltersData;
 use App\Enums\LeadInterest;
 use App\Enums\LeadSort;
 use App\Enums\LeadSource;

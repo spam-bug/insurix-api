@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Documents;
 
-use App\DataTransferObjects\Documents\DocumentFiltersData;
+use App\DataTransferObject\Documents\DocumentFiltersData;
 use App\Enums\DocumentCategory;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;

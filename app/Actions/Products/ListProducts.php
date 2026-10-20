@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Products;
 
-use App\DataTransferObjects\Products\ProductFiltersData;
+use App\DataTransferObject\Products\ProductFiltersData;
 use App\Enums\PolicyStatus;
 use App\Models\Product;
 use App\Models\User;

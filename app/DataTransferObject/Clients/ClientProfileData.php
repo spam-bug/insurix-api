@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DataTransferObjects\Clients;
+namespace App\DataTransferObject\Clients;
 
 use App\Enums\CivilStatus;
 use Carbon\CarbonImmutable;

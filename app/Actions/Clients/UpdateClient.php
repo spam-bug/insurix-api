@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Clients;
 
-use App\DataTransferObjects\Clients\ClientData;
+use App\DataTransferObject\Clients\ClientData;
 use App\Models\Client;
 use Illuminate\Support\Facades\DB;
 

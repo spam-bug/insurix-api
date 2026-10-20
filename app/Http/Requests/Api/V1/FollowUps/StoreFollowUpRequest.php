@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\FollowUps;
 
-use App\DataTransferObjects\FollowUps\FollowUpData;
+use App\DataTransferObject\FollowUps\FollowUpData;
 use App\Enums\FollowUpType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;

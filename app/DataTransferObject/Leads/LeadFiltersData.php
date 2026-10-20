@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DataTransferObjects\Leads;
+namespace App\DataTransferObject\Leads;
 
 use App\Enums\LeadInterest;
 use App\Enums\LeadSort;

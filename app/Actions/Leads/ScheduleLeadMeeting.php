@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Actions\Leads;
 
 use App\Actions\FollowUps\CreateFollowUp;
-use App\DataTransferObjects\FollowUps\FollowUpData;
-use App\DataTransferObjects\Leads\LeadMeetingData;
+use App\DataTransferObject\FollowUps\FollowUpData;
+use App\DataTransferObject\Leads\LeadMeetingData;
 use App\Enums\FollowUpType;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;

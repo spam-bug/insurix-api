@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DataTransferObjects\Products;
+namespace App\DataTransferObject\Products;
 
 use App\Enums\PolicyType;
 

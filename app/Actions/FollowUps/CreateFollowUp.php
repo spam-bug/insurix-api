@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\FollowUps;
 
 use App\Actions\Leads\ScoreLead;
-use App\DataTransferObjects\FollowUps\FollowUpData;
+use App\DataTransferObject\FollowUps\FollowUpData;
 use App\Models\FollowUp;
 use App\Models\Lead;
 use Illuminate\Support\Facades\DB;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Policies;
 
-use App\DataTransferObjects\Policies\PolicyFiltersData;
+use App\DataTransferObject\Policies\PolicyFiltersData;
 use App\Models\Policy;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Policies;
 
-use App\DataTransferObjects\Policies\PolicyFiltersData;
+use App\DataTransferObject\Policies\PolicyFiltersData;
 use App\Enums\PolicyStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;

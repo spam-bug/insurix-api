@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Policies;
 
-use App\DataTransferObjects\Policies\PolicyData;
+use App\DataTransferObject\Policies\PolicyData;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;

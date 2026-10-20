@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\FollowUps;
 
-use App\DataTransferObjects\FollowUps\FollowUpFiltersData;
+use App\DataTransferObject\FollowUps\FollowUpFiltersData;
 use App\Enums\FollowUpWindow;
 use App\Models\FollowUp;
 use App\Models\User;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Clients;
 
-use App\DataTransferObjects\Clients\ClientData;
-use App\DataTransferObjects\Clients\ClientProfileData;
+use App\DataTransferObject\Clients\ClientData;
+use App\DataTransferObject\Clients\ClientProfileData;
 use App\Enums\CivilStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;

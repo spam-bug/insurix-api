@@ -6,7 +6,7 @@ namespace App\Actions\FollowUps;
 
 use App\Actions\Notifications\NotifyAgent;
 use App\Actions\Policies\ListPoliciesNeedingAttention;
-use App\DataTransferObjects\FollowUps\FollowUpData;
+use App\DataTransferObject\FollowUps\FollowUpData;
 use App\Enums\FollowUpType;
 use App\Enums\PolicyStatus;
 use App\Models\Policy;

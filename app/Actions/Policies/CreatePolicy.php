@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Policies;
 
-use App\DataTransferObjects\Policies\PolicyData;
+use App\DataTransferObject\Policies\PolicyData;
 use App\Enums\PolicyEventType;
 use App\Models\Client;
 use App\Models\Policy;

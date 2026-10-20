@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Documents;
 
-use App\DataTransferObjects\Documents\DocumentFiltersData;
+use App\DataTransferObject\Documents\DocumentFiltersData;
 use App\Models\Document;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

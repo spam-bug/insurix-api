@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Clients;
 
 use App\Actions\Leads\RecordLeadActivity;
-use App\DataTransferObjects\Clients\ClientProfileData;
+use App\DataTransferObject\Clients\ClientProfileData;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Client;

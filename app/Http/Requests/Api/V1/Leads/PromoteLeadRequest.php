@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Leads;
 
-use App\DataTransferObjects\Clients\ClientProfileData;
+use App\DataTransferObject\Clients\ClientProfileData;
 use App\Enums\CivilStatus;
 use App\Enums\LeadStatus;
 use App\Models\Lead;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\DataTransferObjects\FollowUps;
+namespace App\DataTransferObject\FollowUps;
 
 use App\Enums\FollowUpWindow;
 

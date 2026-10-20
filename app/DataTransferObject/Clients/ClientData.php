@@ -2,25 +2,21 @@
 
 declare(strict_types=1);
 
-namespace App\DataTransferObjects\Leads;
+namespace App\DataTransferObject\Clients;
 
-use App\Enums\LeadInterest;
-use App\Enums\LeadSource;
-
-class LeadData
+class ClientData
 {
     public function __construct(
         public readonly string $name,
         public readonly ?string $email,
         public readonly ?string $phone,
         public readonly ?string $address,
-        public readonly LeadSource $source,
-        public readonly ?LeadInterest $interest,
+        public readonly ClientProfileData $profile,
         public readonly ?string $notes,
     ) {}
 
     /**
-     * @return array{name: string, email: string|null, phone: string|null, address: string|null, source: LeadSource, interest: LeadInterest|null, notes: string|null}
+     * @return array<string, mixed>
      */
     public function toAttributes(): array
     {
@@ -29,8 +25,7 @@ class LeadData
             'email' => $this->email,
             'phone' => $this->phone,
             'address' => $this->address,
-            'source' => $this->source,
-            'interest' => $this->interest,
+            ...$this->profile->toAttributes(),
             'notes' => $this->notes,
         ];
     }
