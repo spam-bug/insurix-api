@@ -12,7 +12,7 @@ it('lists only the agent’s own clients, newest first', function () {
     Client::factory()->create();
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.clients.index'))
+        ->getJson('/api/v1/clients')
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $newer->id)
@@ -26,7 +26,7 @@ it('searches clients by name, email or phone', function () {
     Client::factory()->for($agent)->create(['name' => 'Someone Else']);
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.clients.index', ['search' => 'teodora']))
+        ->getJson('/api/v1/clients?'.http_build_query(['search' => 'teodora']))
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $match->id);
@@ -37,7 +37,7 @@ it('shows a client', function () {
     $client = Client::factory()->for($agent)->create(['birthdate' => '1990-02-03']);
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.clients.show', $client))
+        ->getJson("/api/v1/clients/{$client->id}")
         ->assertOk()
         ->assertJsonPath('data.id', $client->id)
         ->assertJsonPath('data.birthdate', '1990-02-03');
@@ -48,7 +48,7 @@ it('updates a client', function () {
     $client = Client::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->putJson(route('api.v1.clients.update', $client), [
+        ->putJson("/api/v1/clients/{$client->id}", [
             'name' => 'Teodora Alonso',
             'email' => 'TEODORA@example.com',
             'phone' => null,
@@ -68,7 +68,7 @@ it('validates client updates', function () {
     $client = Client::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->putJson(route('api.v1.clients.update', $client), ['email' => 'not-an-email'])
+        ->putJson("/api/v1/clients/{$client->id}", ['email' => 'not-an-email'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['name', 'email']);
 });
@@ -77,10 +77,10 @@ it('forbids another agent’s client', function () {
     $client = Client::factory()->create();
     $this->actingAs(User::factory()->create());
 
-    $this->getJson(route('api.v1.clients.show', $client))->assertForbidden();
-    $this->putJson(route('api.v1.clients.update', $client), ['name' => 'Taken'])->assertForbidden();
+    $this->getJson("/api/v1/clients/{$client->id}")->assertForbidden();
+    $this->putJson("/api/v1/clients/{$client->id}", ['name' => 'Taken'])->assertForbidden();
 });
 
 it('requires authentication', function () {
-    $this->getJson(route('api.v1.clients.index'))->assertUnauthorized();
+    $this->getJson('/api/v1/clients')->assertUnauthorized();
 });

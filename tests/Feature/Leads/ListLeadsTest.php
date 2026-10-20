@@ -14,7 +14,7 @@ it('lists only the agent’s own leads, newest first', function () {
     Lead::factory()->create();
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.index'))
+        ->getJson('/api/v1/leads')
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $newer->id)
@@ -30,7 +30,7 @@ it('filters leads by search, status and interest', function (array $query, array
     Lead::factory()->for($agent)->status(LeadStatus::Lost)->create(['name' => 'Carla Diaz', 'interest' => LeadInterest::Health]);
 
     $names = $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.index', $query))
+        ->getJson('/api/v1/leads?'.http_build_query($query))
         ->assertOk()
         ->json('data.*.name');
 
@@ -51,7 +51,7 @@ it('leaves clients out of the open leads', function () {
     Lead::factory()->for($agent)->status(LeadStatus::Converted)->create(['name' => 'Ben Cruz']);
 
     $names = $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.index', ['open' => 1]))
+        ->getJson('/api/v1/leads?'.http_build_query(['open' => 1]))
         ->assertOk()
         ->json('data.*.name');
 
@@ -63,7 +63,7 @@ it('paginates leads', function () {
     Lead::factory()->for($agent)->count(12)->create();
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.index', ['per_page' => 5, 'page' => 3]))
+        ->getJson('/api/v1/leads?'.http_build_query(['per_page' => 5, 'page' => 3]))
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('meta.current_page', 3)
@@ -72,11 +72,11 @@ it('paginates leads', function () {
 
 it('rejects invalid filters', function () {
     $this->actingAs(User::factory()->create())
-        ->getJson(route('api.v1.leads.index', ['status' => 'client', 'per_page' => 500]))
+        ->getJson('/api/v1/leads?'.http_build_query(['status' => 'client', 'per_page' => 500]))
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['status', 'per_page']);
 });
 
 it('requires authentication', function () {
-    $this->getJson(route('api.v1.leads.index'))->assertUnauthorized();
+    $this->getJson('/api/v1/leads')->assertUnauthorized();
 });

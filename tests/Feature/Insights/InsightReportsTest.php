@@ -19,12 +19,12 @@ beforeEach(fn () => Carbon::setTestNow('2026-10-17 02:00:00'));
 
 function reports(User $agent): array
 {
-    return test()->actingAs($agent)->getJson(route('api.v1.insights.reports'))->assertOk()->json('data');
+    return test()->actingAs($agent)->getJson('/api/v1/insights/reports')->assertOk()->json('data');
 }
 
 it('needs a signed-in agent', function () {
-    $this->getJson(route('api.v1.insights.reports'))->assertUnauthorized();
-    $this->getJson(route('api.v1.insights.next-actions'))->assertUnauthorized();
+    $this->getJson('/api/v1/insights/reports')->assertUnauthorized();
+    $this->getJson('/api/v1/insights/next-actions')->assertUnauthorized();
 });
 
 it('measures conversion by lead source, sources with enough leads first', function () {
@@ -116,7 +116,7 @@ it('works out renewals from set terms, with a shorter window for short terms', f
 
     expect(reports($agent)['retention']['renewals_coming_up'])->toBe(2);
 
-    $suggestion = collect(test()->getJson(route('api.v1.insights.next-actions'))->json('data'))->firstWhere('code', 'renewals_without_follow_up');
+    $suggestion = collect(test()->getJson('/api/v1/insights/next-actions')->json('data'))->firstWhere('code', 'renewals_without_follow_up');
     expect($suggestion['title'])->toBe('2 renewals in the next 60 days have no follow-up yet')
         ->and($suggestion['detail'])->toBe("{$client->name} (Oct 20) and {$client->name} (Dec 1). Reach out early to keep them.");
 });

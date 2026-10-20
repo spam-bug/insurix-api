@@ -20,7 +20,7 @@ it('puts lead activity, policy changes and documents in one timeline, newest fir
     $this->actingAs($agent);
 
     Carbon::setTestNow(now()->subDays(2));
-    $this->postJson(route('api.v1.clients.policies.store', $client), [
+    $this->postJson("/api/v1/clients/{$client->id}/policies", [
         'product_name' => 'Life Plus', 'type' => 'life', 'status' => 'pending', 'premium' => 2500,
         'payment_frequency' => 'monthly', 'commission_rate' => 30,
     ])->assertCreated();
@@ -30,9 +30,9 @@ it('puts lead activity, policy changes and documents in one timeline, newest fir
     $document = Document::factory()->for($client)->create(['name' => 'Valid ID', 'policy_id' => $policyId]);
 
     Carbon::setTestNow(now()->addDay());
-    $this->postJson(route('api.v1.policies.approve', $policyId), ['effective_date' => '2026-10-20'])->assertOk();
+    $this->postJson("/api/v1/policies/{$policyId}/approve", ['effective_date' => '2026-10-20'])->assertOk();
 
-    $history = $this->getJson(route('api.v1.clients.history', $client))->assertOk()->json('data');
+    $history = $this->getJson("/api/v1/clients/{$client->id}/history")->assertOk()->json('data');
 
     expect(array_column($history, 'id'))->toHaveCount(4)
         ->and(array_column($history, 'source'))->toBe(['policy', 'document', 'policy', 'lead'])
@@ -49,7 +49,7 @@ it('has a history for clients whose lead was removed', function () {
     Document::factory()->for($client)->create();
 
     $this->actingAs($client->user)
-        ->getJson(route('api.v1.clients.history', $client))
+        ->getJson("/api/v1/clients/{$client->id}/history")
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.source', 'document');
@@ -57,6 +57,6 @@ it('has a history for clients whose lead was removed', function () {
 
 it('keeps other agents out of a client’s history', function () {
     $this->actingAs(User::factory()->create())
-        ->getJson(route('api.v1.clients.history', Client::factory()->create()))
+        ->getJson('/api/v1/clients/'.Client::factory()->create()->id.'/history')
         ->assertForbidden();
 });

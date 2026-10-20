@@ -13,7 +13,7 @@ it('promotes a lead to a client, carrying its details over', function () {
     $lead = Lead::factory()->for($agent)->status(LeadStatus::Qualified)->create(['notes' => 'Wants family cover.']);
 
     $response = $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.promote', $lead), [
+        ->postJson("/api/v1/leads/{$lead->id}/promote", [
             'birthdate' => '1988-04-12',
             'civil_status' => 'married',
             'occupation' => '  Nurse ',
@@ -41,7 +41,7 @@ it('lets the client-only details be left out', function () {
     $lead = Lead::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.promote', $lead))
+        ->postJson("/api/v1/leads/{$lead->id}/promote")
         ->assertCreated()
         ->assertJsonPath('data.birthdate', null)
         ->assertJsonPath('data.civil_status', null);
@@ -50,18 +50,18 @@ it('lets the client-only details be left out', function () {
 it('shows the client on the promoted lead', function () {
     $agent = User::factory()->create();
     $lead = Lead::factory()->for($agent)->create();
-    $clientId = $this->actingAs($agent)->postJson(route('api.v1.leads.promote', $lead))->json('data.id');
+    $clientId = $this->actingAs($agent)->postJson("/api/v1/leads/{$lead->id}/promote")->json('data.id');
 
-    $this->getJson(route('api.v1.leads.show', $lead))->assertJsonPath('data.client_id', $clientId);
-    $this->getJson(route('api.v1.leads.index'))->assertJsonPath('data.0.client_id', $clientId);
+    $this->getJson("/api/v1/leads/{$lead->id}")->assertJsonPath('data.client_id', $clientId);
+    $this->getJson('/api/v1/leads')->assertJsonPath('data.0.client_id', $clientId);
 });
 
 it('promotes a lead only once', function () {
     $agent = User::factory()->create();
     $lead = Lead::factory()->for($agent)->create();
-    $this->actingAs($agent)->postJson(route('api.v1.leads.promote', $lead))->assertCreated();
+    $this->actingAs($agent)->postJson("/api/v1/leads/{$lead->id}/promote")->assertCreated();
 
-    $this->postJson(route('api.v1.leads.promote', $lead))
+    $this->postJson("/api/v1/leads/{$lead->id}/promote")
         ->assertUnprocessable()
         ->assertJsonValidationErrors('lead');
 
@@ -73,7 +73,7 @@ it('validates the client details', function () {
     $lead = Lead::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.promote', $lead), ['birthdate' => now()->addDay()->toDateString(), 'civil_status' => 'complicated'])
+        ->postJson("/api/v1/leads/{$lead->id}/promote", ['birthdate' => now()->addDay()->toDateString(), 'civil_status' => 'complicated'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['birthdate', 'civil_status']);
 });
@@ -82,7 +82,7 @@ it('forbids promoting another agent’s lead', function () {
     $lead = Lead::factory()->create();
 
     $this->actingAs(User::factory()->create())
-        ->postJson(route('api.v1.leads.promote', $lead))
+        ->postJson("/api/v1/leads/{$lead->id}/promote")
         ->assertForbidden();
 
     expect(Client::count())->toBe(0);
@@ -93,11 +93,11 @@ it('keeps converted out of manual status changes', function () {
     $lead = Lead::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->patchJson(route('api.v1.leads.status', $lead), ['status' => 'converted'])
+        ->patchJson("/api/v1/leads/{$lead->id}/status", ['status' => 'converted'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('status');
 
-    $this->postJson(route('api.v1.leads.bulk.status'), ['ids' => [$lead->id], 'status' => 'converted'])
+    $this->postJson('/api/v1/leads/bulk/status', ['ids' => [$lead->id], 'status' => 'converted'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('status');
 });
@@ -107,11 +107,11 @@ it('locks a promoted lead’s status', function () {
     $lead = Lead::factory()->for($agent)->status(LeadStatus::Converted)->create();
 
     $this->actingAs($agent)
-        ->patchJson(route('api.v1.leads.status', $lead), ['status' => 'lost'])
+        ->patchJson("/api/v1/leads/{$lead->id}/status", ['status' => 'lost'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('status');
 
-    $this->postJson(route('api.v1.leads.bulk.status'), ['ids' => [$lead->id], 'status' => 'lost'])->assertOk();
+    $this->postJson('/api/v1/leads/bulk/status', ['ids' => [$lead->id], 'status' => 'lost'])->assertOk();
 
     expect($lead->fresh()->status)->toBe(LeadStatus::Converted);
 });
@@ -121,7 +121,7 @@ it('counts converted leads', function () {
     Lead::factory()->for($agent)->status(LeadStatus::Converted)->create();
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.status-counts'))
+        ->getJson('/api/v1/leads/status-counts')
         ->assertJsonPath('data.converted', 1)
         ->assertJsonPath('data.total', 1);
 });

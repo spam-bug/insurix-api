@@ -30,7 +30,7 @@ class BulkLeadRequest extends FormRequest
         return [
             'ids' => ['required', 'array', 'min:1', 'max:100'],
             'ids.*' => ['uuid', 'distinct', Rule::exists(Lead::class, 'id')->where('user_id', $this->user()?->id)],
-            'status' => [Rule::requiredIf($this->routeIs('api.v1.leads.bulk.status')), Rule::enum(LeadStatus::class)->only(LeadStatus::manual())],
+            'status' => [Rule::requiredIf($this->is('api/v1/leads/bulk/status')), Rule::enum(LeadStatus::class)->only(LeadStatus::manual())],
         ];
     }
 

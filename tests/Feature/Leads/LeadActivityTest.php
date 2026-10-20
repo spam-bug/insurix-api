@@ -16,7 +16,7 @@ it('lists a lead’s activity newest first, with who did it', function () {
     LeadActivity::factory()->create();
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.activities.index', $lead))
+        ->getJson("/api/v1/leads/{$lead->id}/activities")
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $note->id)
@@ -31,7 +31,7 @@ it('adds a note to a lead', function () {
     $lead = Lead::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.notes.store', $lead), ['body' => '  Prefers WhatsApp.  '])
+        ->postJson("/api/v1/leads/{$lead->id}/notes", ['body' => '  Prefers WhatsApp.  '])
         ->assertCreated()
         ->assertJsonPath('data.type', 'note')
         ->assertJsonPath('data.body', 'Prefers WhatsApp.');
@@ -44,7 +44,7 @@ it('requires a note body', function () {
     $lead = Lead::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.notes.store', $lead), ['body' => ''])
+        ->postJson("/api/v1/leads/{$lead->id}/notes", ['body' => ''])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('body');
 });
@@ -54,7 +54,7 @@ it('schedules a meeting and moves the lead to meeting scheduled', function () {
     $lead = Lead::factory()->for($agent)->status(LeadStatus::Contacted)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.meeting.store', $lead), [
+        ->postJson("/api/v1/leads/{$lead->id}/meeting", [
             'scheduled_at' => '2030-03-04T09:30:00+08:00',
             'notes' => 'Coffee at Ayala Triangle.',
         ])
@@ -73,23 +73,23 @@ it('rejects meetings in the past', function () {
     $lead = Lead::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.meeting.store', $lead), ['scheduled_at' => now()->subMinute()->toIso8601String()])
+        ->postJson("/api/v1/leads/{$lead->id}/meeting", ['scheduled_at' => now()->subMinute()->toIso8601String()])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['scheduled_at' => 'Choose a time in the future.']);
 
     expect($lead->fresh()->meeting_at)->toBeNull();
 });
 
-it('keeps another agent’s lead activity private', function (string $method, string $routeName, array $payload) {
+it('keeps another agent’s lead activity private', function (string $method, string $path, array $payload) {
     $lead = Lead::factory()->create();
 
     $this->actingAs(User::factory()->create())
-        ->json($method, route($routeName, $lead), $payload)
+        ->json($method, "/api/v1/leads/{$lead->id}{$path}", $payload)
         ->assertForbidden();
 
     expect($lead->activities()->count())->toBe(0);
 })->with([
-    'list' => ['GET', 'api.v1.leads.activities.index', []],
-    'note' => ['POST', 'api.v1.leads.notes.store', ['body' => 'Hi']],
-    'meeting' => ['POST', 'api.v1.leads.meeting.store', ['scheduled_at' => '2030-01-01T10:00:00Z']],
+    'list' => ['GET', '/activities', []],
+    'note' => ['POST', '/notes', ['body' => 'Hi']],
+    'meeting' => ['POST', '/meeting', ['scheduled_at' => '2030-01-01T10:00:00Z']],
 ]);

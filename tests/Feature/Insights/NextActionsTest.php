@@ -16,7 +16,7 @@ beforeEach(fn () => Carbon::setTestNow('2026-10-17 02:00:00'));
 
 function nextActions(User $agent): array
 {
-    return test()->actingAs($agent)->getJson(route('api.v1.insights.next-actions'))->assertOk()->json('data');
+    return test()->actingAs($agent)->getJson('/api/v1/insights/next-actions')->assertOk()->json('data');
 }
 
 it('suggests adding leads to a brand new agent', function () {

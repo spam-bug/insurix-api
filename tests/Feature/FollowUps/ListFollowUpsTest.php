@@ -32,7 +32,7 @@ it('lists today’s follow-ups in the agent’s timezone, overdue first', functi
     FollowUp::factory()->dueAt(now())->create();
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.follow-ups.index', ['window' => 'today']))
+        ->getJson('/api/v1/follow-ups?'.http_build_query(['window' => 'today']))
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $followUps['overdue']->id)
@@ -46,13 +46,13 @@ it('lists upcoming, open and completed follow-ups', function () {
     $followUps = followUpsFor($agent);
     $this->actingAs($agent);
 
-    $this->getJson(route('api.v1.follow-ups.index', ['window' => 'upcoming']))
+    $this->getJson('/api/v1/follow-ups?'.http_build_query(['window' => 'upcoming']))
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $followUps['tomorrow']->id);
 
-    $this->getJson(route('api.v1.follow-ups.index'))->assertJsonCount(4, 'data');
+    $this->getJson('/api/v1/follow-ups')->assertJsonCount(4, 'data');
 
-    $this->getJson(route('api.v1.follow-ups.index', ['window' => 'completed']))
+    $this->getJson('/api/v1/follow-ups?'.http_build_query(['window' => 'completed']))
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $followUps['done']->id);
 });
@@ -65,7 +65,7 @@ it('lists one lead’s follow-ups and links to its client', function () {
     FollowUp::factory()->for($lead)->create();
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.follow-ups.index', ['lead_id' => $lead->id]))
+        ->getJson('/api/v1/follow-ups?'.http_build_query(['lead_id' => $lead->id]))
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.lead.client_id', $client->id);
 });
@@ -75,11 +75,11 @@ it('summarizes open follow-ups', function () {
     followUpsFor($agent);
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.follow-ups.summary'))
+        ->getJson('/api/v1/follow-ups/summary')
         ->assertOk()
         ->assertExactJson(['data' => ['overdue' => 1, 'due_today' => 1, 'upcoming' => 1]]);
 });
 
 it('requires authentication', function () {
-    $this->getJson(route('api.v1.follow-ups.index'))->assertUnauthorized();
+    $this->getJson('/api/v1/follow-ups')->assertUnauthorized();
 });

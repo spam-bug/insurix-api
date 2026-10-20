@@ -34,7 +34,7 @@ it('records a policy for a client, with its yearly figures', function () {
     $client = Client::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.clients.policies.store', $client), policyPayload())
+        ->postJson("/api/v1/clients/{$client->id}/policies", policyPayload())
         ->assertCreated()
         ->assertJsonPath('data.client', ['id' => $client->id, 'name' => $client->name])
         ->assertJsonPath('data.status', ['value' => 'in_force', 'label' => 'In force'])
@@ -70,7 +70,7 @@ it('validates a policy', function () {
     $client = Client::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.clients.policies.store', $client), policyPayload([
+        ->postJson("/api/v1/clients/{$client->id}/policies", policyPayload([
             'product_name' => '',
             'premium' => '0',
             'commission_rate' => '120',
@@ -89,11 +89,11 @@ it('lists, filters and searches the agent’s policies', function () {
     Policy::factory()->create();
     $this->actingAs($agent);
 
-    $this->getJson(route('api.v1.policies.index'))->assertJsonCount(2, 'data');
-    $this->getJson(route('api.v1.policies.index', ['status' => 'pending']))->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $pending->id);
-    $this->getJson(route('api.v1.policies.index', ['search' => 'pru']))->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $inForce->id);
-    $this->getJson(route('api.v1.policies.index', ['search' => 'teodora']))->assertJsonCount(2, 'data');
-    $this->getJson(route('api.v1.policies.index', ['client_id' => $client->id]))->assertJsonCount(2, 'data');
+    $this->getJson('/api/v1/policies')->assertJsonCount(2, 'data');
+    $this->getJson('/api/v1/policies?'.http_build_query(['status' => 'pending']))->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $pending->id);
+    $this->getJson('/api/v1/policies?'.http_build_query(['search' => 'pru']))->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $inForce->id);
+    $this->getJson('/api/v1/policies?'.http_build_query(['search' => 'teodora']))->assertJsonCount(2, 'data');
+    $this->getJson('/api/v1/policies?'.http_build_query(['client_id' => $client->id]))->assertJsonCount(2, 'data');
 });
 
 it('updates and deletes a policy', function () {
@@ -101,12 +101,12 @@ it('updates and deletes a policy', function () {
     $policy = Policy::factory()->for(Client::factory()->for($agent))->status(PolicyStatus::Pending)->create();
     $this->actingAs($agent);
 
-    $this->putJson(route('api.v1.policies.update', $policy), policyPayload(['commission_received_at' => '2026-10-01']))
+    $this->putJson("/api/v1/policies/{$policy->id}", policyPayload(['commission_received_at' => '2026-10-01']))
         ->assertOk()
         ->assertJsonPath('data.status.value', 'in_force')
         ->assertJsonPath('data.commission_received_at', '2026-10-01');
 
-    $this->deleteJson(route('api.v1.policies.destroy', $policy))->assertNoContent();
+    $this->deleteJson("/api/v1/policies/{$policy->id}")->assertNoContent();
     expect(Policy::count())->toBe(0);
 });
 
@@ -114,8 +114,8 @@ it('forbids another agent’s clients and policies', function () {
     $policy = Policy::factory()->create();
     $this->actingAs(User::factory()->create());
 
-    $this->postJson(route('api.v1.clients.policies.store', $policy->client), policyPayload())->assertForbidden();
-    $this->getJson(route('api.v1.policies.show', $policy))->assertForbidden();
-    $this->putJson(route('api.v1.policies.update', $policy), policyPayload())->assertForbidden();
-    $this->deleteJson(route('api.v1.policies.destroy', $policy))->assertForbidden();
+    $this->postJson("/api/v1/clients/{$policy->client->id}/policies", policyPayload())->assertForbidden();
+    $this->getJson("/api/v1/policies/{$policy->id}")->assertForbidden();
+    $this->putJson("/api/v1/policies/{$policy->id}", policyPayload())->assertForbidden();
+    $this->deleteJson("/api/v1/policies/{$policy->id}")->assertForbidden();
 });

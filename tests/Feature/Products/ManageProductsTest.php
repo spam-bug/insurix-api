@@ -27,7 +27,7 @@ it('adds a product to the agent’s catalog', function () {
     $agent = User::factory()->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.products.store'), productPayload())
+        ->postJson('/api/v1/products', productPayload())
         ->assertCreated()
         ->assertJsonPath('data.name', 'Sun FitandWell')
         ->assertJsonPath('data.type', ['value' => 'health', 'label' => 'Health'])
@@ -44,13 +44,13 @@ it('keeps product names unique within a catalog', function () {
     Product::factory()->create(['name' => 'Sun MaxiLink Prime']);
     $this->actingAs($agent);
 
-    $this->postJson(route('api.v1.products.store'), productPayload())->assertJsonValidationErrors(['name' => 'already have']);
-    $this->postJson(route('api.v1.products.store'), productPayload(['name' => 'Sun MaxiLink Prime']))->assertCreated();
+    $this->postJson('/api/v1/products', productPayload())->assertJsonValidationErrors(['name' => 'already have']);
+    $this->postJson('/api/v1/products', productPayload(['name' => 'Sun MaxiLink Prime']))->assertCreated();
 });
 
 it('validates a product', function () {
     $this->actingAs(User::factory()->create())
-        ->postJson(route('api.v1.products.store'), ['commission_rate' => '150', 'type' => 'pet'])
+        ->postJson('/api/v1/products', ['commission_rate' => '150', 'type' => 'pet'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['name', 'type', 'commission_rate']);
 });
@@ -65,14 +65,14 @@ it('lists the catalog with how many clients hold each product', function () {
     Policy::factory()->for($client)->status(PolicyStatus::Cancelled)->create(['product_id' => $sold->id]);
     $this->actingAs($agent);
 
-    $this->getJson(route('api.v1.products.index'))
+    $this->getJson('/api/v1/products')
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $sold->id)
         ->assertJsonPath('data.0.policies_count', 2);
 
-    $this->getJson(route('api.v1.products.index', ['active' => 1]))->assertJsonCount(1, 'data');
-    $this->getJson(route('api.v1.products.index', ['search' => 'philam']))->assertJsonCount(1, 'data');
+    $this->getJson('/api/v1/products?'.http_build_query(['active' => 1]))->assertJsonCount(1, 'data');
+    $this->getJson('/api/v1/products?'.http_build_query(['search' => 'philam']))->assertJsonCount(1, 'data');
 });
 
 it('updates a product and can deactivate it', function () {
@@ -80,7 +80,7 @@ it('updates a product and can deactivate it', function () {
     $product = Product::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->putJson(route('api.v1.products.update', $product), productPayload(['commission_rate' => '40', 'is_active' => false]))
+        ->putJson("/api/v1/products/{$product->id}", productPayload(['commission_rate' => '40', 'is_active' => false]))
         ->assertOk()
         ->assertJsonPath('data.commission_rate', 40)
         ->assertJsonPath('data.is_active', false);
@@ -93,8 +93,8 @@ it('deletes an unused product but not one clients hold', function () {
     Policy::factory()->for(Client::factory()->for($agent))->create(['product_id' => $sold->id]);
     $this->actingAs($agent);
 
-    $this->deleteJson(route('api.v1.products.destroy', $unused))->assertNoContent();
-    $this->deleteJson(route('api.v1.products.destroy', $sold))->assertJsonValidationErrors('product');
+    $this->deleteJson("/api/v1/products/{$unused->id}")->assertNoContent();
+    $this->deleteJson("/api/v1/products/{$sold->id}")->assertJsonValidationErrors('product');
 
     expect(Product::count())->toBe(1);
 });
@@ -103,9 +103,9 @@ it('forbids another agent’s products', function () {
     $product = Product::factory()->create();
     $this->actingAs(User::factory()->create());
 
-    $this->getJson(route('api.v1.products.show', $product))->assertForbidden();
-    $this->putJson(route('api.v1.products.update', $product), productPayload())->assertForbidden();
-    $this->deleteJson(route('api.v1.products.destroy', $product))->assertForbidden();
+    $this->getJson("/api/v1/products/{$product->id}")->assertForbidden();
+    $this->putJson("/api/v1/products/{$product->id}", productPayload())->assertForbidden();
+    $this->deleteJson("/api/v1/products/{$product->id}")->assertForbidden();
 });
 
 it('records a policy from a catalog product', function () {
@@ -114,7 +114,7 @@ it('records a policy from a catalog product', function () {
     $client = Client::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.clients.policies.store', $client), [
+        ->postJson("/api/v1/clients/{$client->id}/policies", [
             'product_id' => $product->id,
             'status' => 'pending',
             'premium' => '5000',
@@ -128,7 +128,7 @@ it('records a policy from a catalog product', function () {
         ->assertJsonPath('data.type.value', 'life')
         ->assertJsonPath('data.coverage_amount', 1000000);
 
-    $this->getJson(route('api.v1.policies.index', ['product_id' => $product->id]))->assertJsonCount(1, 'data');
+    $this->getJson('/api/v1/policies?'.http_build_query(['product_id' => $product->id]))->assertJsonCount(1, 'data');
 });
 
 it('still records a policy without a catalog product', function () {
@@ -136,7 +136,7 @@ it('still records a policy without a catalog product', function () {
     $client = Client::factory()->for($agent)->create();
     $this->actingAs($agent);
 
-    $this->postJson(route('api.v1.clients.policies.store', $client), ['status' => 'pending', 'premium' => '100', 'payment_frequency' => 'annual', 'commission_rate' => '10'])
+    $this->postJson("/api/v1/clients/{$client->id}/policies", ['status' => 'pending', 'premium' => '100', 'payment_frequency' => 'annual', 'commission_rate' => '10'])
         ->assertJsonValidationErrors(['product_name', 'type']);
 });
 
@@ -146,11 +146,11 @@ it('refuses another agent’s or an inactive product for a new policy', function
     $payload = ['status' => 'pending', 'premium' => '100', 'payment_frequency' => 'annual', 'commission_rate' => '10'];
     $this->actingAs($agent);
 
-    $this->postJson(route('api.v1.clients.policies.store', $client), [...$payload, 'product_id' => Product::factory()->create()->id])
+    $this->postJson("/api/v1/clients/{$client->id}/policies", [...$payload, 'product_id' => Product::factory()->create()->id])
         ->assertJsonValidationErrors('product_id');
 
     $inactive = Product::factory()->for($agent)->inactive()->create();
-    $this->postJson(route('api.v1.clients.policies.store', $client), [...$payload, 'product_id' => $inactive->id])
+    $this->postJson("/api/v1/clients/{$client->id}/policies", [...$payload, 'product_id' => $inactive->id])
         ->assertJsonValidationErrors(['product_id' => 'inactive']);
 });
 
@@ -160,7 +160,7 @@ it('lets a policy keep a product that has since been deactivated', function () {
     $policy = Policy::factory()->for(Client::factory()->for($agent))->create(['product_id' => $product->id]);
 
     $this->actingAs($agent)
-        ->putJson(route('api.v1.policies.update', $policy), [
+        ->putJson("/api/v1/policies/{$policy->id}", [
             'product_id' => $product->id,
             'status' => 'in_force',
             'premium' => '2500',
