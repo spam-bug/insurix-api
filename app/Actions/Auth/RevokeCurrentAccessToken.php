@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Auth;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class RevokeCurrentAccessToken
@@ -14,7 +15,7 @@ class RevokeCurrentAccessToken
         $token = $user->currentAccessToken();
 
         if ($token instanceof PersonalAccessToken) {
-            $token->delete();
+            DB::transaction(fn () => $token->delete());
         }
     }
 }

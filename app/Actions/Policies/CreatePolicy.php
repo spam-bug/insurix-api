@@ -9,6 +9,7 @@ use App\Enums\PolicyEventType;
 use App\Models\Client;
 use App\Models\Policy;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class CreatePolicy
 {
@@ -20,13 +21,15 @@ class CreatePolicy
      */
     public function handle(Client $client, PolicyData $data, ?User $actor = null): Policy
     {
-        $policy = $client->policies()->create([
-            ...$data->toAttributes(),
-            'user_id' => $client->user_id,
-        ]);
+        return DB::transaction(function () use ($client, $data, $actor) {
+            $policy = $client->policies()->create([
+                ...$data->toAttributes(),
+                'user_id' => $client->user_id,
+            ]);
 
-        $this->recordPolicyEvent->handle($policy, PolicyEventType::Recorded, $actor, ['status' => $policy->status->value]);
+            $this->recordPolicyEvent->handle($policy, PolicyEventType::Recorded, $actor, ['status' => $policy->status->value]);
 
-        return $policy;
+            return $policy;
+        });
     }
 }

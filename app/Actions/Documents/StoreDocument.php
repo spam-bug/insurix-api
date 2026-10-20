@@ -8,6 +8,7 @@ use App\DataTransferObjects\Documents\DocumentData;
 use App\Models\Client;
 use App\Models\Document;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class StoreDocument
@@ -20,7 +21,7 @@ class StoreDocument
     {
         $path = $file->store("documents/{$client->user_id}/{$client->id}", Document::DISK);
 
-        return $client->documents()->create([
+        return DB::transaction(fn () => $client->documents()->create([
             'name' => Str::limit(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), 250, ''),
             ...$data->toAttributes(),
             'user_id' => $client->user_id,
@@ -28,6 +29,6 @@ class StoreDocument
             'path' => $path,
             'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
             'size' => $file->getSize(),
-        ]);
+        ]));
     }
 }

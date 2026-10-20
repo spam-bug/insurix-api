@@ -6,6 +6,7 @@ namespace App\Actions\Account;
 
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ReplaceAccountImage
@@ -25,7 +26,9 @@ class ReplaceAccountImage
         $previous = $agent->{$column};
         $disk = Storage::disk(User::UPLOADS_DISK);
 
-        $agent->forceFill([$column => $file?->store(self::FOLDERS[$image], User::UPLOADS_DISK)])->save();
+        $path = $file?->store(self::FOLDERS[$image], User::UPLOADS_DISK);
+
+        DB::transaction(fn () => $agent->forceFill([$column => $path])->save());
 
         if ($previous) {
             $disk->delete($previous);

@@ -6,12 +6,13 @@ namespace App\Actions\Account;
 
 use App\DataTransferObjects\Account\ProfileData;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class UpdateProfile
 {
     public function handle(User $agent, ProfileData $data): User
     {
-        $agent->update($data->toAttributes());
+        DB::transaction(fn () => $agent->update($data->toAttributes()));
 
         return $agent;
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Products;
 
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class DeleteProduct
@@ -23,6 +24,6 @@ class DeleteProduct
             ]);
         }
 
-        $product->delete();
+        DB::transaction(fn () => $product->delete());
     }
 }

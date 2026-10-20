@@ -6,6 +6,7 @@ namespace App\Actions\Documents;
 
 use App\DataTransferObjects\Documents\DocumentData;
 use App\Models\Document;
+use Illuminate\Support\Facades\DB;
 
 class UpdateDocument
 {
@@ -14,7 +15,7 @@ class UpdateDocument
      */
     public function handle(Document $document, DocumentData $data): Document
     {
-        $document->update($data->toAttributes());
+        DB::transaction(fn () => $document->update($data->toAttributes()));
 
         return $document;
     }

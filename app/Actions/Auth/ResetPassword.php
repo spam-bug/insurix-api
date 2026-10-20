@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Auth;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -20,10 +21,10 @@ class ResetPassword
     {
         $status = Password::reset(
             ['email' => $email, 'token' => $token, 'password' => $password],
-            function (User $user, string $password) {
+            fn (User $user, string $password) => DB::transaction(function () use ($user, $password) {
                 $user->forceFill(['password' => $password])->save();
                 $user->tokens()->delete();
-            },
+            }),
         );
 
         if ($status !== Password::PASSWORD_RESET) {

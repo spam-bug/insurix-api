@@ -6,6 +6,7 @@ namespace App\Actions\FollowUps;
 
 use App\Actions\Leads\ScoreLead;
 use App\Models\FollowUp;
+use Illuminate\Support\Facades\DB;
 
 class ReopenFollowUp
 {
@@ -16,9 +17,11 @@ class ReopenFollowUp
      */
     public function handle(FollowUp $followUp): FollowUp
     {
-        $followUp->update(['completed_at' => null]);
+        DB::transaction(function () use ($followUp) {
+            $followUp->update(['completed_at' => null]);
 
-        $this->scoreLead->handle($followUp->lead);
+            $this->scoreLead->handle($followUp->lead);
+        });
 
         return $followUp;
     }

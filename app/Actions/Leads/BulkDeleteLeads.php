@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Leads;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class BulkDeleteLeads
 {
@@ -16,6 +17,6 @@ class BulkDeleteLeads
      */
     public function handle(User $agent, array $leadIds): int
     {
-        return $agent->leads()->whereKey($leadIds)->delete();
+        return DB::transaction(fn () => $agent->leads()->whereKey($leadIds)->delete());
     }
 }

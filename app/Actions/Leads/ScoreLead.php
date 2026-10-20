@@ -8,11 +8,12 @@ use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use Carbon\CarbonImmutable;
-
 /**
  * "Which prospects are most likely to become clients?": a 0 to 100 score from simple rules,
  * each with a reason the agent can read. Clients and lost leads aren't scored.
  */
+use Illuminate\Support\Facades\DB;
+
 class ScoreLead
 {
     /** A score from here up is "hot". */
@@ -42,7 +43,7 @@ class ScoreLead
     {
         [$score, $reasons] = $this->assess($lead, $sourceRates ?? $this->sourceRates($lead), $now ?? CarbonImmutable::now());
 
-        $lead->forceFill(['score' => $score, 'score_reasons' => $reasons])->saveQuietly();
+        DB::transaction(fn () => $lead->forceFill(['score' => $score, 'score_reasons' => $reasons])->saveQuietly());
 
         return $lead;
     }

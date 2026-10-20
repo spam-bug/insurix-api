@@ -6,12 +6,13 @@ namespace App\Actions\Policies;
 
 use App\DataTransferObjects\Policies\PolicyData;
 use App\Models\Policy;
+use Illuminate\Support\Facades\DB;
 
 class UpdatePolicy
 {
     public function handle(Policy $policy, PolicyData $data): Policy
     {
-        $policy->update($data->toAttributes());
+        DB::transaction(fn () => $policy->update($data->toAttributes()));
 
         return $policy;
     }

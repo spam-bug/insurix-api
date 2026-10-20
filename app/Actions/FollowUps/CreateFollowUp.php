@@ -8,6 +8,7 @@ use App\Actions\Leads\ScoreLead;
 use App\DataTransferObjects\FollowUps\FollowUpData;
 use App\Models\FollowUp;
 use App\Models\Lead;
+use Illuminate\Support\Facades\DB;
 
 class CreateFollowUp
 {
@@ -21,14 +22,16 @@ class CreateFollowUp
      */
     public function handle(Lead $lead, FollowUpData $data, array $source = []): FollowUp
     {
-        $followUp = $lead->followUps()->create([
-            ...$data->toAttributes(),
-            ...$source,
-            'user_id' => $lead->user_id,
-        ]);
+        return DB::transaction(function () use ($lead, $data, $source) {
+            $followUp = $lead->followUps()->create([
+                ...$data->toAttributes(),
+                ...$source,
+                'user_id' => $lead->user_id,
+            ]);
 
-        $this->scoreLead->handle($lead);
+            $this->scoreLead->handle($lead);
 
-        return $followUp;
+            return $followUp;
+        });
     }
 }

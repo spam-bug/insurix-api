@@ -6,12 +6,13 @@ namespace App\Actions\FollowUps;
 
 use App\DataTransferObjects\FollowUps\FollowUpData;
 use App\Models\FollowUp;
+use Illuminate\Support\Facades\DB;
 
 class UpdateFollowUp
 {
     public function handle(FollowUp $followUp, FollowUpData $data): FollowUp
     {
-        $followUp->update($data->toAttributes());
+        DB::transaction(fn () => $followUp->update($data->toAttributes()));
 
         return $followUp;
     }

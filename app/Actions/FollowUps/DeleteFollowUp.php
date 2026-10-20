@@ -6,6 +6,7 @@ namespace App\Actions\FollowUps;
 
 use App\Actions\Leads\ScoreLead;
 use App\Models\FollowUp;
+use Illuminate\Support\Facades\DB;
 
 class DeleteFollowUp
 {
@@ -13,10 +14,12 @@ class DeleteFollowUp
 
     public function handle(FollowUp $followUp): void
     {
-        $lead = $followUp->lead;
+        DB::transaction(function () use ($followUp) {
+            $lead = $followUp->lead;
 
-        $followUp->delete();
+            $followUp->delete();
 
-        $this->scoreLead->handle($lead);
+            $this->scoreLead->handle($lead);
+        });
     }
 }

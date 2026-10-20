@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Documents;
 
 use App\Models\Document;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class DeleteDocument
@@ -14,7 +15,7 @@ class DeleteDocument
      */
     public function handle(Document $document): void
     {
-        $document->delete();
+        DB::transaction(fn () => $document->delete());
 
         Storage::disk(Document::DISK)->delete($document->path);
     }

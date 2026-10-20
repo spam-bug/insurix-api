@@ -8,6 +8,7 @@ use App\Enums\PolicyEventType;
 use App\Models\Policy;
 use App\Models\PolicyEvent;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class RecordPolicyEvent
 {
@@ -18,10 +19,10 @@ class RecordPolicyEvent
      */
     public function handle(Policy $policy, PolicyEventType $type, ?User $actor, ?array $properties = null): PolicyEvent
     {
-        return $policy->events()->create([
+        return DB::transaction(fn () => $policy->events()->create([
             'user_id' => $actor?->id,
             'type' => $type,
             'properties' => $properties,
-        ]);
+        ]));
     }
 }
