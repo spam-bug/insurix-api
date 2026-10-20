@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PaymentFrequency;
 use App\Events\AgentDataChanged;
 use App\Models\Client;
@@ -34,9 +36,9 @@ it('tells the agent when policy reminders are added to their follow-ups', functi
 });
 
 it('broadcasts on the agent’s private channel', function () {
-    $event = new AgentDataChanged(7, 'leads', 'Hello');
+    $event = new AgentDataChanged('agent-7', 'leads', 'Hello');
 
-    expect($event->broadcastOn()->name)->toBe('private-agents.7')
+    expect($event->broadcastOn()->name)->toBe('private-agents.agent-7')
         ->and($event->broadcastAs())->toBe('data.changed')
         ->and($event->broadcastWith())->toBe(['topic' => 'leads', 'message' => 'Hello']);
 });

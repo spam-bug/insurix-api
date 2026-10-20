@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Actions\FollowUps\QueuePolicyFollowUps;
 use App\Enums\PolicyStatus;
 use App\Enums\RenewalOutcome;

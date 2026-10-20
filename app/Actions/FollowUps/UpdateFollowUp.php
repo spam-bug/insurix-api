@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\FollowUps;
 
 use App\DataTransferObjects\FollowUps\FollowUpData;

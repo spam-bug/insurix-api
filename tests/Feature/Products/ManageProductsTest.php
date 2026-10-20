@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PolicyStatus;
 use App\Models\Client;
 use App\Models\Policy;

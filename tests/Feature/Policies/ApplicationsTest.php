@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PolicyStatus;
 use App\Enums\RenewalTerm;
 use App\Models\Client;

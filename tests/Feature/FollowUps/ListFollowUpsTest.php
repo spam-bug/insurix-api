@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Client;
 use App\Models\FollowUp;
 use App\Models\Lead;

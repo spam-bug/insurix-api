@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Actions\Leads\ScoreLead;
 use App\Enums\LeadInterest;
 use App\Enums\LeadSource;
