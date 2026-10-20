@@ -54,7 +54,7 @@ class ScoreLead
      */
     public function sourceRates(Lead $lead): array
     {
-        return $lead->user->leads()
+        return Lead::where('user_id', $lead->user_id)
             ->toBase()
             ->selectRaw('source, count(*) as total, sum(case when status = ? then 1 else 0 end) as converted', [LeadStatus::Converted->value])
             ->groupBy('source')
