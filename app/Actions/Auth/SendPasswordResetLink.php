@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Auth;
 
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class SendPasswordResetLink
 {
@@ -14,6 +15,6 @@ class SendPasswordResetLink
      */
     public function handle(string $email): void
     {
-        Password::sendResetLink(['email' => $email]);
+        Password::sendResetLink(['email' => Str::lower(trim($email))]);
     }
 }

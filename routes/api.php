@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
+use App\Http\Controllers\Api\V1\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
@@ -60,8 +61,8 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('throttle:6,1')->group(function () {
         Route::post('/auth/two-factor-challenge', TwoFactorChallengeController::class);
-        Route::post('/auth/forgot-password', [PasswordResetController::class, 'sendLink']);
-        Route::post('/auth/reset-password', [PasswordResetController::class, 'reset']);
+        Route::post('/auth/forgot-password', [PasswordResetLinkController::class, 'store']);
+        Route::post('/auth/reset-password', [PasswordResetController::class, 'store']);
     });
 
     Route::get('/public/lead-forms/{agent:lead_form_token}', [PublicLeadFormController::class, 'show']);
