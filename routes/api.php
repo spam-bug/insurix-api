@@ -2,10 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Api\V1\Account\LeadFormBrandingController;
+use App\Http\Controllers\Api\V1\Account\LeadFormBioController;
+use App\Http\Controllers\Api\V1\Account\LogoController;
+use App\Http\Controllers\Api\V1\Account\OtherSessionsController;
 use App\Http\Controllers\Api\V1\Account\PasswordController;
+use App\Http\Controllers\Api\V1\Account\PhotoController;
 use App\Http\Controllers\Api\V1\Account\ProfileController;
+use App\Http\Controllers\Api\V1\Account\RecoveryCodeController;
 use App\Http\Controllers\Api\V1\Account\SessionController;
+use App\Http\Controllers\Api\V1\Account\TwoFactorConfirmationController;
 use App\Http\Controllers\Api\V1\Account\TwoFactorController;
 use App\Http\Controllers\Api\V1\ApplicationApprovalController;
 use App\Http\Controllers\Api\V1\ApplicationDeclineController;
@@ -67,22 +72,22 @@ Route::prefix('v1')->group(function () {
 
         Route::prefix('account')->group(function () {
             Route::put('/profile', [ProfileController::class, 'update']);
-            Route::post('/photo', [ProfileController::class, 'storePhoto']);
-            Route::delete('/photo', [ProfileController::class, 'destroyPhoto']);
+            Route::post('/photo', [PhotoController::class, 'store']);
+            Route::delete('/photo', [PhotoController::class, 'destroy']);
 
-            Route::put('/lead-form', [LeadFormBrandingController::class, 'updateBio']);
-            Route::post('/logo', [LeadFormBrandingController::class, 'storeLogo']);
-            Route::delete('/logo', [LeadFormBrandingController::class, 'destroyLogo']);
+            Route::put('/lead-form', [LeadFormBioController::class, 'update']);
+            Route::post('/logo', [LogoController::class, 'store']);
+            Route::delete('/logo', [LogoController::class, 'destroy']);
 
             Route::put('/password', [PasswordController::class, 'update']);
 
             Route::post('/two-factor', [TwoFactorController::class, 'store']);
-            Route::post('/two-factor/confirm', [TwoFactorController::class, 'confirm']);
+            Route::post('/two-factor/confirm', [TwoFactorConfirmationController::class, 'store']);
             Route::delete('/two-factor', [TwoFactorController::class, 'destroy']);
-            Route::post('/two-factor/recovery-codes', [TwoFactorController::class, 'regenerateRecoveryCodes']);
+            Route::post('/two-factor/recovery-codes', [RecoveryCodeController::class, 'store']);
 
             Route::get('/sessions', [SessionController::class, 'index']);
-            Route::delete('/sessions', [SessionController::class, 'destroyOthers']);
+            Route::delete('/sessions', [OtherSessionsController::class, 'destroy']);
             Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->whereUuid('session');
         });
 

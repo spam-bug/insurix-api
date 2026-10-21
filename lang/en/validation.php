@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 return [
     'custom' => [
+        'current_password' => [
+            'current_password' => 'That isn’t your current password.',
+        ],
         'document_id' => [
             'exists' => 'Pick one of this client’s documents.',
         ],
@@ -12,6 +15,11 @@ return [
         ],
         'email' => [
             'required_without' => 'Enter an email or a phone number.',
+        ],
+        'image' => [
+            'max' => 'Pick an image under 2 MB.',
+            'mimes' => 'Use a JPG, PNG or WebP image.',
+            'dimensions' => 'Use an image between 64 and 4,000 pixels on each side.',
         ],
         'name' => [
             'unique' => 'You already have a product with this name.',
@@ -23,6 +31,10 @@ return [
         'next_renewal_date' => [
             'required' => 'Pick the date it renews next.',
             'after' => 'The next renewal has to come after this one.',
+        ],
+        'password' => [
+            'current_password' => 'That isn’t your password.',
+            'different' => 'Choose a password you haven’t been using.',
         ],
         'phone' => [
             'required_without' => 'Enter a phone number or an email.',

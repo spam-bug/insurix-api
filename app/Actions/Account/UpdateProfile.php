@@ -12,7 +12,7 @@ class UpdateProfile
 {
     public function handle(User $agent, ProfileData $data): User
     {
-        DB::transaction(fn () => $agent->update($data->toAttributes()));
+        DB::transaction(fn () => $agent->update($data->toArray()));
 
         return $agent;
     }

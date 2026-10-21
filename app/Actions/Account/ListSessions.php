@@ -15,8 +15,11 @@ class ListSessions
      *
      * @return Collection<int, array{id: int, device: string, last_used_at: string|null, created_at: string|null, current: bool}>
      */
-    public function handle(User $agent, ?string $currentTokenId): Collection
+    public function handle(User $agent): Collection
     {
+        $token = $agent->currentAccessToken();
+        $currentTokenId = $token instanceof PersonalAccessToken ? $token->id : null;
+
         return $agent->tokens()
             ->orderByDesc('last_used_at')
             ->orderByDesc('id')
