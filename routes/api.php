@@ -90,7 +90,7 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/sessions', [SessionController::class, 'index']);
             Route::delete('/sessions', [OtherSessionsController::class, 'destroy']);
-            Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->whereUuid('session');
+            Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->whereAlphaNumeric('session');
         });
 
         Route::get('/lead-form', [LeadFormController::class, 'show']);

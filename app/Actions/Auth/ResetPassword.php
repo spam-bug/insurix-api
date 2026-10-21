@@ -25,7 +25,7 @@ class ResetPassword
             ['email' => Str::lower(trim($data->email)), 'token' => $data->token, 'password' => $data->password],
             fn (User $user, string $password) => DB::transaction(function () use ($user, $password) {
                 $user->forceFill(['password' => $password])->save();
-                $user->tokens()->delete();
+                DB::table('sessions')->where('user_id', $user->id)->delete();
             }),
         );
 
