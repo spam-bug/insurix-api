@@ -4,28 +4,16 @@ declare(strict_types=1);
 
 namespace App\DataTransferObject\FollowUps;
 
+use App\DataTransferObject\Data;
 use App\Enums\FollowUpType;
 use Carbon\CarbonImmutable;
 
-class FollowUpData
+class FollowUpData extends Data
 {
     public function __construct(
         public readonly FollowUpType $type,
         public readonly string $title,
         public readonly CarbonImmutable $dueAt,
-        public readonly ?string $notes,
+        public readonly ?string $notes = null,
     ) {}
-
-    /**
-     * @return array{type: FollowUpType, title: string, due_at: CarbonImmutable, notes: string|null}
-     */
-    public function toAttributes(): array
-    {
-        return [
-            'type' => $this->type,
-            'title' => $this->title,
-            'due_at' => $this->dueAt,
-            'notes' => $this->notes,
-        ];
-    }
 }

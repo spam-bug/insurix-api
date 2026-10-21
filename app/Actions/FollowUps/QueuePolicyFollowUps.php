@@ -59,8 +59,9 @@ class QueuePolicyFollowUps
 
                 $this->createFollowUp->handle(
                     $policy->client->lead,
-                    new FollowUpData(type: $type, title: $title, dueAt: $dueAt, notes: null),
-                    ['policy_id' => $policy->id, 'reminder_key' => $key],
+                    new FollowUpData(type: $type, title: $title, dueAt: $dueAt),
+                    $policy,
+                    $key,
                 );
                 $created++;
             }

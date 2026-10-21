@@ -40,6 +40,6 @@ class ListFollowUps
             $query->orderBy('due_at')->orderBy('id');
         }
 
-        return $query->paginate($filters->perPage)->withQueryString();
+        return $query->paginate($filters->perPage, page: $filters->page)->withQueryString();
     }
 }

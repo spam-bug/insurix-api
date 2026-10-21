@@ -54,7 +54,6 @@ class SubmitLeadForm
                 type: $lead->phone ? FollowUpType::Call : FollowUpType::Email,
                 title: "Reach out to {$lead->name}: sent your form",
                 dueAt: now()->toImmutable(),
-                notes: null,
             ));
 
             $this->notifyAgent->handle($agent->id, 'leads', "{$lead->name} just filled in your form");

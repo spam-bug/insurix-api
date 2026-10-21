@@ -12,7 +12,7 @@ class UpdateFollowUp
 {
     public function handle(FollowUp $followUp, FollowUpData $data): FollowUp
     {
-        DB::transaction(fn () => $followUp->update($data->toAttributes()));
+        DB::transaction(fn () => $followUp->update($data->toArray()));
 
         return $followUp;
     }
