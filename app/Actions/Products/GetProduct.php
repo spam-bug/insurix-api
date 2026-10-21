@@ -7,6 +7,7 @@ namespace App\Actions\Products;
 use App\Enums\PolicyStatus;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class GetProduct
 {
@@ -15,6 +16,6 @@ class GetProduct
      */
     public function handle(Product $product): Product
     {
-        return $product->loadCount(['policies as policies_count' => fn (Builder $query) => $query->where('status', '!=', PolicyStatus::Cancelled)]);
+        return Cache::tags("agent:{$product->user_id}")->rememberForever("products:{$product->user_id}:{$product->id}", fn () => $product->loadCount(['policies as policies_count' => fn (Builder $query) => $query->where('status', '!=', PolicyStatus::Cancelled)]));
     }
 }

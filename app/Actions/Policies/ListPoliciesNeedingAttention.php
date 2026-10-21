@@ -9,6 +9,7 @@ use App\Models\Policy;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class ListPoliciesNeedingAttention
 {
@@ -32,17 +33,19 @@ class ListPoliciesNeedingAttention
      */
     public function handle(User $agent): Collection
     {
-        $today = CarbonImmutable::now($agent->timezone)->startOfDay();
+        return Cache::tags("agent:{$agent->id}")->remember("policies:{$agent->id}:attention", now()->addMinutes(5), function () use ($agent) {
+            $today = CarbonImmutable::now($agent->timezone)->startOfDay();
 
-        return $agent->policies()
-            ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
-            ->withCount(['requirements as outstanding_requirements' => fn ($query) => $query->whereNull('received_on')])
-            ->whereIn('status', [PolicyStatus::InForce, PolicyStatus::Lapsed, PolicyStatus::Pending])
-            ->get()
-            ->map(fn (Policy $policy) => $this->assess($policy, $today))
-            ->filter()
-            ->sortBy(fn (array $item) => $item['due']->timestamp)
-            ->values();
+            return $agent->policies()
+                ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
+                ->withCount(['requirements as outstanding_requirements' => fn ($query) => $query->whereNull('received_on')])
+                ->whereIn('status', [PolicyStatus::InForce, PolicyStatus::Lapsed, PolicyStatus::Pending])
+                ->get()
+                ->map(fn (Policy $policy) => $this->assess($policy, $today))
+                ->filter()
+                ->sortBy(fn (array $item) => $item['due']->timestamp)
+                ->values();
+        });
     }
 
     /**

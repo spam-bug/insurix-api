@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 
 class ListProducts
 {
@@ -21,7 +22,7 @@ class ListProducts
      */
     public function handle(User $agent, ProductFiltersData $filters): LengthAwarePaginator
     {
-        return $agent->products()
+        return Cache::tags("agent:{$agent->id}")->rememberForever("products:{$agent->id}:index:".md5(json_encode($filters)), fn () => $agent->products()
             ->withCount(['policies as policies_count' => fn (Builder $query) => $query->where('status', '!=', PolicyStatus::Cancelled)])
             ->when($filters->type, fn (Builder $query, $type) => $query->where('type', $type))
             ->when($filters->active !== null, fn (Builder $query) => $query->where('is_active', $filters->active))
@@ -29,6 +30,6 @@ class ListProducts
             ->orderByDesc('is_active')
             ->orderBy('name')
             ->paginate($filters->perPage, page: $filters->page)
-            ->withQueryString();
+            ->withQueryString());
     }
 }

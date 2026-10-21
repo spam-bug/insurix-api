@@ -17,6 +17,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * "What should I do next to grow my business?": a few concrete suggestions from the agent's
@@ -53,24 +54,26 @@ class SuggestNextActions
      */
     public function handle(User $agent): array
     {
-        $today = CarbonImmutable::now($agent->timezone)->startOfDay();
+        return Cache::tags("agent:{$agent->id}")->remember("insights:{$agent->id}:next-actions", now()->addMinutes(5), function () use ($agent) {
+            $today = CarbonImmutable::now($agent->timezone)->startOfDay();
 
-        $quiet = $this->listStalledLeads->handle($agent, self::HOT_QUIET_DAYS);
-        $hot = $quiet->filter(fn (Lead $lead) => $lead->score !== null && $lead->score >= ScoreLead::HOT_SCORE)->values();
-        $stalled = $quiet->filter(fn (Lead $lead) => $lead->days_quiet >= ListStalledLeads::QUIET_DAYS)->diff($hot)->values();
+            $quiet = $this->listStalledLeads->handle($agent, self::HOT_QUIET_DAYS);
+            $hot = $quiet->filter(fn (Lead $lead) => $lead->score !== null && $lead->score >= ScoreLead::HOT_SCORE)->values();
+            $stalled = $quiet->filter(fn (Lead $lead) => $lead->days_quiet >= ListStalledLeads::QUIET_DAYS)->diff($hot)->values();
 
-        $suggestions = array_filter([
-            $this->overdueFollowUps($agent),
-            $this->hotLeadsWaiting($hot),
-            $this->renewalsAwaitingOutcome($agent, $today),
-            $this->renewalsWithoutFollowUp($agent, $today),
-            $this->stuckApplications($agent, $today),
-            $this->bestSource($agent),
-            $this->stalledLeads($stalled),
-            $this->newLeads($agent),
-        ]);
+            $suggestions = array_filter([
+                $this->overdueFollowUps($agent),
+                $this->hotLeadsWaiting($hot),
+                $this->renewalsAwaitingOutcome($agent, $today),
+                $this->renewalsWithoutFollowUp($agent, $today),
+                $this->stuckApplications($agent, $today),
+                $this->bestSource($agent),
+                $this->stalledLeads($stalled),
+                $this->newLeads($agent),
+            ]);
 
-        return array_slice(array_values($suggestions), 0, self::LIMIT);
+            return array_slice(array_values($suggestions), 0, self::LIMIT);
+        });
     }
 
     /**
