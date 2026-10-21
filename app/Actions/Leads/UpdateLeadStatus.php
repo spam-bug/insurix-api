@@ -8,6 +8,7 @@ use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -30,7 +31,7 @@ class UpdateLeadStatus
             return $lead;
         }
 
-        return DB::transaction(function () use ($lead, $status, $previous, $actor) {
+        $lead = DB::transaction(function () use ($lead, $status, $previous, $actor) {
             $lead->update(['status' => $status]);
 
             $this->recordLeadActivity->handle($lead, LeadActivityType::StatusChanged, $actor, properties: [
@@ -40,5 +41,9 @@ class UpdateLeadStatus
 
             return $lead;
         });
+
+        Cache::tags("agent:{$lead->user_id}")->flush();
+
+        return $lead;
     }
 }

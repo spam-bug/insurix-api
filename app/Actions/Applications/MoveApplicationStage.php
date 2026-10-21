@@ -10,6 +10,7 @@ use App\Enums\PolicyEventType;
 use App\Enums\PolicyStatus;
 use App\Models\Policy;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -32,7 +33,7 @@ class MoveApplicationStage
             return $policy;
         }
 
-        return DB::transaction(function () use ($policy, $stage, $previous, $actor) {
+        $policy = DB::transaction(function () use ($policy, $stage, $previous, $actor) {
             $policy->update(['application_stage' => $stage, 'stage_changed_at' => now()]);
 
             $this->recordPolicyEvent->handle($policy, PolicyEventType::StageChanged, $actor, [
@@ -42,5 +43,9 @@ class MoveApplicationStage
 
             return $policy;
         });
+
+        Cache::tags("agent:{$policy->user_id}")->flush();
+
+        return $policy;
     }
 }

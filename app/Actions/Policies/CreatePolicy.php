@@ -9,6 +9,7 @@ use App\Enums\PolicyEventType;
 use App\Models\Client;
 use App\Models\Policy;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CreatePolicy
@@ -26,7 +27,7 @@ class CreatePolicy
     {
         $attributes = $this->preparePolicyAttributes->handle($client->user, $data);
 
-        return DB::transaction(function () use ($client, $attributes, $actor) {
+        $policy = DB::transaction(function () use ($client, $attributes, $actor) {
             $policy = $client->policies()->create([
                 ...$attributes,
                 'user_id' => $client->user_id,
@@ -36,5 +37,9 @@ class CreatePolicy
 
             return $policy;
         });
+
+        Cache::tags("agent:{$client->user_id}")->flush();
+
+        return $policy;
     }
 }

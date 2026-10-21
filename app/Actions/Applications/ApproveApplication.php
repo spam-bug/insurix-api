@@ -11,6 +11,7 @@ use App\Enums\PolicyStatus;
 use App\Enums\RenewalTerm;
 use App\Models\Policy;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -34,7 +35,7 @@ class ApproveApplication
             throw ValidationException::withMessages(['effective_date' => 'Add the date it takes effect, so its renewals can be worked out.']);
         }
 
-        return DB::transaction(function () use ($policy, $data, $actor) {
+        $policy = DB::transaction(function () use ($policy, $data, $actor) {
             $policy->update([
                 'status' => PolicyStatus::InForce,
                 'application_stage' => null,
@@ -50,5 +51,9 @@ class ApproveApplication
 
             return $policy;
         });
+
+        Cache::tags("agent:{$policy->user_id}")->flush();
+
+        return $policy;
     }
 }

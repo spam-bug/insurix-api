@@ -6,6 +6,7 @@ namespace App\Actions\Clients;
 
 use App\DataTransferObject\Clients\ClientData;
 use App\Models\Client;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UpdateClient
@@ -13,6 +14,8 @@ class UpdateClient
     public function handle(Client $client, ClientData $data): Client
     {
         DB::transaction(fn () => $client->update($data->toArray()));
+
+        Cache::tags("agent:{$client->user_id}")->flush();
 
         return $client;
     }

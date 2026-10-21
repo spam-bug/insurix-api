@@ -12,6 +12,7 @@ use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ScheduleLeadMeeting
@@ -28,7 +29,7 @@ class ScheduleLeadMeeting
      */
     public function handle(Lead $lead, LeadMeetingData $data, User $actor): Lead
     {
-        return DB::transaction(function () use ($lead, $data, $actor) {
+        $lead = DB::transaction(function () use ($lead, $data, $actor) {
             $previousStatus = $lead->status;
 
             $lead->update([
@@ -52,5 +53,9 @@ class ScheduleLeadMeeting
 
             return $lead;
         });
+
+        Cache::tags("agent:{$lead->user_id}")->flush();
+
+        return $lead;
     }
 }

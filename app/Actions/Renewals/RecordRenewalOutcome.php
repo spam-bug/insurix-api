@@ -14,6 +14,7 @@ use App\Models\Policy;
 use App\Models\PolicyRenewal;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -36,7 +37,7 @@ class RecordRenewalOutcome
             throw ValidationException::withMessages(['due_on' => 'This renewal isn’t waiting for an outcome.']);
         }
 
-        return DB::transaction(function () use ($policy, $data, $actor) {
+        $renewal = DB::transaction(function () use ($policy, $data, $actor) {
             $renewal = $policy->renewals()->create([
                 'user_id' => $actor->id,
                 'due_on' => $data->dueOn,
@@ -59,5 +60,9 @@ class RecordRenewalOutcome
 
             return $renewal;
         });
+
+        Cache::tags("agent:{$policy->user_id}")->flush();
+
+        return $renewal;
     }
 }

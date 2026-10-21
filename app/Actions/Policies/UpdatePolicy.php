@@ -6,6 +6,7 @@ namespace App\Actions\Policies;
 
 use App\DataTransferObject\Policies\PolicyData;
 use App\Models\Policy;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UpdatePolicy
@@ -17,6 +18,8 @@ class UpdatePolicy
         $attributes = $this->preparePolicyAttributes->handle($policy->user, $data, $policy);
 
         DB::transaction(fn () => $policy->update($attributes));
+
+        Cache::tags("agent:{$policy->user_id}")->flush();
 
         return $policy;
     }

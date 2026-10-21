@@ -6,6 +6,7 @@ namespace App\Actions\Leads;
 
 use App\DataTransferObject\Leads\LeadSelectionData;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class BulkDeleteLeads
@@ -17,6 +18,10 @@ class BulkDeleteLeads
      */
     public function handle(User $agent, LeadSelectionData $data): int
     {
-        return DB::transaction(fn () => $agent->leads()->whereKey($data->ids)->delete());
+        $deleted = DB::transaction(fn () => $agent->leads()->whereKey($data->ids)->delete());
+
+        Cache::tags("agent:{$agent->id}")->flush();
+
+        return $deleted;
     }
 }

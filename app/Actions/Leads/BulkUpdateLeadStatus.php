@@ -7,6 +7,7 @@ namespace App\Actions\Leads;
 use App\DataTransferObject\Leads\BulkLeadStatusData;
 use App\Enums\LeadStatus;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class BulkUpdateLeadStatus
@@ -21,7 +22,7 @@ class BulkUpdateLeadStatus
      */
     public function handle(User $agent, BulkLeadStatusData $data): int
     {
-        return DB::transaction(function () use ($agent, $data) {
+        $updated = DB::transaction(function () use ($agent, $data) {
             $leads = $agent->leads()->whereKey($data->ids)->whereNotIn('status', [$data->status, LeadStatus::Converted])->get();
 
             foreach ($leads as $lead) {
@@ -30,5 +31,9 @@ class BulkUpdateLeadStatus
 
             return $leads->count();
         });
+
+        Cache::tags("agent:{$agent->id}")->flush();
+
+        return $updated;
     }
 }

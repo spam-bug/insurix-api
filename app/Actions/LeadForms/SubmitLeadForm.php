@@ -15,6 +15,7 @@ use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class SubmitLeadForm
@@ -37,7 +38,7 @@ class SubmitLeadForm
             return null;
         }
 
-        return DB::transaction(function () use ($agent, $data) {
+        $lead = DB::transaction(function () use ($agent, $data) {
             $lead = $agent->leads()->create([
                 'name' => $data->name,
                 'email' => $data->email,
@@ -60,5 +61,9 @@ class SubmitLeadForm
 
             return $lead;
         });
+
+        Cache::tags("agent:{$agent->id}")->flush();
+
+        return $lead;
     }
 }

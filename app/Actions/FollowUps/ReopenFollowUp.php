@@ -6,6 +6,7 @@ namespace App\Actions\FollowUps;
 
 use App\Actions\Leads\ScoreLead;
 use App\Models\FollowUp;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ReopenFollowUp
@@ -22,6 +23,8 @@ class ReopenFollowUp
 
             $this->scoreLead->handle($followUp->lead);
         });
+
+        Cache::tags("agent:{$followUp->user_id}")->flush();
 
         return $followUp;
     }

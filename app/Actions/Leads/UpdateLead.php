@@ -8,6 +8,7 @@ use App\DataTransferObject\Leads\LeadData;
 use App\Enums\LeadActivityType;
 use App\Models\Lead;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UpdateLead
@@ -23,12 +24,16 @@ class UpdateLead
             return $lead;
         }
 
-        return DB::transaction(function () use ($lead, $actor, $changedFields) {
+        $lead = DB::transaction(function () use ($lead, $actor, $changedFields) {
             $lead->save();
 
             $this->recordLeadActivity->handle($lead, LeadActivityType::Updated, $actor, properties: ['fields' => $changedFields]);
 
             return $lead;
         });
+
+        Cache::tags("agent:{$lead->user_id}")->flush();
+
+        return $lead;
     }
 }

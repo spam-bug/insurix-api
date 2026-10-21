@@ -11,6 +11,7 @@ use App\Enums\LeadStatus;
 use App\Models\Client;
 use App\Models\Lead;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -28,7 +29,7 @@ class PromoteLead
             throw ValidationException::withMessages(['lead' => 'This lead is already a client.']);
         }
 
-        return DB::transaction(function () use ($lead, $profile, $actor) {
+        $client = DB::transaction(function () use ($lead, $profile, $actor) {
             $previousStatus = $lead->status;
 
             $client = $lead->user->clients()->create([
@@ -50,5 +51,9 @@ class PromoteLead
 
             return $client;
         });
+
+        Cache::tags("agent:{$lead->user_id}")->flush();
+
+        return $client;
     }
 }

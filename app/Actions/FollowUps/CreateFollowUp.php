@@ -9,6 +9,7 @@ use App\DataTransferObject\FollowUps\FollowUpData;
 use App\Models\FollowUp;
 use App\Models\Lead;
 use App\Models\Policy;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CreateFollowUp
@@ -22,7 +23,7 @@ class CreateFollowUp
      */
     public function handle(Lead $lead, FollowUpData $data, ?Policy $policy = null, ?string $reminderKey = null): FollowUp
     {
-        return DB::transaction(function () use ($lead, $data, $policy, $reminderKey) {
+        $followUp = DB::transaction(function () use ($lead, $data, $policy, $reminderKey) {
             $followUp = $lead->followUps()->create([
                 ...$data->toArray(),
                 'policy_id' => $policy?->id,
@@ -34,5 +35,9 @@ class CreateFollowUp
 
             return $followUp;
         });
+
+        Cache::tags("agent:{$lead->user_id}")->flush();
+
+        return $followUp;
     }
 }

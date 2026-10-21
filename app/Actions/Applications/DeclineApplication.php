@@ -9,6 +9,7 @@ use App\Enums\PolicyEventType;
 use App\Enums\PolicyStatus;
 use App\Models\Policy;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -25,12 +26,16 @@ class DeclineApplication
             throw ValidationException::withMessages(['status' => 'Only a pending application can change this way.']);
         }
 
-        return DB::transaction(function () use ($policy, $reason, $actor) {
+        $policy = DB::transaction(function () use ($policy, $reason, $actor) {
             $policy->update(['status' => PolicyStatus::Declined, 'application_stage' => null, 'stage_changed_at' => null]);
 
             $this->recordPolicyEvent->handle($policy, PolicyEventType::Declined, $actor, ['reason' => $reason]);
 
             return $policy;
         });
+
+        Cache::tags("agent:{$policy->user_id}")->flush();
+
+        return $policy;
     }
 }

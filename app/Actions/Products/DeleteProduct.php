@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Products;
 
 use App\Models\Product;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -25,5 +26,7 @@ class DeleteProduct
         }
 
         DB::transaction(fn () => $product->delete());
+
+        Cache::tags("agent:{$product->user_id}")->flush();
     }
 }
