@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\V1\LeadActivityController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadFollowUpController;
 use App\Http\Controllers\Api\V1\LeadFormController;
+use App\Http\Controllers\Api\V1\LeadFormTokenController;
 use App\Http\Controllers\Api\V1\LeadMeetingController;
 use App\Http\Controllers\Api\V1\LeadNoteController;
 use App\Http\Controllers\Api\V1\LeadPromotionController;
@@ -93,7 +94,7 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::get('/lead-form', [LeadFormController::class, 'show']);
-        Route::post('/lead-form/regenerate', [LeadFormController::class, 'regenerate']);
+        Route::post('/lead-form/regenerate', [LeadFormTokenController::class, 'store']);
 
         Route::get('/leads/status-counts', [LeadStatusCountController::class, 'index']);
         Route::post('/leads/bulk/status', [BulkLeadStatusController::class, 'update']);
