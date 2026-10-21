@@ -11,7 +11,7 @@ use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 
-/** The devices the agent is signed in on, one per access token. */
+/** The devices the agent is signed in on, one per browser session. */
 class SessionController extends Controller
 {
     public function index(#[CurrentUser] User $agent, ListSessions $listSessions): JsonResponse
