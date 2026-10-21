@@ -16,12 +16,19 @@ return [
         'name' => [
             'unique' => 'You already have a product with this name.',
         ],
+        'file' => [
+            'max' => 'Pick a file under 10 MB.',
+            'mimes' => 'Use a PDF, an image (JPG, PNG, WebP, HEIC), or a Word or Excel file.',
+        ],
         'next_renewal_date' => [
             'required' => 'Pick the date it renews next.',
             'after' => 'The next renewal has to come after this one.',
         ],
         'phone' => [
             'required_without' => 'Enter a phone number or an email.',
+        ],
+        'policy_id' => [
+            'exists' => 'Pick one of this client’s policies.',
         ],
         'premium' => [
             'gt' => 'Enter the premium per payment.',

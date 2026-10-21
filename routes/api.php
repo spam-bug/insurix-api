@@ -20,10 +20,12 @@ use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\BulkLeadStatusController;
 use App\Http\Controllers\Api\V1\ClientController;
+use App\Http\Controllers\Api\V1\ClientDocumentController;
 use App\Http\Controllers\Api\V1\ClientHistoryController;
 use App\Http\Controllers\Api\V1\ClientPolicyController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\DocumentController;
+use App\Http\Controllers\Api\V1\DocumentDownloadController;
 use App\Http\Controllers\Api\V1\FollowUpController;
 use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
@@ -124,12 +126,12 @@ Route::prefix('v1')->group(function () {
         Route::post('/policies/{policy}/renewals', [PolicyRenewalController::class, 'store']);
         Route::get('/commissions/summary', [CommissionSummaryController::class, 'index']);
 
-        Route::post('/clients/{client}/documents', [DocumentController::class, 'store']);
-        Route::get('/documents/{document}/download', [DocumentController::class, 'download']);
+        Route::post('/clients/{client}/documents', [ClientDocumentController::class, 'store']);
+        Route::get('/documents/{document}/download', [DocumentDownloadController::class, 'show'])->can('view', 'document');
         Route::get('/documents', [DocumentController::class, 'index']);
-        Route::get('/documents/{document}', [DocumentController::class, 'show']);
+        Route::get('/documents/{document}', [DocumentController::class, 'show'])->can('view', 'document');
         Route::put('/documents/{document}', [DocumentController::class, 'update']);
-        Route::delete('/documents/{document}', [DocumentController::class, 'destroy']);
+        Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->can('delete', 'document');
 
         Route::get('/insights/reports', [InsightController::class, 'reports']);
         Route::get('/insights/next-actions', [InsightController::class, 'nextActions']);

@@ -22,8 +22,8 @@ class StoreDocument
         $path = $file->store("documents/{$client->user_id}/{$client->id}", Document::DISK);
 
         return DB::transaction(fn () => $client->documents()->create([
-            'name' => Str::limit(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), 250, ''),
-            ...$data->toAttributes(),
+            ...$data->toArray(),
+            'name' => $data->name ?? Str::limit(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), 250, ''),
             'user_id' => $client->user_id,
             'original_name' => Str::limit($file->getClientOriginalName(), 250, ''),
             'path' => $path,

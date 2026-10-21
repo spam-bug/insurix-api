@@ -15,7 +15,7 @@ class UpdateDocument
      */
     public function handle(Document $document, DocumentData $data): Document
     {
-        DB::transaction(fn () => $document->update($data->toAttributes()));
+        DB::transaction(fn () => $document->update($data->toArray()));
 
         return $document;
     }
