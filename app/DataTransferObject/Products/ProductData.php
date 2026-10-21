@@ -4,32 +4,18 @@ declare(strict_types=1);
 
 namespace App\DataTransferObject\Products;
 
+use App\DataTransferObject\Data;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyType;
 
-class ProductData
+class ProductData extends Data
 {
     public function __construct(
         public readonly string $name,
         public readonly PolicyType $type,
-        public readonly ?string $description,
         public readonly string $commissionRate,
-        public readonly ?PaymentFrequency $paymentFrequency,
-        public readonly bool $isActive,
+        public readonly ?string $description = null,
+        public readonly ?PaymentFrequency $paymentFrequency = null,
+        public readonly bool $isActive = true,
     ) {}
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function toAttributes(): array
-    {
-        return [
-            'name' => $this->name,
-            'type' => $this->type,
-            'description' => $this->description,
-            'commission_rate' => $this->commissionRate,
-            'payment_frequency' => $this->paymentFrequency,
-            'is_active' => $this->isActive,
-        ];
-    }
 }

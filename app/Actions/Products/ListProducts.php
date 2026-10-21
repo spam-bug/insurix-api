@@ -28,7 +28,7 @@ class ListProducts
             ->when($filters->search, fn (Builder $query, string $search) => $query->where('name', 'like', "%{$search}%"))
             ->orderByDesc('is_active')
             ->orderBy('name')
-            ->paginate($filters->perPage)
+            ->paginate($filters->perPage, page: $filters->page)
             ->withQueryString();
     }
 }

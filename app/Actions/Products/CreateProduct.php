@@ -13,6 +13,6 @@ class CreateProduct
 {
     public function handle(User $agent, ProductData $data): Product
     {
-        return DB::transaction(fn () => $agent->products()->create($data->toAttributes()));
+        return DB::transaction(fn () => $agent->products()->create($data->toArray()));
     }
 }

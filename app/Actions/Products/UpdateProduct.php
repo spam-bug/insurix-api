@@ -16,7 +16,7 @@ class UpdateProduct
      */
     public function handle(Product $product, ProductData $data): Product
     {
-        DB::transaction(fn () => $product->update($data->toAttributes()));
+        DB::transaction(fn () => $product->update($data->toArray()));
 
         return $product;
     }

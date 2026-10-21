@@ -7,6 +7,9 @@ return [
         'email' => [
             'required_without' => 'Enter an email or a phone number.',
         ],
+        'name' => [
+            'unique' => 'You already have a product with this name.',
+        ],
         'phone' => [
             'required_without' => 'Enter a phone number or an email.',
         ],

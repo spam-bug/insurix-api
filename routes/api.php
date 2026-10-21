@@ -99,9 +99,9 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/products', [ProductController::class, 'index']);
         Route::post('/products', [ProductController::class, 'store']);
-        Route::get('/products/{product}', [ProductController::class, 'show']);
+        Route::get('/products/{product}', [ProductController::class, 'show'])->can('view', 'product');
         Route::put('/products/{product}', [ProductController::class, 'update']);
-        Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->can('delete', 'product');
 
         Route::get('/policies/attention', [PolicyController::class, 'attention']);
         Route::post('/clients/{client}/policies', [PolicyController::class, 'store']);
