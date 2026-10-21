@@ -29,7 +29,7 @@ class ListClients
             })
             ->latest()
             ->latest('id')
-            ->paginate($filters->perPage)
+            ->paginate($filters->perPage, page: $filters->page)
             ->withQueryString();
     }
 }

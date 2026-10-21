@@ -12,7 +12,7 @@ class UpdateClient
 {
     public function handle(Client $client, ClientData $data): Client
     {
-        DB::transaction(fn () => $client->update($data->toAttributes()));
+        DB::transaction(fn () => $client->update($data->toArray()));
 
         return $client;
     }

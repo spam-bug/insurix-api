@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\BulkLeadStatusController;
 use App\Http\Controllers\Api\V1\ClientController;
+use App\Http\Controllers\Api\V1\ClientHistoryController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\FollowUpController;
@@ -92,9 +93,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/leads/{lead}/promote', [LeadPromotionController::class, 'store']);
 
         Route::get('/clients', [ClientController::class, 'index']);
-        Route::get('/clients/{client}', [ClientController::class, 'show']);
+        Route::get('/clients/{client}', [ClientController::class, 'show'])->can('view', 'client');
         Route::put('/clients/{client}', [ClientController::class, 'update']);
-        Route::get('/clients/{client}/history', [ClientController::class, 'history']);
+        Route::get('/clients/{client}/history', [ClientHistoryController::class, 'index'])->can('view', 'client');
 
         Route::get('/products', [ProductController::class, 'index']);
         Route::post('/products', [ProductController::class, 'store']);

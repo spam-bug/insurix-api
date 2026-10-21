@@ -15,12 +15,4 @@ class ClientProfileData extends Data
         public readonly ?CivilStatus $civilStatus = null,
         public readonly ?string $occupation = null,
     ) {}
-
-    /**
-     * @return array{birthdate: CarbonImmutable|null, civil_status: CivilStatus|null, occupation: string|null}
-     */
-    public function toAttributes(): array
-    {
-        return $this->toArray();
-    }
 }
