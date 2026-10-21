@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Renewals;
 
+use App\Actions\Policies\FindRenewalAwaitingOutcome;
 use App\Actions\Policies\RecordPolicyEvent;
 use App\DataTransferObject\Renewals\RenewalData;
 use App\Enums\PolicyEventType;
@@ -18,7 +19,10 @@ use Illuminate\Validation\ValidationException;
 
 class RecordRenewalOutcome
 {
-    public function __construct(private RecordPolicyEvent $recordPolicyEvent) {}
+    public function __construct(
+        private RecordPolicyEvent $recordPolicyEvent,
+        private FindRenewalAwaitingOutcome $findRenewalAwaitingOutcome,
+    ) {}
 
     /**
      * Records what happened at a renewal date and updates the policy to match: still in force,
@@ -26,7 +30,7 @@ class RecordRenewalOutcome
      */
     public function handle(Policy $policy, RenewalData $data, User $actor): PolicyRenewal
     {
-        $awaiting = $policy->renewalAwaitingOutcome(CarbonImmutable::now($policy->user->timezone)->startOfDay());
+        $awaiting = $this->findRenewalAwaitingOutcome->handle($policy, CarbonImmutable::now($policy->user->timezone)->startOfDay());
 
         if ($awaiting?->toDateString() !== $data->dueOn->toDateString()) {
             throw ValidationException::withMessages(['due_on' => 'This renewal isn’t waiting for an outcome.']);

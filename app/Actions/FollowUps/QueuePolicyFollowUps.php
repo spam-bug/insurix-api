@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Actions\FollowUps;
 
 use App\Actions\Notifications\NotifyAgent;
+use App\Actions\Policies\FindNextPaymentDue;
+use App\Actions\Policies\FindNextRenewalDate;
 use App\Actions\Policies\ListPoliciesNeedingAttention;
 use App\DataTransferObject\FollowUps\FollowUpData;
 use App\Enums\FollowUpType;
@@ -31,6 +33,8 @@ class QueuePolicyFollowUps
     public function __construct(
         private CreateFollowUp $createFollowUp,
         private NotifyAgent $notifyAgent,
+        private FindNextRenewalDate $findNextRenewalDate,
+        private FindNextPaymentDue $findNextPaymentDue,
     ) {}
 
     /**
@@ -80,7 +84,7 @@ class QueuePolicyFollowUps
     private function remindersFor(Policy $policy, CarbonImmutable $today): array
     {
         $reminders = [];
-        $renewal = $policy->nextRenewalDate($today);
+        $renewal = $this->findNextRenewalDate->handle($policy, $today);
         $alreadyRecorded = $renewal && $policy->renewals->contains(fn ($recorded) => $recorded->due_on->equalTo($renewal));
 
         if ($renewal && ! $alreadyRecorded && $renewal->greaterThanOrEqualTo($today) && $renewal->lessThanOrEqualTo($today->addDays($policy->renewal_term->attentionDays()))) {
@@ -92,7 +96,7 @@ class QueuePolicyFollowUps
             ];
         }
 
-        $premium = $policy->nextPaymentDue($today);
+        $premium = $this->findNextPaymentDue->handle($policy, $today);
         if ($premium && $premium->lessThanOrEqualTo($today->addDays(ListPoliciesNeedingAttention::PAYMENT_WINDOW_DAYS))) {
             $reminders[] = [
                 "premium:{$premium->toDateString()}",

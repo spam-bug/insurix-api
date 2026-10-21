@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Policies\FindNextPaymentDue;
 use App\Enums\PolicyStatus;
 use App\Models\Client;
 use App\Models\Policy;
@@ -50,7 +51,7 @@ it('works out the next premium for each payment frequency', function (string $fr
     Carbon::setTestNow('2026-10-17');
     $policy = Policy::factory()->create(['payment_frequency' => $frequency, 'effective_date' => '2026-01-31']);
 
-    expect($policy->nextPaymentDue()?->toDateString())->toBe($expected);
+    expect(app(FindNextPaymentDue::class)->handle($policy)?->toDateString())->toBe($expected);
 })->with([
     'monthly' => ['monthly', '2026-10-31'],
     'quarterly' => ['quarterly', '2026-10-31'],
@@ -62,7 +63,7 @@ it('works out the next premium for each payment frequency', function (string $fr
 it('has no next premium once a policy is no longer in force', function () {
     $policy = Policy::factory()->status(PolicyStatus::Lapsed)->create();
 
-    expect($policy->nextPaymentDue())->toBeNull();
+    expect(app(FindNextPaymentDue::class)->handle($policy))->toBeNull();
 });
 
 it('validates a policy', function () {

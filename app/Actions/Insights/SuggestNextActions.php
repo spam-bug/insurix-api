@@ -6,6 +6,8 @@ namespace App\Actions\Insights;
 
 use App\Actions\FollowUps\SummarizeFollowUps;
 use App\Actions\Leads\ScoreLead;
+use App\Actions\Policies\FindRenewalAwaitingOutcome;
+use App\Actions\Policies\FindUpcomingRenewal;
 use App\Actions\Policies\ListPoliciesNeedingAttention;
 use App\Enums\LeadSource;
 use App\Enums\PolicyStatus;
@@ -42,6 +44,8 @@ class SuggestNextActions
         private SummarizeFollowUps $summarizeFollowUps,
         private ListStalledLeads $listStalledLeads,
         private MeasureLeadSources $measureLeadSources,
+        private FindRenewalAwaitingOutcome $findRenewalAwaitingOutcome,
+        private FindUpcomingRenewal $findUpcomingRenewal,
     ) {}
 
     /**
@@ -128,7 +132,7 @@ class SuggestNextActions
             ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
             ->where('status', PolicyStatus::InForce)
             ->get()
-            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $policy->renewalAwaitingOutcome($today)])
+            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $this->findRenewalAwaitingOutcome->handle($policy, $today)])
             ->filter(fn (array $renewal) => $renewal['date'] !== null && $renewal['date']->lessThan($today))
             ->sortBy(fn (array $renewal) => $renewal['date']->timestamp)
             ->values();
@@ -157,7 +161,7 @@ class SuggestNextActions
             ->where('status', PolicyStatus::InForce)
             ->whereDoesntHave('followUps', fn (Builder $query) => $query->whereNull('completed_at'))
             ->get()
-            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $policy->renewalWithin($today, self::RENEWAL_WINDOW_DAYS), 'policy' => $policy])
+            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $this->findUpcomingRenewal->handle($policy, $today, self::RENEWAL_WINDOW_DAYS), 'policy' => $policy])
             // A renewal already recorded early doesn't need a follow-up.
             ->filter(fn (array $renewal) => $renewal['date'] !== null && ! $renewal['policy']->renewals->contains(fn ($recorded) => $recorded->due_on->equalTo($renewal['date'])))
             ->sortBy(fn (array $renewal) => $renewal['date']->timestamp)

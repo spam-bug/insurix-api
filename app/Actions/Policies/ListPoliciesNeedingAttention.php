@@ -12,6 +12,12 @@ use Illuminate\Support\Collection;
 
 class ListPoliciesNeedingAttention
 {
+    public function __construct(
+        private FindRenewalAwaitingOutcome $findRenewalAwaitingOutcome,
+        private FindNextRenewalDate $findNextRenewalDate,
+        private FindNextPaymentDue $findNextPaymentDue,
+    ) {}
+
     /** Premiums this many days out start showing. */
     public const PAYMENT_WINDOW_DAYS = 7;
 
@@ -67,7 +73,9 @@ class ListPoliciesNeedingAttention
         }
 
         // Annual and custom terms wait for the agent to record each outcome; shorter terms roll over.
-        $renewal = $policy->tracksRenewalOutcomes() ? $policy->renewalAwaitingOutcome($today) : $policy->nextRenewalDate($today);
+        $renewal = $policy->renewal_term?->tracksOutcomes()
+            ? $this->findRenewalAwaitingOutcome->handle($policy, $today)
+            : $this->findNextRenewalDate->handle($policy, $today);
         if ($policy->status === PolicyStatus::InForce && $renewal) {
             if ($renewal->lessThan($today)) {
                 $reasons[] = ['code' => 'renewal_overdue', 'label' => 'Renewal date has passed: record how it went', 'date' => $renewal->toDateString()];
@@ -78,7 +86,7 @@ class ListPoliciesNeedingAttention
             }
         }
 
-        $nextPayment = $policy->nextPaymentDue($today);
+        $nextPayment = $this->findNextPaymentDue->handle($policy, $today);
         if ($nextPayment && $nextPayment->lessThanOrEqualTo($today->addDays(self::PAYMENT_WINDOW_DAYS))) {
             $reasons[] = ['code' => 'payment_due', 'label' => 'Premium due soon', 'date' => $nextPayment->toDateString()];
             $dates[] = $nextPayment;
