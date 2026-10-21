@@ -34,7 +34,7 @@ class ListPolicies
             })
             ->latest()
             ->latest('id')
-            ->paginate($filters->perPage)
+            ->paginate($filters->perPage, page: $filters->page)
             ->withQueryString();
     }
 }

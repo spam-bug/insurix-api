@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Applications;
 
 use App\Actions\Policies\RecordPolicyEvent;
+use App\DataTransferObject\Applications\RequirementData;
 use App\Enums\PolicyEventType;
 use App\Models\ApplicationRequirement;
 use App\Models\Document;
@@ -20,9 +21,10 @@ class UpdateRequirement
      * Ticks a requirement off as received today (or un-ticks it), and links the document that
      * covers it. Linking a document counts as receiving it.
      */
-    public function handle(ApplicationRequirement $requirement, bool $received, ?Document $document, User $actor): ApplicationRequirement
+    public function handle(ApplicationRequirement $requirement, RequirementData $data, User $actor): ApplicationRequirement
     {
-        $received = $received || $document !== null;
+        $document = $data->documentId === null ? null : Document::findOrFail($data->documentId);
+        $received = $data->received || $document !== null;
         $wasReceived = $requirement->received_on !== null;
 
         return DB::transaction(function () use ($requirement, $received, $wasReceived, $document, $actor) {

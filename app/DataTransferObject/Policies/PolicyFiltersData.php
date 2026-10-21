@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\DataTransferObject\Policies;
 
+use App\DataTransferObject\Data;
 use App\Enums\PolicyStatus;
 
-class PolicyFiltersData
+class PolicyFiltersData extends Data
 {
     public function __construct(
         public readonly ?string $search = null,
@@ -14,5 +15,6 @@ class PolicyFiltersData
         public readonly ?string $clientId = null,
         public readonly ?string $productId = null,
         public readonly int $perPage = 10,
+        public readonly int $page = 1,
     ) {}
 }

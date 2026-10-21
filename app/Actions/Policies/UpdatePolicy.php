@@ -10,9 +10,13 @@ use Illuminate\Support\Facades\DB;
 
 class UpdatePolicy
 {
+    public function __construct(private PreparePolicyAttributes $preparePolicyAttributes) {}
+
     public function handle(Policy $policy, PolicyData $data): Policy
     {
-        DB::transaction(fn () => $policy->update($data->toAttributes()));
+        $attributes = $this->preparePolicyAttributes->handle($policy->user, $data, $policy);
+
+        DB::transaction(fn () => $policy->update($attributes));
 
         return $policy;
     }

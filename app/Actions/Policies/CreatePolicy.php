@@ -13,7 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class CreatePolicy
 {
-    public function __construct(private RecordPolicyEvent $recordPolicyEvent) {}
+    public function __construct(
+        private PreparePolicyAttributes $preparePolicyAttributes,
+        private RecordPolicyEvent $recordPolicyEvent,
+    ) {}
 
     /**
      * Records a policy for the client, owned by the client's agent. A pending one starts as a
@@ -21,9 +24,11 @@ class CreatePolicy
      */
     public function handle(Client $client, PolicyData $data, ?User $actor = null): Policy
     {
-        return DB::transaction(function () use ($client, $data, $actor) {
+        $attributes = $this->preparePolicyAttributes->handle($client->user, $data);
+
+        return DB::transaction(function () use ($client, $attributes, $actor) {
             $policy = $client->policies()->create([
-                ...$data->toAttributes(),
+                ...$attributes,
                 'user_id' => $client->user_id,
             ]);
 

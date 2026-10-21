@@ -10,6 +10,7 @@ use App\Enums\PolicyStatus;
 use App\Models\Policy;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class DeclineApplication
 {
@@ -20,6 +21,10 @@ class DeclineApplication
      */
     public function handle(Policy $policy, ?string $reason, ?User $actor): Policy
     {
+        if ($policy->status !== PolicyStatus::Pending) {
+            throw ValidationException::withMessages(['status' => 'Only a pending application can change this way.']);
+        }
+
         return DB::transaction(function () use ($policy, $reason, $actor) {
             $policy->update(['status' => PolicyStatus::Declined, 'application_stage' => null, 'stage_changed_at' => null]);
 

@@ -7,9 +7,11 @@ namespace App\Actions\Applications;
 use App\Actions\Policies\RecordPolicyEvent;
 use App\Enums\ApplicationStage;
 use App\Enums\PolicyEventType;
+use App\Enums\PolicyStatus;
 use App\Models\Policy;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class MoveApplicationStage
 {
@@ -21,6 +23,10 @@ class MoveApplicationStage
      */
     public function handle(Policy $policy, ApplicationStage $stage, ?User $actor): Policy
     {
+        if ($policy->status !== PolicyStatus::Pending) {
+            throw ValidationException::withMessages(['status' => 'Only a pending application can change this way.']);
+        }
+
         $previous = $policy->application_stage;
         if ($previous === $stage) {
             return $policy;
