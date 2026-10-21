@@ -46,9 +46,9 @@ class PolicyResource extends JsonResource
             'premium' => (float) $this->premium,
             'coverage_amount' => $this->coverage_amount === null ? null : (float) $this->coverage_amount,
             'payment_frequency' => ['value' => $this->payment_frequency->value, 'label' => $this->payment_frequency->label()],
-            'annual_premium' => $this->annualPremium(),
+            'annual_premium' => (float) $this->annual_premium,
             'commission_rate' => (float) $this->commission_rate,
-            'commission' => $this->commission(),
+            'commission' => (float) $this->commission,
             'effective_date' => $this->effective_date?->toDateString(),
             'renewal_term' => $this->renewal_term ? ['value' => $this->renewal_term->value, 'label' => $this->renewal_term->label()] : null,
             // The next renewal: worked out for set terms, the fixed date for a custom one.

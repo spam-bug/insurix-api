@@ -37,11 +37,15 @@ class Policy extends Model
 
     /**
      * Only a pending application has a stage. One that becomes pending starts at Submitted,
-     * counting from when it was recorded; any other status clears the stage.
+     * counting from when it was recorded; any other status clears the stage. The annual premium
+     * and first-year commission are stored so reports can sum them in SQL.
      */
     protected static function booted(): void
     {
         static::saving(function (Policy $policy) {
+            $policy->annual_premium = round((float) $policy->premium * $policy->payment_frequency->paymentsPerYear(), 2);
+            $policy->commission = round((float) $policy->annual_premium * (float) $policy->commission_rate / 100, 2);
+
             if ($policy->status !== PolicyStatus::Pending) {
                 $policy->application_stage = null;
                 $policy->stage_changed_at = null;
@@ -184,22 +188,6 @@ class Policy extends Model
     }
 
     /**
-     * What the client pays in a policy year: the premium times the payments in a year.
-     */
-    public function annualPremium(): float
-    {
-        return round((float) $this->premium * $this->payment_frequency->paymentsPerYear(), 2);
-    }
-
-    /**
-     * The agent's first-year commission on the policy: the annual premium times the rate.
-     */
-    public function commission(): float
-    {
-        return round($this->annualPremium() * (float) $this->commission_rate / 100, 2);
-    }
-
-    /**
      * The next premium due on or after $today, counting from the effective date. Null for
      * single-payment policies, ones without an effective date, and ones no longer in force.
      */
@@ -278,6 +266,8 @@ class Policy extends Model
             'premium' => 'decimal:2',
             'coverage_amount' => 'decimal:2',
             'commission_rate' => 'decimal:2',
+            'annual_premium' => 'decimal:2',
+            'commission' => 'decimal:2',
             'effective_date' => 'immutable_date',
             'renewal_term' => RenewalTerm::class,
             'renewal_date' => 'immutable_date',

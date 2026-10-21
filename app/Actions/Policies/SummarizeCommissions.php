@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Actions\Policies;
 
 use App\Enums\PolicyStatus;
-use App\Models\Policy;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
@@ -22,21 +21,30 @@ class SummarizeCommissions
      */
     public function handle(User $agent): array
     {
-        $startOfYear = CarbonImmutable::now($agent->timezone)->startOfYear();
-        $policies = $agent->policies()->get();
-
-        $inForce = $policies->filter(fn (Policy $policy) => $policy->status === PolicyStatus::InForce);
-        $pending = $policies->filter(fn (Policy $policy) => $policy->status === PolicyStatus::Pending);
+        $totals = $agent->policies()->toBase()->selectRaw(
+            'coalesce(sum(case when commission_received_at >= ? then commission end), 0) as received_this_year,
+            coalesce(sum(case when status = ? and commission_received_at is null then commission end), 0) as receivable,
+            coalesce(sum(case when status = ? then commission end), 0) as expected,
+            coalesce(sum(case when status = ? then annual_premium end), 0) as annual_premium_in_force,
+            count(case when status = ? then 1 end) as policies_in_force,
+            count(case when status = ? then 1 end) as pending_applications',
+            [
+                CarbonImmutable::now($agent->timezone)->startOfYear()->toDateString(),
+                PolicyStatus::InForce->value,
+                PolicyStatus::Pending->value,
+                PolicyStatus::InForce->value,
+                PolicyStatus::InForce->value,
+                PolicyStatus::Pending->value,
+            ],
+        )->first();
 
         return [
-            'received_this_year' => round($policies
-                ->filter(fn (Policy $policy) => $policy->commission_received_at?->greaterThanOrEqualTo($startOfYear))
-                ->sum(fn (Policy $policy) => $policy->commission()), 2),
-            'receivable' => round($inForce->filter(fn (Policy $policy) => $policy->commission_received_at === null)->sum(fn (Policy $policy) => $policy->commission()), 2),
-            'expected' => round($pending->sum(fn (Policy $policy) => $policy->commission()), 2),
-            'annual_premium_in_force' => round($inForce->sum(fn (Policy $policy) => $policy->annualPremium()), 2),
-            'policies_in_force' => $inForce->count(),
-            'pending_applications' => $pending->count(),
+            'received_this_year' => round((float) $totals->received_this_year, 2),
+            'receivable' => round((float) $totals->receivable, 2),
+            'expected' => round((float) $totals->expected, 2),
+            'annual_premium_in_force' => round((float) $totals->annual_premium_in_force, 2),
+            'policies_in_force' => (int) $totals->policies_in_force,
+            'pending_applications' => (int) $totals->pending_applications,
         ];
     }
 }
