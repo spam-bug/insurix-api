@@ -16,12 +16,11 @@ use App\Http\Controllers\Api\V1\ApplicationApprovalController;
 use App\Http\Controllers\Api\V1\ApplicationDeclineController;
 use App\Http\Controllers\Api\V1\ApplicationRequirementController;
 use App\Http\Controllers\Api\V1\ApplicationStageController;
+use App\Http\Controllers\Api\V1\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
-use App\Http\Controllers\Api\V1\Auth\LoginController;
-use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Api\V1\Auth\RegisterController;
+use App\Http\Controllers\Api\V1\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\BulkLeadStatusController;
@@ -56,11 +55,11 @@ use App\Http\Controllers\Api\V1\RequirementController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
-    Route::post('/auth/register', RegisterController::class);
-    Route::post('/auth/login', LoginController::class);
+    Route::post('/auth/register', [RegisteredUserController::class, 'store']);
+    Route::post('/auth/login', [AuthenticatedSessionController::class, 'store']);
 
     Route::middleware('throttle:6,1')->group(function () {
-        Route::post('/auth/two-factor-challenge', TwoFactorChallengeController::class);
+        Route::post('/auth/two-factor-challenge', [TwoFactorChallengeController::class, 'store']);
         Route::post('/auth/forgot-password', [PasswordResetLinkController::class, 'store']);
         Route::post('/auth/reset-password', [PasswordResetController::class, 'store']);
     });
@@ -70,8 +69,8 @@ Route::prefix('v1')->group(function () {
         ->middleware('throttle:lead-form');
 
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/auth/user', CurrentUserController::class);
-        Route::post('/auth/logout', LogoutController::class);
+        Route::get('/auth/user', [CurrentUserController::class, 'show']);
+        Route::post('/auth/logout', [AuthenticatedSessionController::class, 'destroy']);
 
         Route::prefix('account')->group(function () {
             Route::put('/profile', [ProfileController::class, 'update']);
