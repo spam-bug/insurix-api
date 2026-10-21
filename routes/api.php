@@ -34,7 +34,7 @@ use App\Http\Controllers\Api\V1\DocumentDownloadController;
 use App\Http\Controllers\Api\V1\FollowUpCompletionController;
 use App\Http\Controllers\Api\V1\FollowUpController;
 use App\Http\Controllers\Api\V1\FollowUpSummaryController;
-use App\Http\Controllers\Api\V1\InsightController;
+use App\Http\Controllers\Api\V1\InsightReportController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadFollowUpController;
@@ -44,6 +44,7 @@ use App\Http\Controllers\Api\V1\LeadNoteController;
 use App\Http\Controllers\Api\V1\LeadPromotionController;
 use App\Http\Controllers\Api\V1\LeadStatusController;
 use App\Http\Controllers\Api\V1\LeadStatusCountController;
+use App\Http\Controllers\Api\V1\NextActionController;
 use App\Http\Controllers\Api\V1\PolicyAttentionController;
 use App\Http\Controllers\Api\V1\PolicyController;
 use App\Http\Controllers\Api\V1\PolicyRenewalController;
@@ -141,8 +142,8 @@ Route::prefix('v1')->group(function () {
         Route::put('/documents/{document}', [DocumentController::class, 'update']);
         Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->can('delete', 'document');
 
-        Route::get('/insights/reports', [InsightController::class, 'reports']);
-        Route::get('/insights/next-actions', [InsightController::class, 'nextActions']);
+        Route::get('/insights/reports', [InsightReportController::class, 'index']);
+        Route::get('/insights/next-actions', [NextActionController::class, 'index']);
 
         Route::get('/follow-ups', [FollowUpController::class, 'index']);
         Route::get('/follow-ups/summary', [FollowUpSummaryController::class, 'index']);
