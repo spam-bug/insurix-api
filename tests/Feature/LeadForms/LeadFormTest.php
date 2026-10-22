@@ -85,16 +85,18 @@ it('returns 404 for unknown form links', function () {
     $this->postJson('/api/v1/public/lead-forms/nope', ['name' => 'Ana', 'phone' => '123'])->assertNotFound();
 });
 
-it('rate limits each visitor per form', function () {
+it('rate limits each visitor per form by their own IP', function () {
     User::factory()->create(['lead_form_token' => 'abc123']);
     $payload = ['name' => 'Ana', 'phone' => '0917 555 0100'];
+    $submitFrom = fn (string $ip, array $headers = []) => $this->withServerVariables(['REMOTE_ADDR' => $ip])
+        ->postJson('/api/v1/public/lead-forms/abc123', $payload, $headers);
 
     foreach (range(1, 5) as $attempt) {
-        $this->postJson('/api/v1/public/lead-forms/abc123', $payload, ['X-Client-IP' => '203.0.113.7'])->assertCreated();
+        $submitFrom('203.0.113.7')->assertCreated();
     }
 
-    $this->postJson('/api/v1/public/lead-forms/abc123', $payload, ['X-Client-IP' => '203.0.113.7'])->assertTooManyRequests();
-    $this->postJson('/api/v1/public/lead-forms/abc123', $payload, ['X-Client-IP' => '198.51.100.9'])->assertCreated();
+    $submitFrom('203.0.113.7', ['X-Client-IP' => '192.0.2.1'])->assertTooManyRequests();
+    $submitFrom('198.51.100.9')->assertCreated();
 });
 
 it('never exposes the form token on the user resource', function () {

@@ -41,19 +41,17 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Public lead form submissions arrive through the Next.js server, so every request shares
-     * its IP. The visitor's own IP comes in X-Client-IP; it can be spoofed, so the hourly cap
-     * per form is the real backstop.
+     * Visitors post the public lead form straight from their browser, so each one is limited by
+     * their own IP, with an hourly cap per form as the backstop.
      */
     private function configureRateLimiting(): void
     {
         RateLimiter::for('lead-form', function (Request $request) {
             $agent = $request->route('agent');
             $token = $agent instanceof User ? $agent->lead_form_token : (string) $agent;
-            $visitor = $request->header('X-Client-IP') ?: $request->ip();
 
             return [
-                Limit::perMinute(5)->by("lead-form:{$token}:{$visitor}"),
+                Limit::perMinute(5)->by("lead-form:{$token}:{$request->ip()}"),
                 Limit::perHour(60)->by("lead-form:{$token}"),
             ];
         });
