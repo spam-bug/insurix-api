@@ -31,6 +31,7 @@ class ListLeadsRequest extends FormRequest
         return [
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', Rule::enum(LeadStatus::class)],
+            'open' => ['nullable', 'boolean'],
             'interest' => ['nullable', Rule::enum(LeadInterest::class)],
             'source' => ['nullable', Rule::enum(LeadSource::class)],
             'sort' => ['nullable', Rule::enum(LeadSort::class)],
@@ -44,6 +45,7 @@ class ListLeadsRequest extends FormRequest
         return new LeadFiltersData(
             search: $this->filled('search') ? $this->string('search')->trim()->toString() : null,
             status: $this->enum('status', LeadStatus::class),
+            open: $this->boolean('open'),
             interest: $this->enum('interest', LeadInterest::class),
             source: $this->enum('source', LeadSource::class),
             sort: $this->enum('sort', LeadSort::class) ?? LeadSort::Latest,

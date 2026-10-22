@@ -4,6 +4,7 @@ namespace App\Actions\Leads;
 
 use App\DataTransferObjects\Leads\LeadFiltersData;
 use App\Enums\LeadSort;
+use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -26,6 +27,7 @@ class ListLeads
                 });
             })
             ->when($filters->status, fn (Builder $query, $status) => $query->where('status', $status))
+            ->when($filters->open && ! $filters->status, fn (Builder $query) => $query->whereIn('status', LeadStatus::open()))
             ->when($filters->interest, fn (Builder $query, $interest) => $query->where('interest', $interest))
             ->when($filters->source, fn (Builder $query, $source) => $query->where('source', $source));
 
