@@ -29,4 +29,14 @@ enum PolicyStatus: string
             self::Declined => 'Declined',
         };
     }
+
+    /**
+     * The statuses a bulk change can move between. Pending and declined go through the application steps.
+     *
+     * @return array<int, self>
+     */
+    public static function bulkSettable(): array
+    {
+        return [self::InForce, self::Lapsed, self::Cancelled];
+    }
 }

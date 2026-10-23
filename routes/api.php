@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\BulkLeadStatusController;
 use App\Http\Controllers\Api\V1\BulkPolicyFollowUpController;
+use App\Http\Controllers\Api\V1\BulkPolicyStatusController;
 use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\ClientDocumentController;
 use App\Http\Controllers\Api\V1\ClientHistoryController;
@@ -128,6 +129,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/policies/status-counts', [PolicyStatusCountController::class, 'index']);
         Route::get('/policies/premium-mix', [PolicyPremiumMixController::class, 'index']);
         Route::post('/policies/bulk/follow-ups', [BulkPolicyFollowUpController::class, 'store']);
+        Route::post('/policies/bulk/status', [BulkPolicyStatusController::class, 'update']);
         Route::post('/clients/{client}/policies', [ClientPolicyController::class, 'store']);
         Route::get('/policies', [PolicyController::class, 'index']);
         Route::get('/policies/{policy}', [PolicyController::class, 'show'])->can('view', 'policy');
