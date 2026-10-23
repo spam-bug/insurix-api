@@ -48,6 +48,7 @@ use App\Http\Controllers\Api\V1\LeadStatusCountController;
 use App\Http\Controllers\Api\V1\NextActionController;
 use App\Http\Controllers\Api\V1\PolicyAttentionController;
 use App\Http\Controllers\Api\V1\PolicyController;
+use App\Http\Controllers\Api\V1\PolicyPremiumMixController;
 use App\Http\Controllers\Api\V1\PolicyRenewalController;
 use App\Http\Controllers\Api\V1\PolicyStatusCountController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -124,6 +125,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/policies/attention', [PolicyAttentionController::class, 'index']);
         Route::get('/policies/status-counts', [PolicyStatusCountController::class, 'index']);
+        Route::get('/policies/premium-mix', [PolicyPremiumMixController::class, 'index']);
         Route::post('/clients/{client}/policies', [ClientPolicyController::class, 'store']);
         Route::get('/policies', [PolicyController::class, 'index']);
         Route::get('/policies/{policy}', [PolicyController::class, 'show'])->can('view', 'policy');
