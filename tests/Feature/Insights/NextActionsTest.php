@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Enums\PolicyStatus;

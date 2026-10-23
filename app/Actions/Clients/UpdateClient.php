@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Clients;
 
 use App\DataTransferObjects\Clients\ClientData;
 use App\Models\Client;
+use Illuminate\Support\Facades\DB;
 
 class UpdateClient
 {
     public function handle(Client $client, ClientData $data): Client
     {
-        $client->update($data->toAttributes());
+        DB::transaction(fn () => $client->update($data->toAttributes()));
 
         return $client;
     }

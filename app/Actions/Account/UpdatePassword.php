@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Account;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class UpdatePassword
 {
@@ -12,9 +15,11 @@ class UpdatePassword
      */
     public function handle(User $agent, string $password, ?string $keepTokenId): User
     {
-        $agent->update(['password' => $password]);
+        DB::transaction(function () use ($agent, $password, $keepTokenId) {
+            $agent->update(['password' => $password]);
 
-        $agent->tokens()->when($keepTokenId, fn ($query, $id) => $query->whereKeyNot($id))->delete();
+            $agent->tokens()->when($keepTokenId, fn ($query, $id) => $query->whereKeyNot($id))->delete();
+        });
 
         return $agent;
     }

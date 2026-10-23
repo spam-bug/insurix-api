@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 /** Which slice of the agent's follow-ups to list. Day boundaries use the agent's timezone. */

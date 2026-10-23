@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Products;
 
 use App\DataTransferObjects\Products\ProductData;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 class UpdateProduct
 {
@@ -13,7 +16,7 @@ class UpdateProduct
      */
     public function handle(Product $product, ProductData $data): Product
     {
-        $product->update($data->toAttributes());
+        DB::transaction(fn () => $product->update($data->toAttributes()));
 
         return $product;
     }

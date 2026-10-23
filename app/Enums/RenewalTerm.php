@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 /** How often a policy renews. Set terms count from the effective date; custom uses a fixed date. */

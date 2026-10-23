@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Leads;
 
 use App\Enums\LeadActivityType;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class RecordLeadActivity
 {
@@ -19,15 +22,17 @@ class RecordLeadActivity
      */
     public function handle(Lead $lead, LeadActivityType $type, ?User $actor = null, ?string $body = null, ?array $properties = null): LeadActivity
     {
-        $activity = $lead->activities()->create([
-            'user_id' => $actor?->id,
-            'type' => $type,
-            'body' => $body,
-            'properties' => $properties,
-        ]);
+        return DB::transaction(function () use ($lead, $type, $actor, $body, $properties) {
+            $activity = $lead->activities()->create([
+                'user_id' => $actor?->id,
+                'type' => $type,
+                'body' => $body,
+                'properties' => $properties,
+            ]);
 
-        $this->scoreLead->handle($lead);
+            $this->scoreLead->handle($lead);
 
-        return $activity;
+            return $activity;
+        });
     }
 }

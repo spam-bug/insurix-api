@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Account;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Actions\EnableTwoFactorAuthentication;
 use Laravel\Fortify\Fortify;
@@ -25,8 +28,10 @@ class StartTwoFactorSetup
             throw ValidationException::withMessages(['two_factor' => 'Two-factor authentication is already on.']);
         }
 
-        ($this->enableTwoFactorAuthentication)($agent, force: true);
-        $agent->forceFill(['two_factor_confirmed_at' => null])->save();
+        DB::transaction(function () use ($agent) {
+            ($this->enableTwoFactorAuthentication)($agent, force: true);
+            $agent->forceFill(['two_factor_confirmed_at' => null])->save();
+        });
 
         return [
             'qr_code_svg' => $agent->twoFactorQrCodeSvg(),

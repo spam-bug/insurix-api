@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Applications;
 
 use App\Actions\Policies\RecordPolicyEvent;
@@ -8,6 +10,7 @@ use App\Models\ApplicationRequirement;
 use App\Models\Document;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 
 class UpdateRequirement
 {
@@ -22,15 +25,17 @@ class UpdateRequirement
         $received = $received || $document !== null;
         $wasReceived = $requirement->received_on !== null;
 
-        $requirement->update([
-            'received_on' => $received ? ($requirement->received_on ?? CarbonImmutable::now($actor->timezone)->toDateString()) : null,
-            'document_id' => $document?->id,
-        ]);
+        return DB::transaction(function () use ($requirement, $received, $wasReceived, $document, $actor) {
+            $requirement->update([
+                'received_on' => $received ? ($requirement->received_on ?? CarbonImmutable::now($actor->timezone)->toDateString()) : null,
+                'document_id' => $document?->id,
+            ]);
 
-        if ($received && ! $wasReceived) {
-            $this->recordPolicyEvent->handle($requirement->policy, PolicyEventType::RequirementReceived, $actor, ['title' => $requirement->title]);
-        }
+            if ($received && ! $wasReceived) {
+                $this->recordPolicyEvent->handle($requirement->policy, PolicyEventType::RequirementReceived, $actor, ['title' => $requirement->title]);
+            }
 
-        return $requirement;
+            return $requirement;
+        });
     }
 }

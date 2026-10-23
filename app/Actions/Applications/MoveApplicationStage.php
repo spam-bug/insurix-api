@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Applications;
 
 use App\Actions\Policies\RecordPolicyEvent;
@@ -7,6 +9,7 @@ use App\Enums\ApplicationStage;
 use App\Enums\PolicyEventType;
 use App\Models\Policy;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class MoveApplicationStage
 {
@@ -23,13 +26,15 @@ class MoveApplicationStage
             return $policy;
         }
 
-        $policy->update(['application_stage' => $stage, 'stage_changed_at' => now()]);
+        return DB::transaction(function () use ($policy, $stage, $previous, $actor) {
+            $policy->update(['application_stage' => $stage, 'stage_changed_at' => now()]);
 
-        $this->recordPolicyEvent->handle($policy, PolicyEventType::StageChanged, $actor, [
-            'from' => $previous?->value,
-            'to' => $stage->value,
-        ]);
+            $this->recordPolicyEvent->handle($policy, PolicyEventType::StageChanged, $actor, [
+                'from' => $previous?->value,
+                'to' => $stage->value,
+            ]);
 
-        return $policy;
+            return $policy;
+        });
     }
 }

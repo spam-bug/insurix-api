@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Account;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class RevokeSessions
 {
@@ -13,9 +16,9 @@ class RevokeSessions
      */
     public function handle(User $agent, ?string $tokenId, ?string $currentTokenId): int
     {
-        return $agent->tokens()
+        return DB::transaction(fn () => $agent->tokens()
             ->when($tokenId, fn ($query, $id) => $query->whereKey($id))
             ->when($currentTokenId, fn ($query, $id) => $query->whereKeyNot($id))
-            ->delete();
+            ->delete());
     }
 }

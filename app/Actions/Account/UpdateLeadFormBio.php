@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Account;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class UpdateLeadFormBio
 {
@@ -11,7 +14,7 @@ class UpdateLeadFormBio
      */
     public function handle(User $agent, ?string $bio): User
     {
-        $agent->update(['bio' => $bio]);
+        DB::transaction(fn () => $agent->update(['bio' => $bio]));
 
         return $agent;
     }

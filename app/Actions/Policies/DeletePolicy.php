@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Policies;
 
 use App\Models\Policy;
+use Illuminate\Support\Facades\DB;
 
 class DeletePolicy
 {
     public function handle(Policy $policy): void
     {
-        $policy->delete();
+        DB::transaction(fn () => $policy->delete());
     }
 }

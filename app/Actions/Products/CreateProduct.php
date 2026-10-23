@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Actions\Products;
 
 use App\DataTransferObjects\Products\ProductData;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class CreateProduct
 {
     public function handle(User $agent, ProductData $data): Product
     {
-        return $agent->products()->create($data->toAttributes());
+        return DB::transaction(fn () => $agent->products()->create($data->toAttributes()));
     }
 }
