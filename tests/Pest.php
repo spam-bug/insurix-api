@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Enums\WorkspaceRole;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -50,9 +52,40 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/** The workspace the user owns, which every factory-made user has. */
+function workspaceOf(User $user): Workspace
 {
-    // ..
+    return $user->workspaces()->oldest('workspaces.created_at')->firstOrFail();
+}
+
+/** The first member of the workspace, for tests that start from a record rather than a user. */
+function memberOf(Workspace $workspace): User
+{
+    $member = $workspace->users()->first();
+
+    if ($member) {
+        return $member;
+    }
+
+    // Saved directly so the factory doesn't give this user a workspace of their own.
+    $owner = tap(User::factory()->make())->save();
+    $workspace->users()->attach($owner, ['role' => WorkspaceRole::Owner]);
+
+    return $owner;
+}
+
+/** Gives the user's workspace a shareable form token, and returns the user. */
+function withLeadForm(User $user, string $token): User
+{
+    workspaceOf($user)->forceFill(['lead_form_token' => $token])->save();
+
+    return $user;
+}
+
+/** The API prefix for the user's own workspace, e.g. ws($agent).'/leads'. */
+function ws(User $user): string
+{
+    return '/api/v1/workspaces/'.workspaceOf($user)->id;
 }
 
 /**

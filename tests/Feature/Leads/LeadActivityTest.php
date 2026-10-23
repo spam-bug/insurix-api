@@ -10,13 +10,13 @@ use App\Models\User;
 
 it('lists a lead’s activity newest first, with who did it', function () {
     $agent = User::factory()->create(['name' => 'Jane Agent']);
-    $lead = Lead::factory()->for($agent)->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
     LeadActivity::factory()->for($lead)->create(['type' => LeadActivityType::Created, 'body' => null, 'created_at' => now()->subHour()]);
     $note = LeadActivity::factory()->for($lead)->create(['body' => 'Called, no answer.']);
     LeadActivity::factory()->create();
 
     $this->actingAs($agent)
-        ->getJson("/api/v1/leads/{$lead->id}/activities")
+        ->getJson(ws($agent)."/leads/{$lead->id}/activities")
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $note->id)
@@ -28,10 +28,10 @@ it('lists a lead’s activity newest first, with who did it', function () {
 
 it('adds a note to a lead', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson("/api/v1/leads/{$lead->id}/notes", ['body' => '  Prefers WhatsApp.  '])
+        ->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => '  Prefers WhatsApp.  '])
         ->assertCreated()
         ->assertJsonPath('data.type', 'note')
         ->assertJsonPath('data.body', 'Prefers WhatsApp.');
@@ -41,32 +41,32 @@ it('adds a note to a lead', function () {
 
 it('shows a new note in activity that was already read and cached', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->create();
-    $this->actingAs($agent)->getJson("/api/v1/leads/{$lead->id}/activities")->assertJsonCount(0, 'data');
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
+    $this->actingAs($agent)->getJson(ws($agent)."/leads/{$lead->id}/activities")->assertJsonCount(0, 'data');
 
-    $this->postJson("/api/v1/leads/{$lead->id}/notes", ['body' => 'Prefers WhatsApp.'])->assertCreated();
+    $this->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => 'Prefers WhatsApp.'])->assertCreated();
 
-    $this->getJson("/api/v1/leads/{$lead->id}/activities")
+    $this->getJson(ws($agent)."/leads/{$lead->id}/activities")
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.body', 'Prefers WhatsApp.');
 });
 
 it('requires a note body', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson("/api/v1/leads/{$lead->id}/notes", ['body' => ''])
+        ->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => ''])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('body');
 });
 
 it('schedules a meeting and moves the lead to meeting scheduled', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->status(LeadStatus::Contacted)->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Contacted)->create();
 
     $this->actingAs($agent)
-        ->postJson("/api/v1/leads/{$lead->id}/meeting", [
+        ->postJson(ws($agent)."/leads/{$lead->id}/meeting", [
             'scheduled_at' => '2030-03-04T09:30:00+08:00',
             'notes' => 'Coffee at Ayala Triangle.',
         ])
@@ -82,10 +82,10 @@ it('schedules a meeting and moves the lead to meeting scheduled', function () {
 
 it('rejects meetings in the past', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson("/api/v1/leads/{$lead->id}/meeting", ['scheduled_at' => now()->subMinute()->toIso8601String()])
+        ->postJson(ws($agent)."/leads/{$lead->id}/meeting", ['scheduled_at' => now()->subMinute()->toIso8601String()])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['scheduled_at' => 'Choose a time in the future.']);
 
@@ -95,9 +95,9 @@ it('rejects meetings in the past', function () {
 it('keeps another agent’s lead activity private', function (string $method, string $path, array $payload) {
     $lead = Lead::factory()->create();
 
-    $this->actingAs(User::factory()->create())
-        ->json($method, "/api/v1/leads/{$lead->id}{$path}", $payload)
-        ->assertForbidden();
+    $this->actingAs($agent = User::factory()->create())
+        ->json($method, ws($agent)."/leads/{$lead->id}{$path}", $payload)
+        ->assertNotFound();
 
     expect($lead->activities()->count())->toBe(0);
 })->with([

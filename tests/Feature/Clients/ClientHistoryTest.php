@@ -14,13 +14,13 @@ beforeEach(fn () => Carbon::setTestNow('2026-10-17 02:00:00'));
 
 it('puts lead activity, policy changes and documents in one timeline, newest first', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->status(LeadStatus::Converted)->create();
-    $client = Client::factory()->for($agent)->create(['lead_id' => $lead->id]);
+    $lead = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create(['lead_id' => $lead->id]);
     $note = LeadActivity::factory()->for($lead)->create(['body' => 'Wants cover for the kids', 'created_at' => now()->subDays(3)]);
     $this->actingAs($agent);
 
     Carbon::setTestNow(now()->subDays(2));
-    $this->postJson("/api/v1/clients/{$client->id}/policies", [
+    $this->postJson(ws($agent)."/clients/{$client->id}/policies", [
         'product_name' => 'Life Plus', 'type' => 'life', 'status' => 'pending', 'premium' => 2500,
         'payment_frequency' => 'monthly', 'commission_rate' => 30,
     ])->assertCreated();
@@ -30,9 +30,9 @@ it('puts lead activity, policy changes and documents in one timeline, newest fir
     $document = Document::factory()->for($client)->create(['name' => 'Valid ID', 'policy_id' => $policyId]);
 
     Carbon::setTestNow(now()->addDay());
-    $this->postJson("/api/v1/policies/{$policyId}/approve", ['effective_date' => '2026-10-20'])->assertOk();
+    $this->postJson(ws($agent)."/policies/{$policyId}/approve", ['effective_date' => '2026-10-20'])->assertOk();
 
-    $history = $this->getJson("/api/v1/clients/{$client->id}/history")->assertOk()->json('data');
+    $history = $this->getJson(ws($agent)."/clients/{$client->id}/history")->assertOk()->json('data');
 
     expect(array_column($history, 'id'))->toHaveCount(4)
         ->and(array_column($history, 'source'))->toBe(['policy', 'document', 'policy', 'lead'])
@@ -48,15 +48,15 @@ it('has a history for clients whose lead was removed', function () {
     $client = Client::factory()->create(['lead_id' => null]);
     Document::factory()->for($client)->create();
 
-    $this->actingAs($client->user)
-        ->getJson("/api/v1/clients/{$client->id}/history")
+    $this->actingAs($agent = memberOf($client->workspace))
+        ->getJson(ws($agent)."/clients/{$client->id}/history")
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.source', 'document');
 });
 
 it('keeps other agents out of a client’s history', function () {
-    $this->actingAs(User::factory()->create())
-        ->getJson('/api/v1/clients/'.Client::factory()->create()->id.'/history')
-        ->assertForbidden();
+    $this->actingAs($agent = User::factory()->create())
+        ->getJson(ws($agent).'/clients/'.Client::factory()->create()->id.'/history')
+        ->assertNotFound();
 });

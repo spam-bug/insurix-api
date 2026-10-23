@@ -7,12 +7,12 @@ use App\Models\User;
 
 it('lists only the agent’s own clients, newest first', function () {
     $agent = User::factory()->create();
-    $older = Client::factory()->for($agent)->create(['created_at' => now()->subDay()]);
-    $newer = Client::factory()->for($agent)->create();
+    $older = Client::factory()->for(workspaceOf($agent))->create(['created_at' => now()->subDay()]);
+    $newer = Client::factory()->for(workspaceOf($agent))->create();
     Client::factory()->create();
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/clients')
+        ->getJson(ws($agent).'/clients')
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $newer->id)
@@ -22,11 +22,11 @@ it('lists only the agent’s own clients, newest first', function () {
 
 it('searches clients by name, email or phone', function () {
     $agent = User::factory()->create();
-    $match = Client::factory()->for($agent)->create(['name' => 'Teodora Alonso']);
-    Client::factory()->for($agent)->create(['name' => 'Someone Else']);
+    $match = Client::factory()->for(workspaceOf($agent))->create(['name' => 'Teodora Alonso']);
+    Client::factory()->for(workspaceOf($agent))->create(['name' => 'Someone Else']);
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/clients?'.http_build_query(['search' => 'teodora']))
+        ->getJson(ws($agent).'/clients?'.http_build_query(['search' => 'teodora']))
         ->assertOk()
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.id', $match->id);
@@ -34,10 +34,10 @@ it('searches clients by name, email or phone', function () {
 
 it('shows a client', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create(['birthdate' => '1990-02-03']);
+    $client = Client::factory()->for(workspaceOf($agent))->create(['birthdate' => '1990-02-03']);
 
     $this->actingAs($agent)
-        ->getJson("/api/v1/clients/{$client->id}")
+        ->getJson(ws($agent)."/clients/{$client->id}")
         ->assertOk()
         ->assertJsonPath('data.id', $client->id)
         ->assertJsonPath('data.birthdate', '1990-02-03');
@@ -45,10 +45,10 @@ it('shows a client', function () {
 
 it('updates a client', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->putJson("/api/v1/clients/{$client->id}", [
+        ->putJson(ws($agent)."/clients/{$client->id}", [
             'name' => 'Teodora Alonso',
             'email' => 'TEODORA@example.com',
             'phone' => null,
@@ -65,22 +65,23 @@ it('updates a client', function () {
 
 it('validates client updates', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->putJson("/api/v1/clients/{$client->id}", ['email' => 'not-an-email'])
+        ->putJson(ws($agent)."/clients/{$client->id}", ['email' => 'not-an-email'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['name', 'email']);
 });
 
 it('forbids another agent’s client', function () {
     $client = Client::factory()->create();
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($agent = User::factory()->create());
 
-    $this->getJson("/api/v1/clients/{$client->id}")->assertForbidden();
-    $this->putJson("/api/v1/clients/{$client->id}", ['name' => 'Taken'])->assertForbidden();
+    $this->getJson(ws($agent)."/clients/{$client->id}")->assertNotFound();
+    $this->putJson(ws($agent)."/clients/{$client->id}", ['name' => 'Taken'])->assertNotFound();
 });
 
 it('requires authentication', function () {
-    $this->getJson('/api/v1/clients')->assertUnauthorized();
+    $agent = User::factory()->create();
+    $this->getJson(ws($agent).'/clients')->assertUnauthorized();
 });

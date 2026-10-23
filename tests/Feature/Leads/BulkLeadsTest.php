@@ -10,11 +10,11 @@ use App\Models\User;
 
 it('sorts leads', function (string $sort, array $expectedNames) {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->create(['name' => 'Bea', 'created_at' => now()->subDays(2)]);
-    Lead::factory()->for($agent)->create(['name' => 'Ana', 'created_at' => now()->subDay()]);
-    Lead::factory()->for($agent)->create(['name' => 'Cyd', 'created_at' => now()]);
+    Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Bea', 'created_at' => now()->subDays(2)]);
+    Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Ana', 'created_at' => now()->subDay()]);
+    Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Cyd', 'created_at' => now()]);
 
-    $names = $this->actingAs($agent)->getJson('/api/v1/leads?'.http_build_query(['sort' => $sort]))->assertOk()->json('data.*.name');
+    $names = $this->actingAs($agent)->getJson(ws($agent).'/leads?'.http_build_query(['sort' => $sort]))->assertOk()->json('data.*.name');
 
     expect($names)->toBe($expectedNames);
 })->with([
@@ -26,23 +26,23 @@ it('sorts leads', function (string $sort, array $expectedNames) {
 
 it('filters leads by source', function () {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->create(['name' => 'Referred', 'source' => LeadSource::Referral]);
-    Lead::factory()->for($agent)->create(['name' => 'Walk-in', 'source' => LeadSource::Manual]);
+    Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Referred', 'source' => LeadSource::Referral]);
+    Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Walk-in', 'source' => LeadSource::Manual]);
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/leads?'.http_build_query(['source' => 'referral']))
+        ->getJson(ws($agent).'/leads?'.http_build_query(['source' => 'referral']))
         ->assertOk()
         ->assertJsonPath('data.*.name', ['Referred']);
 });
 
 it('changes the status of several leads at once, logging each change', function () {
     $agent = User::factory()->create();
-    [$first, $second] = Lead::factory()->for($agent)->count(2)->create();
-    $alreadyQualified = Lead::factory()->for($agent)->status(LeadStatus::Qualified)->create();
-    $untouched = Lead::factory()->for($agent)->create();
+    [$first, $second] = Lead::factory()->for(workspaceOf($agent))->count(2)->create();
+    $alreadyQualified = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create();
+    $untouched = Lead::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson('/api/v1/leads/bulk/status', ['ids' => [$first->id, $second->id, $alreadyQualified->id], 'status' => 'qualified'])
+        ->postJson(ws($agent).'/leads/bulk/status', ['ids' => [$first->id, $second->id, $alreadyQualified->id], 'status' => 'qualified'])
         ->assertOk()
         ->assertJson(['updated' => 2]);
 
@@ -55,10 +55,10 @@ it('changes the status of several leads at once, logging each change', function 
 
 it('deletes several leads at once', function () {
     $agent = User::factory()->create();
-    [$first, $second, $kept] = Lead::factory()->for($agent)->count(3)->create();
+    [$first, $second, $kept] = Lead::factory()->for(workspaceOf($agent))->count(3)->create();
 
     $this->actingAs($agent)
-        ->postJson('/api/v1/leads/bulk/delete', ['ids' => [$first->id, $second->id]])
+        ->postJson(ws($agent).'/leads/bulk/delete', ['ids' => [$first->id, $second->id]])
         ->assertOk()
         ->assertJson(['deleted' => 2]);
 
@@ -67,13 +67,13 @@ it('deletes several leads at once', function () {
     $this->assertModelExists($kept);
 });
 
-it('rejects bulk changes that include another agent’s lead', function (string $url, array $extra) {
+it('rejects bulk changes that include another workspace’s lead', function (string $path, array $extra) {
     $agent = User::factory()->create();
-    $own = Lead::factory()->for($agent)->create();
+    $own = Lead::factory()->for(workspaceOf($agent))->create();
     $foreign = Lead::factory()->create();
 
     $this->actingAs($agent)
-        ->postJson($url, ['ids' => [$own->id, $foreign->id], ...$extra])
+        ->postJson(ws($agent).$path, ['ids' => [$own->id, $foreign->id], ...$extra])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('ids.1');
 
@@ -81,13 +81,13 @@ it('rejects bulk changes that include another agent’s lead', function (string 
     $this->assertModelExists($foreign);
     expect($own->fresh()->status)->toBe(LeadStatus::Prospect);
 })->with([
-    'status' => ['/api/v1/leads/bulk/status', ['status' => 'lost']],
-    'delete' => ['/api/v1/leads/bulk/delete', []],
+    'status' => ['/leads/bulk/status', ['status' => 'lost']],
+    'delete' => ['/leads/bulk/delete', []],
 ]);
 
 it('validates bulk requests', function () {
-    $this->actingAs(User::factory()->create())
-        ->postJson('/api/v1/leads/bulk/status', ['ids' => []])
+    $this->actingAs($agent = User::factory()->create())
+        ->postJson(ws($agent).'/leads/bulk/status', ['ids' => []])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['ids', 'status']);
 });

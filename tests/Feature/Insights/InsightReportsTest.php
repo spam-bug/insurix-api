@@ -19,22 +19,23 @@ beforeEach(fn () => Carbon::setTestNow('2026-10-17 02:00:00'));
 
 function reports(User $agent): array
 {
-    return test()->actingAs($agent)->getJson('/api/v1/insights/reports')->assertOk()->json('data');
+    return test()->actingAs($agent)->getJson(ws($agent).'/insights/reports')->assertOk()->json('data');
 }
 
 it('needs a signed-in agent', function () {
-    $this->getJson('/api/v1/insights/reports')->assertUnauthorized();
-    $this->getJson('/api/v1/insights/next-actions')->assertUnauthorized();
+    $agent = User::factory()->create();
+    $this->getJson(ws($agent).'/insights/reports')->assertUnauthorized();
+    $this->getJson(ws($agent).'/insights/next-actions')->assertUnauthorized();
 });
 
 it('measures conversion by lead source, sources with enough leads first', function () {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->count(2)->status(LeadStatus::Converted)->create(['source' => LeadSource::Referral]);
-    Lead::factory()->for($agent)->status(LeadStatus::Lost)->create(['source' => LeadSource::Referral]);
-    Lead::factory()->for($agent)->create(['source' => LeadSource::Referral]);
-    Lead::factory()->for($agent)->status(LeadStatus::Converted)->create(['source' => LeadSource::Manual]);
-    Lead::factory()->for($agent)->count(2)->create(['source' => LeadSource::Manual]);
-    Lead::factory()->for($agent)->count(2)->create(['source' => LeadSource::ShareableForm]);
+    Lead::factory()->for(workspaceOf($agent))->count(2)->status(LeadStatus::Converted)->create(['source' => LeadSource::Referral]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Lost)->create(['source' => LeadSource::Referral]);
+    Lead::factory()->for(workspaceOf($agent))->create(['source' => LeadSource::Referral]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create(['source' => LeadSource::Manual]);
+    Lead::factory()->for(workspaceOf($agent))->count(2)->create(['source' => LeadSource::Manual]);
+    Lead::factory()->for(workspaceOf($agent))->count(2)->create(['source' => LeadSource::ShareableForm]);
     Lead::factory()->count(3)->status(LeadStatus::Converted)->create(['source' => LeadSource::SocialMedia]);
 
     expect(reports($agent)['lead_sources'])->toBe([
@@ -47,7 +48,7 @@ it('measures conversion by lead source, sources with enough leads first', functi
 it('measures how long leads promoted in the last year took to become clients', function () {
     $agent = User::factory()->create();
     $promoted = fn (string $added, string $promotedAt) => LeadActivity::factory()
-        ->for(Lead::factory()->for($agent)->status(LeadStatus::Converted)->create(['created_at' => $added]))
+        ->for(Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create(['created_at' => $added]))
         ->create(['type' => LeadActivityType::Promoted, 'created_at' => $promotedAt]);
 
     $promoted('2026-09-01', '2026-09-11');
@@ -65,13 +66,13 @@ it('has no pipeline speed before any lead is promoted', function () {
 
 it('lists open leads nobody has been in touch with for two weeks', function () {
     $agent = User::factory()->create();
-    $quiet = Lead::factory()->for($agent)->status(LeadStatus::Contacted)->create(['created_at' => now()->subDays(20), 'score' => 15]);
-    $touched = Lead::factory()->for($agent)->create(['created_at' => now()->subDays(30)]);
+    $quiet = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Contacted)->create(['created_at' => now()->subDays(20), 'score' => 15]);
+    $touched = Lead::factory()->for(workspaceOf($agent))->create(['created_at' => now()->subDays(30)]);
     LeadActivity::factory()->for($touched)->create(['created_at' => now()->subDays(3)]);
-    $onlyEdited = Lead::factory()->for($agent)->create(['created_at' => now()->subDays(40), 'score' => 5]);
+    $onlyEdited = Lead::factory()->for(workspaceOf($agent))->create(['created_at' => now()->subDays(40), 'score' => 5]);
     LeadActivity::factory()->for($onlyEdited)->create(['type' => LeadActivityType::Updated, 'created_at' => now()->subDay()]);
-    Lead::factory()->for($agent)->status(LeadStatus::Lost)->create(['created_at' => now()->subDays(40)]);
-    Lead::factory()->for($agent)->create(['created_at' => now()->subDays(5)]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Lost)->create(['created_at' => now()->subDays(40)]);
+    Lead::factory()->for(workspaceOf($agent))->create(['created_at' => now()->subDays(5)]);
 
     expect(reports($agent)['stalled_leads'])->toBe([
         'quiet_days' => 14,
@@ -85,7 +86,7 @@ it('lists open leads nobody has been in touch with for two weeks', function () {
 
 it('measures retention and counts renewals coming up', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
     Policy::factory()->for($client)->count(2)->create();
     Policy::factory()->for($client)->create(['renewal_date' => '2026-11-20']);
     Policy::factory()->for($client)->status(PolicyStatus::Lapsed)->create();
@@ -105,7 +106,7 @@ it('measures retention and counts renewals coming up', function () {
 
 it('works out renewals from set terms, with a shorter window for short terms', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
     $term = fn (RenewalTerm $term, string $effective) => ['renewal_term' => $term, 'effective_date' => $effective, 'renewal_date' => null];
 
     $annual = Policy::factory()->for($client)->create($term(RenewalTerm::Annual, '2025-12-01'));
@@ -116,14 +117,14 @@ it('works out renewals from set terms, with a shorter window for short terms', f
 
     expect(reports($agent)['retention']['renewals_coming_up'])->toBe(2);
 
-    $suggestion = collect(test()->getJson('/api/v1/insights/next-actions')->json('data'))->firstWhere('code', 'renewals_without_follow_up');
+    $suggestion = collect(test()->getJson(ws($agent).'/insights/next-actions')->json('data'))->firstWhere('code', 'renewals_without_follow_up');
     expect($suggestion['title'])->toBe('2 renewals in the next 60 days have no follow-up yet')
         ->and($suggestion['detail'])->toBe("{$client->name} (Oct 20) and {$client->name} (Dec 1). Reach out early to keep them.");
 });
 
 it('ranks products by the commission their policies earn', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
     // 2,000 a month at 25% is 6,000 a year in commission.
     $monthly = ['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25];
     Policy::factory()->for($client)->count(2)->create([...$monthly, 'product_name' => 'Life Plus']);
@@ -138,7 +139,7 @@ it('ranks products by the commission their policies earn', function () {
 
 it('charts commission received over the last twelve months', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
     $monthly = ['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25];
     Policy::factory()->for($client)->count(2)->create([...$monthly, 'commission_received_at' => '2026-10-05']);
     Policy::factory()->for($client)->create([...$monthly, 'commission_received_at' => '2025-12-20']);

@@ -29,22 +29,22 @@ function annualPolicy(string $effective, array $attributes = []): Policy
 
 it('asks for the outcome of a renewal date that has passed', function () {
     $policy = annualPolicy('2025-10-10');
-    $this->actingAs($policy->user);
+    $this->actingAs($agent = memberOf($policy->workspace));
 
-    $this->getJson("/api/v1/policies/{$policy->id}")
+    $this->getJson(ws($agent)."/policies/{$policy->id}")
         ->assertJsonPath('data.tracks_renewal_outcomes', true)
         ->assertJsonPath('data.renewal_awaiting_outcome', '2026-10-10');
-    $this->getJson('/api/v1/policies/attention')
+    $this->getJson(ws($agent).'/policies/attention')
         ->assertJsonPath('data.0.reasons.0', ['code' => 'renewal_overdue', 'label' => 'Renewal date has passed: record how it went', 'date' => '2026-10-10']);
-    expect(collect($this->getJson('/api/v1/insights/next-actions')->json('data'))->firstWhere('code', 'renewals_awaiting_outcome'))
+    expect(collect($this->getJson(ws($agent).'/insights/next-actions')->json('data'))->firstWhere('code', 'renewals_awaiting_outcome'))
         ->toMatchArray(['title' => '1 renewal is waiting for its outcome', 'detail' => 'Ana Reyes (Oct 10). Record whether they renewed or lapsed.']);
 });
 
 it('records a renewal and moves on to the next one', function () {
     $policy = annualPolicy('2025-10-10');
-    $this->actingAs($policy->user);
+    $this->actingAs($agent = memberOf($policy->workspace));
 
-    $this->postJson("/api/v1/policies/{$policy->id}/renewals", ['due_on' => '2026-10-10', 'outcome' => 'renewed', 'notes' => 'Paid on time'])
+    $this->postJson(ws($agent)."/policies/{$policy->id}/renewals", ['due_on' => '2026-10-10', 'outcome' => 'renewed', 'notes' => 'Paid on time'])
         ->assertCreated()
         ->assertJsonPath('data.status.value', 'in_force')
         ->assertJsonPath('data.renewal_awaiting_outcome', null)
@@ -52,35 +52,35 @@ it('records a renewal and moves on to the next one', function () {
         ->assertJsonPath('data.renewals.0', fn (array $renewal) => $renewal['due_on'] === '2026-10-10' && $renewal['outcome']['value'] === 'renewed' && $renewal['notes'] === 'Paid on time')
         ->assertJsonPath('data.events.0.type', 'renewal_recorded');
 
-    $this->postJson("/api/v1/policies/{$policy->id}/renewals", ['due_on' => '2026-10-10', 'outcome' => 'renewed'])
+    $this->postJson(ws($agent)."/policies/{$policy->id}/renewals", ['due_on' => '2026-10-10', 'outcome' => 'renewed'])
         ->assertJsonValidationErrors(['due_on' => 'waiting for an outcome']);
-    $this->getJson('/api/v1/policies/attention')->assertJsonCount(0, 'data');
+    $this->getJson(ws($agent).'/policies/attention')->assertJsonCount(0, 'data');
 });
 
 it('sets the policy lapsed or cancelled when it does not renew', function (string $outcome, string $status) {
     $policy = annualPolicy('2025-10-10');
 
-    $this->actingAs($policy->user)
-        ->postJson("/api/v1/policies/{$policy->id}/renewals", ['due_on' => '2026-10-10', 'outcome' => $outcome])
+    $this->actingAs($agent = memberOf($policy->workspace))
+        ->postJson(ws($agent)."/policies/{$policy->id}/renewals", ['due_on' => '2026-10-10', 'outcome' => $outcome])
         ->assertCreated()
         ->assertJsonPath('data.status.value', $status);
 })->with([['lapsed', 'lapsed'], ['not_renewing', 'cancelled']]);
 
 it('needs the next date when a custom-date policy renews', function () {
     $policy = annualPolicy('2025-01-01', ['renewal_term' => RenewalTerm::Custom, 'renewal_date' => '2026-10-01']);
-    $this->actingAs($policy->user);
+    $this->actingAs($agent = memberOf($policy->workspace));
 
-    $this->postJson("/api/v1/policies/{$policy->id}/renewals", ['due_on' => '2026-10-01', 'outcome' => 'renewed'])
+    $this->postJson(ws($agent)."/policies/{$policy->id}/renewals", ['due_on' => '2026-10-01', 'outcome' => 'renewed'])
         ->assertJsonValidationErrors(['next_renewal_date' => 'renews next']);
 
-    $this->postJson("/api/v1/policies/{$policy->id}/renewals", ['due_on' => '2026-10-01', 'outcome' => 'renewed', 'next_renewal_date' => '2027-04-01'])
+    $this->postJson(ws($agent)."/policies/{$policy->id}/renewals", ['due_on' => '2026-10-01', 'outcome' => 'renewed', 'next_renewal_date' => '2027-04-01'])
         ->assertCreated()
         ->assertJsonPath('data.renewal_date', '2027-04-01');
 });
 
 it('records a renewal early, so its reminder is not queued', function () {
     $lead = Lead::factory()->create();
-    $client = Client::factory()->for($lead->user)->create(['lead_id' => $lead->id]);
+    $client = Client::factory()->for($lead->workspace)->create(['lead_id' => $lead->id]);
     $policy = Policy::factory()->for($client)->create([
         'renewal_term' => RenewalTerm::Annual,
         'effective_date' => '2025-11-05',
@@ -88,37 +88,37 @@ it('records a renewal early, so its reminder is not queued', function () {
         'payment_frequency' => 'annual',
     ]);
 
-    $this->actingAs($client->user)
-        ->postJson("/api/v1/policies/{$policy->id}/renewals", ['due_on' => '2026-11-05', 'outcome' => 'renewed'])
+    $this->actingAs($agent = memberOf($client->workspace))
+        ->postJson(ws($agent)."/policies/{$policy->id}/renewals", ['due_on' => '2026-11-05', 'outcome' => 'renewed'])
         ->assertCreated();
 
-    expect(app(QueuePolicyFollowUps::class)->handle($client->user))->toBe(0);
+    expect(app(QueuePolicyFollowUps::class)->handle($client->workspace))->toBe(0);
 });
 
 it('leaves monthly and quarterly terms out of renewal outcomes', function () {
     $policy = annualPolicy('2026-01-20', ['renewal_term' => RenewalTerm::Monthly]);
 
-    $this->actingAs($policy->user)
-        ->getJson("/api/v1/policies/{$policy->id}")
+    $this->actingAs($agent = memberOf($policy->workspace))
+        ->getJson(ws($agent)."/policies/{$policy->id}")
         ->assertJsonPath('data.tracks_renewal_outcomes', false)
         ->assertJsonPath('data.renewal_awaiting_outcome', null);
-    $this->postJson("/api/v1/policies/{$policy->id}/renewals", ['due_on' => '2026-10-20', 'outcome' => 'renewed'])
+    $this->postJson(ws($agent)."/policies/{$policy->id}/renewals", ['due_on' => '2026-10-20', 'outcome' => 'renewed'])
         ->assertJsonValidationErrors('due_on');
 });
 
 it('keeps other agents from recording renewals', function () {
     $policy = annualPolicy('2025-10-10');
 
-    $this->actingAs(User::factory()->create())
-        ->postJson("/api/v1/policies/{$policy->id}/renewals", ['due_on' => '2026-10-10', 'outcome' => 'renewed'])
-        ->assertForbidden();
+    $this->actingAs($agent = User::factory()->create())
+        ->postJson(ws($agent)."/policies/{$policy->id}/renewals", ['due_on' => '2026-10-10', 'outcome' => 'renewed'])
+        ->assertNotFound();
 });
 
 it('measures the renewal rate over the last twelve months', function () {
     $agent = User::factory()->create();
-    $policy = Policy::factory()->for(Client::factory()->for($agent))->create();
+    $policy = Policy::factory()->for(Client::factory()->for(workspaceOf($agent)))->create();
     $outcome = fn (string $dueOn, RenewalOutcome $outcome) => PolicyRenewal::forceCreate([
-        'policy_id' => $policy->id, 'user_id' => $agent->id, 'due_on' => $dueOn, 'outcome' => $outcome,
+        'policy_id' => $policy->id, 'workspace_id' => workspaceOf($agent)->id, 'due_on' => $dueOn, 'outcome' => $outcome,
     ]);
 
     $outcome('2026-09-01', RenewalOutcome::Renewed);
@@ -128,7 +128,7 @@ it('measures the renewal rate over the last twelve months', function () {
     $outcome('2025-06-01', RenewalOutcome::NotRenewing);
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/insights/reports')
+        ->getJson(ws($agent).'/insights/reports')
         ->assertJsonPath('data.retention.renewals_recorded', 4)
         ->assertJsonPath('data.retention.renewal_rate_percent', 75);
 });
@@ -136,7 +136,7 @@ it('measures the renewal rate over the last twelve months', function () {
 it('does not ask about renewals of policies that are no longer in force', function () {
     $policy = annualPolicy('2025-10-10', ['status' => PolicyStatus::Lapsed]);
 
-    $this->actingAs($policy->user)
-        ->getJson("/api/v1/policies/{$policy->id}")
+    $this->actingAs($agent = memberOf($policy->workspace))
+        ->getJson(ws($agent)."/policies/{$policy->id}")
         ->assertJsonPath('data.renewal_awaiting_outcome', null);
 });

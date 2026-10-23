@@ -10,10 +10,10 @@ use App\Models\User;
 
 it('promotes a lead to a client, carrying its details over', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->status(LeadStatus::Qualified)->create(['notes' => 'Wants family cover.']);
+    $lead = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create(['notes' => 'Wants family cover.']);
 
     $response = $this->actingAs($agent)
-        ->postJson("/api/v1/leads/{$lead->id}/promote", [
+        ->postJson(ws($agent)."/leads/{$lead->id}/promote", [
             'birthdate' => '1988-04-12',
             'civil_status' => 'married',
             'occupation' => '  Nurse ',
@@ -28,7 +28,7 @@ it('promotes a lead to a client, carrying its details over', function () {
         ->assertJsonPath('data.occupation', 'Nurse');
 
     $client = Client::findOrFail($response->json('data.id'));
-    expect($client->user_id)->toBe($agent->id)
+    expect($client->workspace_id)->toBe(workspaceOf($agent)->id)
         ->and($lead->fresh()->status)->toBe(LeadStatus::Converted);
 
     $activity = $lead->activities()->latest('id')->first();
@@ -38,10 +38,10 @@ it('promotes a lead to a client, carrying its details over', function () {
 
 it('lets the client-only details be left out', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson("/api/v1/leads/{$lead->id}/promote")
+        ->postJson(ws($agent)."/leads/{$lead->id}/promote")
         ->assertCreated()
         ->assertJsonPath('data.birthdate', null)
         ->assertJsonPath('data.civil_status', null);
@@ -49,19 +49,19 @@ it('lets the client-only details be left out', function () {
 
 it('shows the client on the promoted lead', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->create();
-    $clientId = $this->actingAs($agent)->postJson("/api/v1/leads/{$lead->id}/promote")->json('data.id');
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
+    $clientId = $this->actingAs($agent)->postJson(ws($agent)."/leads/{$lead->id}/promote")->json('data.id');
 
-    $this->getJson("/api/v1/leads/{$lead->id}")->assertJsonPath('data.client_id', $clientId);
-    $this->getJson('/api/v1/leads')->assertJsonPath('data.0.client_id', $clientId);
+    $this->getJson(ws($agent)."/leads/{$lead->id}")->assertJsonPath('data.client_id', $clientId);
+    $this->getJson(ws($agent).'/leads')->assertJsonPath('data.0.client_id', $clientId);
 });
 
 it('promotes a lead only once', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->create();
-    $this->actingAs($agent)->postJson("/api/v1/leads/{$lead->id}/promote")->assertCreated();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
+    $this->actingAs($agent)->postJson(ws($agent)."/leads/{$lead->id}/promote")->assertCreated();
 
-    $this->postJson("/api/v1/leads/{$lead->id}/promote")
+    $this->postJson(ws($agent)."/leads/{$lead->id}/promote")
         ->assertUnprocessable()
         ->assertJsonValidationErrors('lead');
 
@@ -70,10 +70,10 @@ it('promotes a lead only once', function () {
 
 it('validates the client details', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson("/api/v1/leads/{$lead->id}/promote", ['birthdate' => now()->addDay()->toDateString(), 'civil_status' => 'complicated'])
+        ->postJson(ws($agent)."/leads/{$lead->id}/promote", ['birthdate' => now()->addDay()->toDateString(), 'civil_status' => 'complicated'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['birthdate', 'civil_status']);
 });
@@ -81,47 +81,47 @@ it('validates the client details', function () {
 it('forbids promoting another agent’s lead', function () {
     $lead = Lead::factory()->create();
 
-    $this->actingAs(User::factory()->create())
-        ->postJson("/api/v1/leads/{$lead->id}/promote")
-        ->assertForbidden();
+    $this->actingAs($agent = User::factory()->create())
+        ->postJson(ws($agent)."/leads/{$lead->id}/promote")
+        ->assertNotFound();
 
     expect(Client::count())->toBe(0);
 });
 
 it('keeps converted out of manual status changes', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->patchJson("/api/v1/leads/{$lead->id}/status", ['status' => 'converted'])
+        ->patchJson(ws($agent)."/leads/{$lead->id}/status", ['status' => 'converted'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('status');
 
-    $this->postJson('/api/v1/leads/bulk/status', ['ids' => [$lead->id], 'status' => 'converted'])
+    $this->postJson(ws($agent).'/leads/bulk/status', ['ids' => [$lead->id], 'status' => 'converted'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('status');
 });
 
 it('locks a promoted lead’s status', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->status(LeadStatus::Converted)->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create();
 
     $this->actingAs($agent)
-        ->patchJson("/api/v1/leads/{$lead->id}/status", ['status' => 'lost'])
+        ->patchJson(ws($agent)."/leads/{$lead->id}/status", ['status' => 'lost'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('status');
 
-    $this->postJson('/api/v1/leads/bulk/status', ['ids' => [$lead->id], 'status' => 'lost'])->assertOk();
+    $this->postJson(ws($agent).'/leads/bulk/status', ['ids' => [$lead->id], 'status' => 'lost'])->assertOk();
 
     expect($lead->fresh()->status)->toBe(LeadStatus::Converted);
 });
 
 it('counts converted leads', function () {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->status(LeadStatus::Converted)->create();
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create();
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/leads/status-counts')
+        ->getJson(ws($agent).'/leads/status-counts')
         ->assertJsonPath('data.converted', 1)
         ->assertJsonPath('data.total', 1);
 });

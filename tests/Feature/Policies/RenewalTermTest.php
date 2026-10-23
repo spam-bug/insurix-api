@@ -30,10 +30,10 @@ function renewalPayload(array $overrides = []): array
 
 it('works out the next renewal from the effective date for set terms', function (string $term, string $expected) {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson("/api/v1/clients/{$client->id}/policies", renewalPayload(['renewal_term' => $term, 'renewal_date' => '2030-01-01']))
+        ->postJson(ws($agent)."/clients/{$client->id}/policies", renewalPayload(['renewal_term' => $term, 'renewal_date' => '2030-01-01']))
         ->assertCreated()
         ->assertJsonPath('data.renewal_term.value', $term)
         ->assertJsonPath('data.renewal_date', $expected);
@@ -47,10 +47,10 @@ it('works out the next renewal from the effective date for set terms', function 
 
 it('keeps a custom renewal date as entered', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson("/api/v1/clients/{$client->id}/policies", renewalPayload(['renewal_term' => 'custom', 'renewal_date' => '2027-06-15']))
+        ->postJson(ws($agent)."/clients/{$client->id}/policies", renewalPayload(['renewal_term' => 'custom', 'renewal_date' => '2027-06-15']))
         ->assertCreated()
         ->assertJsonPath('data.renewal_term', ['value' => 'custom', 'label' => 'Custom date'])
         ->assertJsonPath('data.renewal_date', '2027-06-15');
@@ -58,10 +58,10 @@ it('keeps a custom renewal date as entered', function () {
 
 it('allows a policy with no renewal', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson("/api/v1/clients/{$client->id}/policies", renewalPayload(['effective_date' => null]))
+        ->postJson(ws($agent)."/clients/{$client->id}/policies", renewalPayload(['effective_date' => null]))
         ->assertCreated()
         ->assertJsonPath('data.renewal_term', null)
         ->assertJsonPath('data.renewal_date', null);
@@ -69,28 +69,28 @@ it('allows a policy with no renewal', function () {
 
 it('needs the date for a custom term and the effective date for a set one', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
     $this->actingAs($agent);
 
-    $this->postJson("/api/v1/clients/{$client->id}/policies", renewalPayload(['renewal_term' => 'custom']))
+    $this->postJson(ws($agent)."/clients/{$client->id}/policies", renewalPayload(['renewal_term' => 'custom']))
         ->assertJsonValidationErrors(['renewal_date' => 'Pick the date it renews.']);
 
-    $this->postJson("/api/v1/clients/{$client->id}/policies", renewalPayload(['renewal_term' => 'quarterly', 'effective_date' => null]))
+    $this->postJson(ws($agent)."/clients/{$client->id}/policies", renewalPayload(['renewal_term' => 'quarterly', 'effective_date' => null]))
         ->assertJsonValidationErrors(['effective_date' => 'effective date']);
 
-    $this->postJson("/api/v1/clients/{$client->id}/policies", renewalPayload(['renewal_term' => 'yearly']))
+    $this->postJson(ws($agent)."/clients/{$client->id}/policies", renewalPayload(['renewal_term' => 'yearly']))
         ->assertJsonValidationErrors('renewal_term');
 });
 
 it('flags a monthly renewal only in its last week', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
     $quietPremium = ['payment_frequency' => PaymentFrequency::Single];
     $soon = Policy::factory()->for($client)->create([...$quietPremium, 'renewal_term' => RenewalTerm::Monthly, 'effective_date' => '2026-09-20', 'renewal_date' => null]);
     Policy::factory()->for($client)->create([...$quietPremium, 'renewal_term' => RenewalTerm::Monthly, 'effective_date' => '2026-09-30', 'renewal_date' => null]);
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/policies/attention')
+        ->getJson(ws($agent).'/policies/attention')
         ->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.policy.id', $soon->id)
         ->assertJsonPath('data.0.reasons.0', ['code' => 'renewal_due', 'label' => 'Renewal coming up', 'date' => '2026-10-20']);
