@@ -31,6 +31,7 @@ return new class extends Migration
 
             $table->index(['user_id', 'created_at']);
             $table->index(['client_id', 'created_at']);
+            $table->index('policy_id');
         });
     }
 

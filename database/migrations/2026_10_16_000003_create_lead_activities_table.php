@@ -24,6 +24,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['lead_id', 'created_at']);
+            $table->index('user_id');
         });
     }
 

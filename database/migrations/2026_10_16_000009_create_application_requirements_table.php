@@ -23,6 +23,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['policy_id', 'received_on']);
+            $table->index('document_id');
         });
     }
 
