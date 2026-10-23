@@ -18,7 +18,7 @@ class UpdateDocument
     {
         DB::transaction(fn () => $document->update($data->toArray()));
 
-        Cache::tags("agent:{$document->user_id}")->flush();
+        Cache::tags("workspace:{$document->workspace_id}")->flush();
 
         return $document;
     }

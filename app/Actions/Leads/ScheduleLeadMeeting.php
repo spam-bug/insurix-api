@@ -24,7 +24,7 @@ class ScheduleLeadMeeting
 
     /**
      * Sets the meeting time, moves an open lead to "meeting scheduled", and puts the meeting
-     * on the agent's follow-ups. Rescheduling replaces the open meeting follow-up. A lead that
+     * on the workspace's follow-ups. Rescheduling replaces the open meeting follow-up. A lead that
      * is already a client keeps its status.
      */
     public function handle(Lead $lead, LeadMeetingData $data, User $actor): Lead
@@ -54,7 +54,7 @@ class ScheduleLeadMeeting
             return $lead;
         });
 
-        Cache::tags("agent:{$lead->user_id}")->flush();
+        Cache::tags("workspace:{$lead->workspace_id}")->flush();
 
         return $lead;
     }

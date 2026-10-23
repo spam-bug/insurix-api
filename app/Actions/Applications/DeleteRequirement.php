@@ -14,6 +14,6 @@ class DeleteRequirement
     {
         DB::transaction(fn () => $requirement->delete());
 
-        Cache::tags("agent:{$requirement->policy->user_id}")->flush();
+        Cache::tags("workspace:{$requirement->policy->workspace_id}")->flush();
     }
 }

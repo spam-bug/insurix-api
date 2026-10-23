@@ -6,7 +6,7 @@ namespace App\Actions\Policies;
 
 use App\Enums\PolicyStatus;
 use App\Models\Policy;
-use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -31,12 +31,12 @@ class ListPoliciesNeedingAttention
      *
      * @return Collection<int, array{policy: Policy, reasons: array<int, array{code: string, label: string, date: string|null}>, due: CarbonImmutable}>
      */
-    public function handle(User $agent): Collection
+    public function handle(Workspace $workspace): Collection
     {
-        return Cache::tags("agent:{$agent->id}")->remember("policies:{$agent->id}:attention", now()->addMinutes(5), function () use ($agent) {
-            $today = CarbonImmutable::now($agent->timezone)->startOfDay();
+        return Cache::tags("workspace:{$workspace->id}")->remember("policies:{$workspace->id}:attention", now()->addMinutes(5), function () use ($workspace) {
+            $today = CarbonImmutable::now($workspace->timezone)->startOfDay();
 
-            return $agent->policies()
+            return $workspace->policies()
                 ->with(['client:id,name,lead_id', 'renewals:id,policy_id,due_on'])
                 ->withCount(['requirements as outstanding_requirements' => fn ($query) => $query->whereNull('received_on')])
                 ->whereIn('status', [PolicyStatus::InForce, PolicyStatus::Lapsed, PolicyStatus::Pending])
@@ -61,7 +61,7 @@ class ListPoliciesNeedingAttention
             $dates[] = $today;
         }
 
-        // Counted in whole days in the agent's timezone, from the day it moved.
+        // Counted in whole days in the workspace's timezone, from the day it moved.
         $stageSince = ($policy->stage_changed_at ?? $policy->created_at)->toImmutable()->setTimezone($today->timezone)->startOfDay();
         if ($policy->status === PolicyStatus::Pending && $stageSince->lessThan($today->subDays(self::PENDING_DAYS))) {
             $days = (int) $stageSince->diffInDays($today);

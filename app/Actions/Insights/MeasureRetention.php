@@ -9,7 +9,7 @@ use App\Enums\PolicyStatus;
 use App\Enums\RenewalOutcome;
 use App\Models\Policy;
 use App\Models\PolicyRenewal;
-use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 
 class MeasureRetention
@@ -27,9 +27,9 @@ class MeasureRetention
      *
      * @return array{in_force: int, lapsed: int, cancelled: int, retention_percent: int|null, renewals_coming_up: int, renewals_recorded: int, renewal_rate_percent: int|null}
      */
-    public function handle(User $agent): array
+    public function handle(Workspace $workspace): array
     {
-        $counts = $agent->policies()
+        $counts = $workspace->policies()
             ->toBase()
             ->selectRaw('status, count(*) as aggregate')
             ->groupBy('status')
@@ -40,10 +40,10 @@ class MeasureRetention
         $cancelled = (int) ($counts[PolicyStatus::Cancelled->value] ?? 0);
         $everInForce = $inForce + $lapsed + $cancelled;
 
-        $today = CarbonImmutable::now($agent->timezone)->startOfDay();
+        $today = CarbonImmutable::now($workspace->timezone)->startOfDay();
 
         $outcomes = PolicyRenewal::query()
-            ->where('user_id', $agent->id)
+            ->where('workspace_id', $workspace->id)
             ->whereBetween('due_on', [$today->subYear()->toDateString(), $today->toDateString()])
             ->pluck('outcome');
         $renewed = $outcomes->filter(fn (RenewalOutcome $outcome) => $outcome === RenewalOutcome::Renewed)->count();
@@ -53,7 +53,7 @@ class MeasureRetention
             'lapsed' => $lapsed,
             'cancelled' => $cancelled,
             'retention_percent' => $everInForce === 0 ? null : (int) round($inForce / $everInForce * 100),
-            'renewals_coming_up' => $agent->policies()
+            'renewals_coming_up' => $workspace->policies()
                 ->where('status', PolicyStatus::InForce)
                 ->get()
                 ->filter(fn (Policy $policy) => $this->findUpcomingRenewal->handle($policy, $today, self::RENEWAL_WINDOW_DAYS))

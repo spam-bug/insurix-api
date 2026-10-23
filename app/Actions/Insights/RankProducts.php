@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Insights;
 
 use App\Enums\PolicyStatus;
-use App\Models\User;
+use App\Models\Workspace;
 
 class RankProducts
 {
@@ -15,9 +15,9 @@ class RankProducts
      *
      * @return array<int, array{product_id: string|null, name: string, policies: int, annual_premium: float, commission: float}>
      */
-    public function handle(User $agent, int $limit = 5): array
+    public function handle(Workspace $workspace, int $limit = 5): array
     {
-        return $agent->policies()
+        return $workspace->policies()
             ->toBase()
             ->where('status', PolicyStatus::InForce)
             ->selectRaw('max(product_id) as product_id, max(product_name) as name, count(*) as policies, sum(annual_premium) as annual_premium, sum(commission) as commission')

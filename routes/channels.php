@@ -3,10 +3,11 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Broadcast;
 
-// Each agent listens on their own private channel for changes made outside their browser:
+// Everyone in a workspace listens on its private channel for changes made outside their browser:
 // shareable form submissions and the nightly jobs.
-Broadcast::channel('agents.{agentId}', function (User $user, string $agentId) {
-    return $user->id === $agentId;
+Broadcast::channel('workspaces.{workspace}', function (User $user, Workspace $workspace) {
+    return $user->can('view', $workspace);
 });

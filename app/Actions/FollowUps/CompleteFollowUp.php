@@ -36,7 +36,7 @@ class CompleteFollowUp
             return $followUp;
         });
 
-        Cache::tags("agent:{$followUp->user_id}")->flush();
+        Cache::tags("workspace:{$followUp->workspace_id}")->flush();
 
         return $followUp;
     }

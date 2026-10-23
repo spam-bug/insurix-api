@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Insights;
 
 use App\Models\Lead;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 
 class BuildInsightReport
@@ -27,14 +27,14 @@ class BuildInsightReport
      *
      * @return array<string, mixed>
      */
-    public function handle(User $agent): array
+    public function handle(Workspace $workspace): array
     {
-        return Cache::tags("agent:{$agent->id}")->remember("insights:{$agent->id}:reports", now()->addMinutes(5), function () use ($agent) {
-            $stalled = $this->listStalledLeads->handle($agent);
+        return Cache::tags("workspace:{$workspace->id}")->remember("insights:{$workspace->id}:reports", now()->addMinutes(5), function () use ($workspace) {
+            $stalled = $this->listStalledLeads->handle($workspace);
 
             return [
-                'lead_sources' => $this->measureLeadSources->handle($agent),
-                'pipeline_speed' => $this->measurePipelineSpeed->handle($agent),
+                'lead_sources' => $this->measureLeadSources->handle($workspace),
+                'pipeline_speed' => $this->measurePipelineSpeed->handle($workspace),
                 'stalled_leads' => [
                     'quiet_days' => ListStalledLeads::QUIET_DAYS,
                     'total' => $stalled->count(),
@@ -46,9 +46,9 @@ class BuildInsightReport
                         'days_quiet' => $lead->days_quiet,
                     ])->values()->all(),
                 ],
-                'retention' => $this->measureRetention->handle($agent),
-                'top_products' => $this->rankProducts->handle($agent),
-                'commission_by_month' => $this->chartCommissionByMonth->handle($agent),
+                'retention' => $this->measureRetention->handle($workspace),
+                'top_products' => $this->rankProducts->handle($workspace),
+                'commission_by_month' => $this->chartCommissionByMonth->handle($workspace),
             ];
         });
     }

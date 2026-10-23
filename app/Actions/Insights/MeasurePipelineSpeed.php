@@ -6,7 +6,7 @@ namespace App\Actions\Insights;
 
 use App\Enums\LeadActivityType;
 use App\Models\LeadActivity;
-use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 
 class MeasurePipelineSpeed
@@ -17,11 +17,11 @@ class MeasurePipelineSpeed
      *
      * @return array{average_days: int|null, median_days: int|null, converted: int}
      */
-    public function handle(User $agent): array
+    public function handle(Workspace $workspace): array
     {
         $days = LeadActivity::query()
             ->join('leads', 'leads.id', '=', 'lead_activities.lead_id')
-            ->where('leads.user_id', $agent->id)
+            ->where('leads.workspace_id', $workspace->id)
             ->where('lead_activities.type', LeadActivityType::Promoted)
             ->where('lead_activities.created_at', '>=', CarbonImmutable::now()->subYear())
             ->toBase()

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\FollowUps;
 
-use App\Actions\Notifications\NotifyAgent;
+use App\Actions\Notifications\NotifyWorkspace;
 use App\Actions\Policies\FindNextPaymentDue;
 use App\Actions\Policies\FindNextRenewalDate;
 use App\Actions\Policies\ListPoliciesNeedingAttention;
@@ -12,7 +12,7 @@ use App\DataTransferObject\FollowUps\FollowUpData;
 use App\Enums\FollowUpType;
 use App\Enums\PolicyStatus;
 use App\Models\Policy;
-use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 
 /**
@@ -21,7 +21,7 @@ use Carbon\CarbonImmutable;
  */
 class QueuePolicyFollowUps
 {
-    /** Reminders are due at this hour, in the agent's timezone. */
+    /** Reminders are due at this hour, in the workspace's timezone. */
     private const DUE_HOUR = 9;
 
     /** A renewal reminder comes up this many days before the renewal date, or less for short terms. */
@@ -32,7 +32,7 @@ class QueuePolicyFollowUps
 
     public function __construct(
         private CreateFollowUp $createFollowUp,
-        private NotifyAgent $notifyAgent,
+        private NotifyWorkspace $notifyWorkspace,
         private FindNextRenewalDate $findNextRenewalDate,
         private FindNextPaymentDue $findNextPaymentDue,
     ) {}
@@ -40,12 +40,12 @@ class QueuePolicyFollowUps
     /**
      * @return int how many follow-ups were created
      */
-    public function handle(User $agent): int
+    public function handle(Workspace $workspace): int
     {
-        $today = CarbonImmutable::now($agent->timezone)->startOfDay();
+        $today = CarbonImmutable::now($workspace->timezone)->startOfDay();
         $created = 0;
 
-        $policies = $agent->policies()
+        $policies = $workspace->policies()
             ->with('client.lead', 'followUps:id,policy_id,reminder_key', 'renewals:id,policy_id,due_on')
             ->where('status', PolicyStatus::InForce)
             ->get();
@@ -56,10 +56,10 @@ class QueuePolicyFollowUps
                     continue;
                 }
 
-                // Policy dates are plain dates, so read them in the agent's timezone. A reminder
+                // Policy dates are plain dates, so read them in the workspace's timezone. A reminder
                 // whose hour has already passed today is due right away rather than overdue.
-                $dueAt = CarbonImmutable::parse($dueOn->toDateString(), $agent->timezone)->setTime(self::DUE_HOUR, 0);
-                $dueAt = max($dueAt, CarbonImmutable::now($agent->timezone))->utc();
+                $dueAt = CarbonImmutable::parse($dueOn->toDateString(), $workspace->timezone)->setTime(self::DUE_HOUR, 0);
+                $dueAt = max($dueAt, CarbonImmutable::now($workspace->timezone))->utc();
 
                 $this->createFollowUp->handle(
                     $policy->client->lead,
@@ -72,7 +72,7 @@ class QueuePolicyFollowUps
         }
 
         if ($created > 0) {
-            $this->notifyAgent->handle($agent->id, 'follow-ups');
+            $this->notifyWorkspace->handle($workspace->id, 'follow-ups');
         }
 
         return $created;

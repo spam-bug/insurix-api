@@ -52,7 +52,7 @@ class ApproveApplication
             return $policy;
         });
 
-        Cache::tags("agent:{$policy->user_id}")->flush();
+        Cache::tags("workspace:{$policy->workspace_id}")->flush();
 
         return $policy;
     }

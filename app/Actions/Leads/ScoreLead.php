@@ -49,13 +49,13 @@ class ScoreLead
     }
 
     /**
-     * Converted leads over all leads, per source, for the agent who owns $lead.
+     * Converted leads over all leads, per source, in the workspace that owns $lead.
      *
      * @return array<string, float>
      */
     public function sourceRates(Lead $lead): array
     {
-        return Lead::where('user_id', $lead->user_id)
+        return Lead::where('workspace_id', $lead->workspace_id)
             ->toBase()
             ->selectRaw('source, count(*) as total, sum(case when status = ? then 1 else 0 end) as converted', [LeadStatus::Converted->value])
             ->groupBy('source')

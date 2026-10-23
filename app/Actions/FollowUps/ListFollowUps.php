@@ -7,7 +7,7 @@ namespace App\Actions\FollowUps;
 use App\DataTransferObject\FollowUps\FollowUpFiltersData;
 use App\Enums\FollowUpWindow;
 use App\Models\FollowUp;
-use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,12 +20,12 @@ class ListFollowUps
      *
      * @return LengthAwarePaginator<int, FollowUp>
      */
-    public function handle(User $agent, FollowUpFiltersData $filters): LengthAwarePaginator
+    public function handle(Workspace $workspace, FollowUpFiltersData $filters): LengthAwarePaginator
     {
-        return Cache::tags("agent:{$agent->id}")->remember("follow-ups:{$agent->id}:index:".md5(json_encode($filters)), now()->addMinutes(5), function () use ($agent, $filters) {
-            $endOfToday = CarbonImmutable::now($agent->timezone)->endOfDay()->utc();
+        return Cache::tags("workspace:{$workspace->id}")->remember("follow-ups:{$workspace->id}:index:".md5(json_encode($filters)), now()->addMinutes(5), function () use ($workspace, $filters) {
+            $endOfToday = CarbonImmutable::now($workspace->timezone)->endOfDay()->utc();
 
-            $query = $agent->followUps()
+            $query = $workspace->followUps()
                 ->with(['lead:id,name,status', 'lead.client:id,lead_id'])
                 ->when($filters->leadId, fn (Builder $query, string $leadId) => $query->where('lead_id', $leadId));
 

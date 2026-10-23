@@ -7,7 +7,7 @@ namespace App\Actions\Insights;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
-use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -23,11 +23,11 @@ class ListStalledLeads
      *
      * @return Collection<int, Lead>
      */
-    public function handle(User $agent, int $quietDays = self::QUIET_DAYS): Collection
+    public function handle(Workspace $workspace, int $quietDays = self::QUIET_DAYS): Collection
     {
         $now = CarbonImmutable::now();
 
-        return $agent->leads()
+        return $workspace->leads()
             ->whereIn('status', LeadStatus::open())
             ->withMax(['activities as last_touched_at' => fn (Builder $query) => $query
                 ->whereNotNull('lead_activities.user_id')

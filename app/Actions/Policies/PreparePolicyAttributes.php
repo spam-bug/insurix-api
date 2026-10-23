@@ -8,7 +8,7 @@ use App\DataTransferObject\Policies\PolicyData;
 use App\Enums\PolicyType;
 use App\Enums\RenewalTerm;
 use App\Models\Policy;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Validation\ValidationException;
 
 class PreparePolicyAttributes
@@ -20,9 +20,9 @@ class PreparePolicyAttributes
      *
      * @return array<string, mixed>
      */
-    public function handle(User $agent, PolicyData $data, ?Policy $current = null): array
+    public function handle(Workspace $workspace, PolicyData $data, ?Policy $current = null): array
     {
-        $product = $data->productId === null ? null : $agent->products()->findOrFail($data->productId);
+        $product = $data->productId === null ? null : $workspace->products()->findOrFail($data->productId);
 
         if ($product && ! $product->is_active && $current?->product_id !== $product->id) {
             throw ValidationException::withMessages(['product_id' => 'This product is inactive. Reactivate it in your catalog to use it.']);

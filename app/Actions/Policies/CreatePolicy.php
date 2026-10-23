@@ -25,12 +25,12 @@ class CreatePolicy
      */
     public function handle(Client $client, PolicyData $data, ?User $actor = null): Policy
     {
-        $attributes = $this->preparePolicyAttributes->handle($client->user, $data);
+        $attributes = $this->preparePolicyAttributes->handle($client->workspace, $data);
 
         $policy = DB::transaction(function () use ($client, $attributes, $actor) {
             $policy = $client->policies()->create([
                 ...$attributes,
-                'user_id' => $client->user_id,
+                'workspace_id' => $client->workspace_id,
             ]);
 
             $this->recordPolicyEvent->handle($policy, PolicyEventType::Recorded, $actor, ['status' => $policy->status->value]);
@@ -38,7 +38,7 @@ class CreatePolicy
             return $policy;
         });
 
-        Cache::tags("agent:{$client->user_id}")->flush();
+        Cache::tags("workspace:{$client->workspace_id}")->flush();
 
         return $policy;
     }

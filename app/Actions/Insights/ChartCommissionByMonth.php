@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Insights;
 
-use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 
 class ChartCommissionByMonth
@@ -15,11 +15,11 @@ class ChartCommissionByMonth
      *
      * @return array<int, array{month: string, received: float, policies: int}>
      */
-    public function handle(User $agent, int $months = 12): array
+    public function handle(Workspace $workspace, int $months = 12): array
     {
-        $firstMonth = CarbonImmutable::now($agent->timezone)->startOfMonth()->subMonths($months - 1);
+        $firstMonth = CarbonImmutable::now($workspace->timezone)->startOfMonth()->subMonths($months - 1);
 
-        $byMonth = $agent->policies()
+        $byMonth = $workspace->policies()
             ->toBase()
             ->where('commission_received_at', '>=', $firstMonth->toDateString())
             ->selectRaw('commission_received_at, sum(commission) as received, count(*) as policies')

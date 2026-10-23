@@ -14,6 +14,6 @@ class DeletePolicy
     {
         DB::transaction(fn () => $policy->delete());
 
-        Cache::tags("agent:{$policy->user_id}")->flush();
+        Cache::tags("workspace:{$policy->workspace_id}")->flush();
     }
 }

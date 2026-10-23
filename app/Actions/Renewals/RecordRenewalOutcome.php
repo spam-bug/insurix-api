@@ -31,7 +31,7 @@ class RecordRenewalOutcome
      */
     public function handle(Policy $policy, RenewalData $data, User $actor): PolicyRenewal
     {
-        $awaiting = $this->findRenewalAwaitingOutcome->handle($policy, CarbonImmutable::now($policy->user->timezone)->startOfDay());
+        $awaiting = $this->findRenewalAwaitingOutcome->handle($policy, CarbonImmutable::now($policy->workspace->timezone)->startOfDay());
 
         if ($awaiting?->toDateString() !== $data->dueOn->toDateString()) {
             throw ValidationException::withMessages(['due_on' => 'This renewal isn’t waiting for an outcome.']);
@@ -39,7 +39,7 @@ class RecordRenewalOutcome
 
         $renewal = DB::transaction(function () use ($policy, $data, $actor) {
             $renewal = $policy->renewals()->create([
-                'user_id' => $actor->id,
+                'workspace_id' => $policy->workspace_id,
                 'due_on' => $data->dueOn,
                 'outcome' => $data->outcome,
                 'notes' => $data->notes,
@@ -61,7 +61,7 @@ class RecordRenewalOutcome
             return $renewal;
         });
 
-        Cache::tags("agent:{$policy->user_id}")->flush();
+        Cache::tags("workspace:{$policy->workspace_id}")->flush();
 
         return $renewal;
     }

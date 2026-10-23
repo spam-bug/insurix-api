@@ -9,6 +9,7 @@ use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -19,20 +20,20 @@ class CreateLead
     /**
      * Every new lead starts as a prospect, whatever the caller sends.
      */
-    public function handle(User $agent, LeadData $data): Lead
+    public function handle(Workspace $workspace, LeadData $data, User $actor): Lead
     {
-        $lead = DB::transaction(function () use ($agent, $data) {
-            $lead = $agent->leads()->create([
+        $lead = DB::transaction(function () use ($workspace, $data, $actor) {
+            $lead = $workspace->leads()->create([
                 ...$data->toArray(),
                 'status' => LeadStatus::Prospect,
             ]);
 
-            $this->recordLeadActivity->handle($lead, LeadActivityType::Created, $agent, properties: ['source' => $lead->source->value]);
+            $this->recordLeadActivity->handle($lead, LeadActivityType::Created, $actor, properties: ['source' => $lead->source->value]);
 
             return $lead;
         });
 
-        Cache::tags("agent:{$agent->id}")->flush();
+        Cache::tags("workspace:{$workspace->id}")->flush();
 
         return $lead;
     }

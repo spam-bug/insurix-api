@@ -8,7 +8,7 @@ use App\Actions\FollowUps\CreateFollowUp;
 use App\DataTransferObject\FollowUps\FollowUpData;
 use App\DataTransferObject\Policies\BulkPolicyFollowUpData;
 use App\Models\Policy;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -22,12 +22,12 @@ class BulkCreatePolicyFollowUps
      *
      * @return array{created: int, skipped: int}
      */
-    public function handle(User $agent, BulkPolicyFollowUpData $data): array
+    public function handle(Workspace $workspace, BulkPolicyFollowUpData $data): array
     {
         $followUp = new FollowUpData(type: $data->type, title: $data->title, dueAt: $data->dueAt, notes: $data->notes);
 
-        $created = DB::transaction(function () use ($agent, $data, $followUp) {
-            $policies = $agent->policies()
+        $created = DB::transaction(function () use ($workspace, $data, $followUp) {
+            $policies = $workspace->policies()
                 ->with('client.lead')
                 ->whereKey($data->ids)
                 ->get()
@@ -40,7 +40,7 @@ class BulkCreatePolicyFollowUps
             return $policies->count();
         });
 
-        Cache::tags("agent:{$agent->id}")->flush();
+        Cache::tags("workspace:{$workspace->id}")->flush();
 
         return ['created' => $created, 'skipped' => count($data->ids) - $created];
     }

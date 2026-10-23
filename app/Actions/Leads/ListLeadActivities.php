@@ -17,7 +17,7 @@ class ListLeadActivities
      */
     public function handle(Lead $lead, int $perPage = 20): LengthAwarePaginator
     {
-        return Cache::tags("agent:{$lead->user_id}")->rememberForever("leads:{$lead->user_id}:{$lead->id}:activities:page-".Paginator::resolveCurrentPage()."-{$perPage}", fn () => $lead->activities()
+        return Cache::tags("workspace:{$lead->workspace_id}")->rememberForever("leads:{$lead->workspace_id}:{$lead->id}:activities:page-".Paginator::resolveCurrentPage()."-{$perPage}", fn () => $lead->activities()
             ->with('user:id,name')
             ->latest()
             ->latest('id')

@@ -32,7 +32,7 @@ class PromoteLead
         $client = DB::transaction(function () use ($lead, $profile, $actor) {
             $previousStatus = $lead->status;
 
-            $client = $lead->user->clients()->create([
+            $client = $lead->workspace->clients()->create([
                 'lead_id' => $lead->id,
                 'name' => $lead->name,
                 'email' => $lead->email,
@@ -52,7 +52,7 @@ class PromoteLead
             return $client;
         });
 
-        Cache::tags("agent:{$lead->user_id}")->flush();
+        Cache::tags("workspace:{$lead->workspace_id}")->flush();
 
         return $client;
     }

@@ -6,7 +6,7 @@ namespace App\Actions\Policies;
 
 use App\DataTransferObject\Policies\PolicyFiltersData;
 use App\Models\Policy;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -14,15 +14,15 @@ use Illuminate\Support\Facades\Cache;
 class ListPolicies
 {
     /**
-     * The agent's policies, newest first. Search matches the policy number,
+     * The workspace's policies, newest first. Search matches the policy number,
      * product or client name.
      *
      * @return LengthAwarePaginator<int, Policy>
      */
-    public function handle(User $agent, PolicyFiltersData $filters): LengthAwarePaginator
+    public function handle(Workspace $workspace, PolicyFiltersData $filters): LengthAwarePaginator
     {
-        return Cache::tags("agent:{$agent->id}")->rememberForever("policies:{$agent->id}:index:".md5(json_encode($filters)), function () use ($agent, $filters) {
-            return $agent->policies()
+        return Cache::tags("workspace:{$workspace->id}")->rememberForever("policies:{$workspace->id}:index:".md5(json_encode($filters)), function () use ($workspace, $filters) {
+            return $workspace->policies()
                 ->with('client:id,name,lead_id')
                 ->when($filters->clientId, fn (Builder $query, string $clientId) => $query->where('client_id', $clientId))
                 ->when($filters->productId, fn (Builder $query, string $productId) => $query->where('product_id', $productId))

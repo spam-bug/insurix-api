@@ -19,7 +19,7 @@ class UpdateProduct
     {
         DB::transaction(fn () => $product->update($data->toArray()));
 
-        Cache::tags("agent:{$product->user_id}")->flush();
+        Cache::tags("workspace:{$product->workspace_id}")->flush();
 
         return $product;
     }

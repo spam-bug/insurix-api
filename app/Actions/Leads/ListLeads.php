@@ -8,7 +8,7 @@ use App\DataTransferObject\Leads\LeadFiltersData;
 use App\Enums\LeadSort;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -18,10 +18,10 @@ class ListLeads
     /**
      * @return LengthAwarePaginator<int, Lead>
      */
-    public function handle(User $agent, LeadFiltersData $filters): LengthAwarePaginator
+    public function handle(Workspace $workspace, LeadFiltersData $filters): LengthAwarePaginator
     {
-        return Cache::tags("agent:{$agent->id}")->rememberForever("leads:{$agent->id}:index:".md5(json_encode($filters)), function () use ($agent, $filters) {
-            $query = $agent->leads()
+        return Cache::tags("workspace:{$workspace->id}")->rememberForever("leads:{$workspace->id}:index:".md5(json_encode($filters)), function () use ($workspace, $filters) {
+            $query = $workspace->leads()
                 ->with('client:id,lead_id')
                 ->when($filters->search, function (Builder $query, string $search) {
                     $query->where(function (Builder $query) use ($search) {

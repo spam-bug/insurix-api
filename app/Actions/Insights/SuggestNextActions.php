@@ -13,7 +13,7 @@ use App\Enums\LeadSource;
 use App\Enums\PolicyStatus;
 use App\Models\Lead;
 use App\Models\Policy;
-use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -52,24 +52,24 @@ class SuggestNextActions
     /**
      * @return array<int, array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}>
      */
-    public function handle(User $agent): array
+    public function handle(Workspace $workspace): array
     {
-        return Cache::tags("agent:{$agent->id}")->remember("insights:{$agent->id}:next-actions", now()->addMinutes(5), function () use ($agent) {
-            $today = CarbonImmutable::now($agent->timezone)->startOfDay();
+        return Cache::tags("workspace:{$workspace->id}")->remember("insights:{$workspace->id}:next-actions", now()->addMinutes(5), function () use ($workspace) {
+            $today = CarbonImmutable::now($workspace->timezone)->startOfDay();
 
-            $quiet = $this->listStalledLeads->handle($agent, self::HOT_QUIET_DAYS);
+            $quiet = $this->listStalledLeads->handle($workspace, self::HOT_QUIET_DAYS);
             $hot = $quiet->filter(fn (Lead $lead) => $lead->score !== null && $lead->score >= ScoreLead::HOT_SCORE)->values();
             $stalled = $quiet->filter(fn (Lead $lead) => $lead->days_quiet >= ListStalledLeads::QUIET_DAYS)->diff($hot)->values();
 
             $suggestions = array_filter([
-                $this->overdueFollowUps($agent),
+                $this->overdueFollowUps($workspace),
                 $this->hotLeadsWaiting($hot),
-                $this->renewalsAwaitingOutcome($agent, $today),
-                $this->renewalsWithoutFollowUp($agent, $today),
-                $this->stuckApplications($agent, $today),
-                $this->bestSource($agent),
+                $this->renewalsAwaitingOutcome($workspace, $today),
+                $this->renewalsWithoutFollowUp($workspace, $today),
+                $this->stuckApplications($workspace, $today),
+                $this->bestSource($workspace),
                 $this->stalledLeads($stalled),
-                $this->newLeads($agent),
+                $this->newLeads($workspace),
             ]);
 
             return array_slice(array_values($suggestions), 0, self::LIMIT);
@@ -79,9 +79,9 @@ class SuggestNextActions
     /**
      * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}|null
      */
-    private function overdueFollowUps(User $agent): ?array
+    private function overdueFollowUps(Workspace $workspace): ?array
     {
-        $overdue = $this->summarizeFollowUps->handle($agent)['overdue'];
+        $overdue = $this->summarizeFollowUps->handle($workspace)['overdue'];
         if ($overdue === 0) {
             return null;
         }
@@ -129,9 +129,9 @@ class SuggestNextActions
      *
      * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}|null
      */
-    private function renewalsAwaitingOutcome(User $agent, CarbonImmutable $today): ?array
+    private function renewalsAwaitingOutcome(Workspace $workspace, CarbonImmutable $today): ?array
     {
-        $waiting = $agent->policies()
+        $waiting = $workspace->policies()
             ->with(['client:id,name,lead_id', 'renewals:id,policy_id,due_on'])
             ->where('status', PolicyStatus::InForce)
             ->get()
@@ -157,9 +157,9 @@ class SuggestNextActions
     /**
      * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}|null
      */
-    private function renewalsWithoutFollowUp(User $agent, CarbonImmutable $today): ?array
+    private function renewalsWithoutFollowUp(Workspace $workspace, CarbonImmutable $today): ?array
     {
-        $renewals = $agent->policies()
+        $renewals = $workspace->policies()
             ->with(['client:id,name,lead_id', 'renewals:id,policy_id,due_on'])
             ->where('status', PolicyStatus::InForce)
             ->whereDoesntHave('followUps', fn (Builder $query) => $query->whereNull('completed_at'))
@@ -189,10 +189,10 @@ class SuggestNextActions
     /**
      * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}|null
      */
-    private function stuckApplications(User $agent, CarbonImmutable $today): ?array
+    private function stuckApplications(Workspace $workspace, CarbonImmutable $today): ?array
     {
         $days = ListPoliciesNeedingAttention::PENDING_DAYS;
-        $count = $agent->policies()
+        $count = $workspace->policies()
             ->where('status', PolicyStatus::Pending)
             ->where(fn (Builder $query) => $query
                 ->where('stage_changed_at', '<', $today->subDays($days)->utc())
@@ -216,9 +216,9 @@ class SuggestNextActions
      *
      * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}|null
      */
-    private function bestSource(User $agent): ?array
+    private function bestSource(Workspace $workspace): ?array
     {
-        $best = collect($this->measureLeadSources->handle($agent))
+        $best = collect($this->measureLeadSources->handle($workspace))
             ->first(fn (array $source) => $source['enough_data'] && $source['rate_percent'] >= self::GOOD_SOURCE_PERCENT);
 
         if ($best === null) {
@@ -231,7 +231,7 @@ class SuggestNextActions
             LeadSource::Referral => $this->suggestion(
                 'ask_for_referrals',
                 "Referrals convert at {$rate}% for you",
-                'Ask your newest clients ('.$this->names($agent->clients()->latest()->latest('id')->limit(3)->pluck('name')).') who else they know.',
+                'Ask your newest clients ('.$this->names($workspace->clients()->latest()->latest('id')->limit(3)->pluck('name')).') who else they know.',
                 $best['leads'],
                 source: $best['source'],
             ),
@@ -276,9 +276,9 @@ class SuggestNextActions
     /**
      * @return array{code: string, title: string, detail: string, count: int, lead_id: int|null, source: string|null}|null
      */
-    private function newLeads(User $agent): ?array
+    private function newLeads(Workspace $workspace): ?array
     {
-        $latest = $agent->leads()->max('created_at');
+        $latest = $workspace->leads()->max('created_at');
 
         if ($latest === null) {
             return $this->suggestion('no_new_leads', 'Add your first leads', "Share your form link, or add someone you've talked to.", 0);

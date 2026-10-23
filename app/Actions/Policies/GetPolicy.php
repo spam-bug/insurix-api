@@ -15,6 +15,6 @@ class GetPolicy
      */
     public function handle(Policy $policy): Policy
     {
-        return Cache::tags("agent:{$policy->user_id}")->rememberForever("policies:{$policy->user_id}:{$policy->id}", fn () => $policy->load(PolicyResource::DETAIL_RELATIONS));
+        return Cache::tags("workspace:{$policy->workspace_id}")->rememberForever("policies:{$policy->workspace_id}:{$policy->id}", fn () => $policy->load(PolicyResource::DETAIL_RELATIONS));
     }
 }

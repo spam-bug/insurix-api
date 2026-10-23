@@ -18,7 +18,7 @@ class AddLeadNote
     {
         $activity = $this->recordLeadActivity->handle($lead, LeadActivityType::Note, $actor, $body);
 
-        Cache::tags("agent:{$lead->user_id}")->flush();
+        Cache::tags("workspace:{$lead->workspace_id}")->flush();
 
         return $activity;
     }

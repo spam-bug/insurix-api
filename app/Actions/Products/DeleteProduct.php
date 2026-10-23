@@ -27,6 +27,6 @@ class DeleteProduct
 
         DB::transaction(fn () => $product->delete());
 
-        Cache::tags("agent:{$product->user_id}")->flush();
+        Cache::tags("workspace:{$product->workspace_id}")->flush();
     }
 }
