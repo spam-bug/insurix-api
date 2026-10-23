@@ -15,7 +15,8 @@ class UpdateProfile
     {
         DB::transaction(fn () => $agent->update($data->toArray()));
 
-        Cache::tags("agent:{$agent->id}")->flush();
+        // Names show on timelines in every workspace the person belongs to.
+        $agent->workspaces()->pluck('workspaces.id')->each(fn (string $id) => Cache::tags("workspace:{$id}")->flush());
 
         return $agent;
     }
