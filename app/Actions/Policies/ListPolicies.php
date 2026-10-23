@@ -23,7 +23,7 @@ class ListPolicies
     {
         return Cache::tags("agent:{$agent->id}")->rememberForever("policies:{$agent->id}:index:".md5(json_encode($filters)), function () use ($agent, $filters) {
             return $agent->policies()
-                ->with('client:id,name')
+                ->with('client:id,name,lead_id')
                 ->when($filters->clientId, fn (Builder $query, string $clientId) => $query->where('client_id', $clientId))
                 ->when($filters->productId, fn (Builder $query, string $productId) => $query->where('product_id', $productId))
                 ->when($filters->status, fn (Builder $query, $status) => $query->where('status', $status))

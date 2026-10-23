@@ -132,7 +132,7 @@ class SuggestNextActions
     private function renewalsAwaitingOutcome(User $agent, CarbonImmutable $today): ?array
     {
         $waiting = $agent->policies()
-            ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
+            ->with(['client:id,name,lead_id', 'renewals:id,policy_id,due_on'])
             ->where('status', PolicyStatus::InForce)
             ->get()
             ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $this->findRenewalAwaitingOutcome->handle($policy, $today)])
@@ -160,7 +160,7 @@ class SuggestNextActions
     private function renewalsWithoutFollowUp(User $agent, CarbonImmutable $today): ?array
     {
         $renewals = $agent->policies()
-            ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
+            ->with(['client:id,name,lead_id', 'renewals:id,policy_id,due_on'])
             ->where('status', PolicyStatus::InForce)
             ->whereDoesntHave('followUps', fn (Builder $query) => $query->whereNull('completed_at'))
             ->get()

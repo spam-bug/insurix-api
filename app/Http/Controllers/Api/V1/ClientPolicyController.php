@@ -18,7 +18,7 @@ class ClientPolicyController extends Controller
 {
     public function store(StorePolicyRequest $request, Client $client, #[CurrentUser] User $agent, CreatePolicy $createPolicy): JsonResponse
     {
-        return PolicyResource::make($createPolicy->handle($client, PolicyData::fromArray($request->validated()), $agent)->load('client:id,name'))
+        return PolicyResource::make($createPolicy->handle($client, PolicyData::fromArray($request->validated()), $agent)->load('client:id,name,lead_id'))
             ->response()
             ->setStatusCode(201);
     }
