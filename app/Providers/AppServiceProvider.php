@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Models\PersonalAccessToken;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -13,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
-use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,9 +33,6 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureRateLimiting();
 
-        // Tokens are keyed by UUID, like their users.
-        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
-
         // Reset links open the frontend's reset page, which posts the token back to the API.
         ResetPassword::createUrlUsing(fn (User $user, string $token) => config('app.frontend_url').'/reset-password?'.http_build_query([
             'token' => $token,
@@ -46,18 +41,17 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Public lead form submissions arrive through the Next.js server, so every request shares
-     * its IP. The visitor's own IP comes in X-Client-IP; it can be spoofed, so the hourly cap
-     * per form is the real backstop.
+     * Visitors post the public lead form straight from their browser, so each one is limited by
+     * their own IP, with an hourly cap per form as the backstop.
      */
     private function configureRateLimiting(): void
     {
         RateLimiter::for('lead-form', function (Request $request) {
-            $token = (string) $request->route('token');
-            $visitor = $request->header('X-Client-IP') ?: $request->ip();
+            $agent = $request->route('agent');
+            $token = $agent instanceof User ? $agent->lead_form_token : (string) $agent;
 
             return [
-                Limit::perMinute(5)->by("lead-form:{$token}:{$visitor}"),
+                Limit::perMinute(5)->by("lead-form:{$token}:{$request->ip()}"),
                 Limit::perHour(60)->by("lead-form:{$token}"),
             ];
         });

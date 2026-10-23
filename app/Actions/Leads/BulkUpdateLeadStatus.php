@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions\Leads;
 
+use App\DataTransferObject\Leads\BulkLeadStatusData;
 use App\Enums\LeadStatus;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class BulkUpdateLeadStatus
@@ -13,22 +15,25 @@ class BulkUpdateLeadStatus
     public function __construct(private UpdateLeadStatus $updateLeadStatus) {}
 
     /**
-     * Changes the status of the agent's own leads among $leadIds, logging each change.
+     * Changes the status of the agent's own leads among the selected ones, logging each change.
      * Leads already promoted to clients are left as they are.
      *
-     * @param  array<int, string>  $leadIds
      * @return int how many leads were changed
      */
-    public function handle(User $agent, array $leadIds, LeadStatus $status): int
+    public function handle(User $agent, BulkLeadStatusData $data): int
     {
-        return DB::transaction(function () use ($agent, $leadIds, $status) {
-            $leads = $agent->leads()->whereKey($leadIds)->whereNotIn('status', [$status, LeadStatus::Converted])->get();
+        $updated = DB::transaction(function () use ($agent, $data) {
+            $leads = $agent->leads()->whereKey($data->ids)->whereNotIn('status', [$data->status, LeadStatus::Converted])->get();
 
             foreach ($leads as $lead) {
-                $this->updateLeadStatus->handle($lead, $status, $agent);
+                $this->updateLeadStatus->handle($lead, $data->status, $agent);
             }
 
             return $leads->count();
         });
+
+        Cache::tags("agent:{$agent->id}")->flush();
+
+        return $updated;
     }
 }

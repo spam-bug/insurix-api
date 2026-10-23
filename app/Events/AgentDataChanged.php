@@ -6,14 +6,14 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
  * Tells an agent's open tabs that some of their data changed without them doing it, so the
- * page can re-fetch. Broadcast right away rather than queued, so no queue worker is needed.
+ * page can re-fetch. Queued, so a slow or failing broadcaster never holds up the request.
  */
-class AgentDataChanged implements ShouldBroadcastNow
+class AgentDataChanged implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets;
 

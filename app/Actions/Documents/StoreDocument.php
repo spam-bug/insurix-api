@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Actions\Documents;
 
-use App\DataTransferObjects\Documents\DocumentData;
+use App\DataTransferObject\Documents\DocumentData;
 use App\Models\Client;
 use App\Models\Document;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -21,14 +22,18 @@ class StoreDocument
     {
         $path = $file->store("documents/{$client->user_id}/{$client->id}", Document::DISK);
 
-        return DB::transaction(fn () => $client->documents()->create([
-            'name' => Str::limit(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), 250, ''),
-            ...$data->toAttributes(),
+        $document = DB::transaction(fn () => $client->documents()->create([
+            ...$data->toArray(),
+            'name' => $data->name ?? Str::limit(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), 250, ''),
             'user_id' => $client->user_id,
             'original_name' => Str::limit($file->getClientOriginalName(), 250, ''),
             'path' => $path,
             'mime_type' => $file->getMimeType() ?? 'application/octet-stream',
             'size' => $file->getSize(),
         ]));
+
+        Cache::tags("agent:{$client->user_id}")->flush();
+
+        return $document;
     }
 }

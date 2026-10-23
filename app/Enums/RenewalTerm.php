@@ -47,4 +47,13 @@ enum RenewalTerm: string
             self::Annual, self::Custom => 30,
         };
     }
+
+    /**
+     * Whether the agent records an outcome for each renewal. Annual and custom-date terms
+     * only: monthly and quarterly ones roll over like payments and aren't tracked one by one.
+     */
+    public function tracksOutcomes(): bool
+    {
+        return $this === self::Annual || $this === self::Custom;
+    }
 }

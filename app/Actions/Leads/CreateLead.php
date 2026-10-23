@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Actions\Leads;
 
-use App\DataTransferObjects\Leads\LeadData;
+use App\DataTransferObject\Leads\LeadData;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CreateLead
@@ -20,9 +21,9 @@ class CreateLead
      */
     public function handle(User $agent, LeadData $data): Lead
     {
-        return DB::transaction(function () use ($agent, $data) {
+        $lead = DB::transaction(function () use ($agent, $data) {
             $lead = $agent->leads()->create([
-                ...$data->toAttributes(),
+                ...$data->toArray(),
                 'status' => LeadStatus::Prospect,
             ]);
 
@@ -30,5 +31,9 @@ class CreateLead
 
             return $lead;
         });
+
+        Cache::tags("agent:{$agent->id}")->flush();
+
+        return $lead;
     }
 }

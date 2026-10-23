@@ -11,7 +11,7 @@ use Illuminate\Container\Attributes\CurrentUser;
 
 class CurrentUserController extends Controller
 {
-    public function __invoke(#[CurrentUser] User $user): UserResource
+    public function show(#[CurrentUser] User $user): UserResource
     {
         return UserResource::make($user);
     }

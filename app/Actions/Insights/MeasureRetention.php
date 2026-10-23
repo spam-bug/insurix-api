@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Insights;
 
+use App\Actions\Policies\FindUpcomingRenewal;
 use App\Enums\PolicyStatus;
 use App\Enums\RenewalOutcome;
 use App\Models\Policy;
@@ -13,6 +14,8 @@ use Carbon\CarbonImmutable;
 
 class MeasureRetention
 {
+    public function __construct(private FindUpcomingRenewal $findUpcomingRenewal) {}
+
     /** Renewals this many days out count as coming up. */
     public const RENEWAL_WINDOW_DAYS = 60;
 
@@ -53,7 +56,7 @@ class MeasureRetention
             'renewals_coming_up' => $agent->policies()
                 ->where('status', PolicyStatus::InForce)
                 ->get()
-                ->filter(fn (Policy $policy) => $policy->renewalWithin($today, self::RENEWAL_WINDOW_DAYS))
+                ->filter(fn (Policy $policy) => $this->findUpcomingRenewal->handle($policy, $today, self::RENEWAL_WINDOW_DAYS))
                 ->count(),
             'renewals_recorded' => $outcomes->count(),
             'renewal_rate_percent' => $outcomes->isEmpty() ? null : (int) round($renewed / $outcomes->count() * 100),

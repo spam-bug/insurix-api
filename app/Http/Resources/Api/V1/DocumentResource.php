@@ -13,6 +13,9 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class DocumentResource extends JsonResource
 {
+    /** The relations the client and policy links need. */
+    public const RELATIONS = ['client:id,name', 'policy:id,product_name,policy_number'];
+
     /**
      * Transform the resource into an array. The file itself is fetched from download_path
      * with the agent's token; there's no public URL.

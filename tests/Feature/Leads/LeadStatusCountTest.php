@@ -13,7 +13,7 @@ it('counts every status for the agent’s own leads', function () {
     Lead::factory()->status(LeadStatus::Lost)->create();
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.status-counts'))
+        ->getJson('/api/v1/leads/status-counts')
         ->assertOk()
         ->assertExactJson(['data' => [
             'total' => 3,
@@ -31,11 +31,11 @@ it('ignores the list filters', function () {
     Lead::factory()->for($agent)->count(2)->create();
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.status-counts', ['status' => 'lost']))
+        ->getJson('/api/v1/leads/status-counts?'.http_build_query(['status' => 'lost']))
         ->assertOk()
         ->assertJsonPath('data.total', 2);
 });
 
 it('requires authentication', function () {
-    $this->getJson(route('api.v1.leads.status-counts'))->assertUnauthorized();
+    $this->getJson('/api/v1/leads/status-counts')->assertUnauthorized();
 });

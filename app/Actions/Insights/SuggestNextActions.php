@@ -6,6 +6,8 @@ namespace App\Actions\Insights;
 
 use App\Actions\FollowUps\SummarizeFollowUps;
 use App\Actions\Leads\ScoreLead;
+use App\Actions\Policies\FindRenewalAwaitingOutcome;
+use App\Actions\Policies\FindUpcomingRenewal;
 use App\Actions\Policies\ListPoliciesNeedingAttention;
 use App\Enums\LeadSource;
 use App\Enums\PolicyStatus;
@@ -15,6 +17,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * "What should I do next to grow my business?": a few concrete suggestions from the agent's
@@ -42,6 +45,8 @@ class SuggestNextActions
         private SummarizeFollowUps $summarizeFollowUps,
         private ListStalledLeads $listStalledLeads,
         private MeasureLeadSources $measureLeadSources,
+        private FindRenewalAwaitingOutcome $findRenewalAwaitingOutcome,
+        private FindUpcomingRenewal $findUpcomingRenewal,
     ) {}
 
     /**
@@ -49,24 +54,26 @@ class SuggestNextActions
      */
     public function handle(User $agent): array
     {
-        $today = CarbonImmutable::now($agent->timezone)->startOfDay();
+        return Cache::tags("agent:{$agent->id}")->remember("insights:{$agent->id}:next-actions", now()->addMinutes(5), function () use ($agent) {
+            $today = CarbonImmutable::now($agent->timezone)->startOfDay();
 
-        $quiet = $this->listStalledLeads->handle($agent, self::HOT_QUIET_DAYS);
-        $hot = $quiet->filter(fn (Lead $lead) => $lead->score !== null && $lead->score >= ScoreLead::HOT_SCORE)->values();
-        $stalled = $quiet->filter(fn (Lead $lead) => $lead->days_quiet >= ListStalledLeads::QUIET_DAYS)->diff($hot)->values();
+            $quiet = $this->listStalledLeads->handle($agent, self::HOT_QUIET_DAYS);
+            $hot = $quiet->filter(fn (Lead $lead) => $lead->score !== null && $lead->score >= ScoreLead::HOT_SCORE)->values();
+            $stalled = $quiet->filter(fn (Lead $lead) => $lead->days_quiet >= ListStalledLeads::QUIET_DAYS)->diff($hot)->values();
 
-        $suggestions = array_filter([
-            $this->overdueFollowUps($agent),
-            $this->hotLeadsWaiting($hot),
-            $this->renewalsAwaitingOutcome($agent, $today),
-            $this->renewalsWithoutFollowUp($agent, $today),
-            $this->stuckApplications($agent, $today),
-            $this->bestSource($agent),
-            $this->stalledLeads($stalled),
-            $this->newLeads($agent),
-        ]);
+            $suggestions = array_filter([
+                $this->overdueFollowUps($agent),
+                $this->hotLeadsWaiting($hot),
+                $this->renewalsAwaitingOutcome($agent, $today),
+                $this->renewalsWithoutFollowUp($agent, $today),
+                $this->stuckApplications($agent, $today),
+                $this->bestSource($agent),
+                $this->stalledLeads($stalled),
+                $this->newLeads($agent),
+            ]);
 
-        return array_slice(array_values($suggestions), 0, self::LIMIT);
+            return array_slice(array_values($suggestions), 0, self::LIMIT);
+        });
     }
 
     /**
@@ -125,10 +132,10 @@ class SuggestNextActions
     private function renewalsAwaitingOutcome(User $agent, CarbonImmutable $today): ?array
     {
         $waiting = $agent->policies()
-            ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
+            ->with(['client:id,name,lead_id', 'renewals:id,policy_id,due_on'])
             ->where('status', PolicyStatus::InForce)
             ->get()
-            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $policy->renewalAwaitingOutcome($today)])
+            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $this->findRenewalAwaitingOutcome->handle($policy, $today)])
             ->filter(fn (array $renewal) => $renewal['date'] !== null && $renewal['date']->lessThan($today))
             ->sortBy(fn (array $renewal) => $renewal['date']->timestamp)
             ->values();
@@ -153,11 +160,11 @@ class SuggestNextActions
     private function renewalsWithoutFollowUp(User $agent, CarbonImmutable $today): ?array
     {
         $renewals = $agent->policies()
-            ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
+            ->with(['client:id,name,lead_id', 'renewals:id,policy_id,due_on'])
             ->where('status', PolicyStatus::InForce)
             ->whereDoesntHave('followUps', fn (Builder $query) => $query->whereNull('completed_at'))
             ->get()
-            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $policy->renewalWithin($today, self::RENEWAL_WINDOW_DAYS), 'policy' => $policy])
+            ->map(fn (Policy $policy) => ['client' => $policy->client->name, 'date' => $this->findUpcomingRenewal->handle($policy, $today, self::RENEWAL_WINDOW_DAYS), 'policy' => $policy])
             // A renewal already recorded early doesn't need a follow-up.
             ->filter(fn (array $renewal) => $renewal['date'] !== null && ! $renewal['policy']->renewals->contains(fn ($recorded) => $recorded->due_on->equalTo($renewal['date'])))
             ->sortBy(fn (array $renewal) => $renewal['date']->timestamp)

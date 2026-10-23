@@ -11,17 +11,12 @@ use Illuminate\Validation\Rule;
 
 class MoveApplicationStageRequest extends FormRequest
 {
-    /**
-     * Ownership is checked in the controller with the policy policy.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('update', $this->route('policy'));
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
@@ -29,10 +24,5 @@ class MoveApplicationStageRequest extends FormRequest
         return [
             'stage' => ['required', Rule::enum(ApplicationStage::class)],
         ];
-    }
-
-    public function stage(): ApplicationStage
-    {
-        return $this->enum('stage', ApplicationStage::class) ?? ApplicationStage::Submitted;
     }
 }

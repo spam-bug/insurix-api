@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 
 it('changes the password and signs out other devices', function () {
     $agent = User::factory()->create(['password' => 'old-password-123']);
-    $current = $agent->createToken('Chrome on Windows');
-    $agent->createToken('Safari on iPhone');
+    $current = storeSession($agent, 'Chrome on Windows');
+    storeSession($agent, 'Safari on iPhone');
 
-    $this->withToken($current->plainTextToken)
-        ->putJson(route('api.v1.account.password.update'), [
+    useSession($current);
+    $this->actingAs($agent)
+        ->putJson('/api/v1/account/password', [
             'current_password' => 'old-password-123',
             'password' => 'new-password-456',
             'password_confirmation' => 'new-password-456',
@@ -22,14 +24,14 @@ it('changes the password and signs out other devices', function () {
         ->assertNoContent();
 
     expect(Hash::check('new-password-456', $agent->fresh()->password))->toBeTrue()
-        ->and($agent->tokens()->pluck('id')->all())->toBe([$current->accessToken->id]);
+        ->and(DB::table('sessions')->where('user_id', $agent->id)->pluck('id')->all())->toBe([$current]);
 });
 
 it('needs the current password to change it', function () {
     $agent = User::factory()->create(['password' => 'old-password-123']);
 
-    $this->actingAs($agent, 'sanctum')
-        ->putJson(route('api.v1.account.password.update'), [
+    $this->actingAs($agent)
+        ->putJson('/api/v1/account/password', [
             'current_password' => 'not-it',
             'password' => 'new-password-456',
             'password_confirmation' => 'new-password-456',
@@ -41,8 +43,8 @@ it('emails a reset link that opens the frontend, without revealing who has an ac
     Notification::fake();
     $agent = User::factory()->create(['email' => 'ana@example.com']);
 
-    $this->postJson(route('api.v1.auth.password.email'), ['email' => 'ANA@example.com'])->assertOk();
-    $this->postJson(route('api.v1.auth.password.email'), ['email' => 'nobody@example.com'])
+    $this->postJson('/api/v1/auth/forgot-password', ['email' => 'ANA@example.com'])->assertOk();
+    $this->postJson('/api/v1/auth/forgot-password', ['email' => 'nobody@example.com'])
         ->assertOk()
         ->assertJsonPath('message', 'If that email has an account, a reset link is on its way.');
 
@@ -56,10 +58,10 @@ it('emails a reset link that opens the frontend, without revealing who has an ac
 
 it('resets the password from the link and signs out every device', function () {
     $agent = User::factory()->create(['email' => 'ana@example.com']);
-    $agent->createToken('Chrome on Windows');
+    storeSession($agent, 'Chrome on Windows');
     $token = Password::createToken($agent);
 
-    $this->postJson(route('api.v1.auth.password.reset'), [
+    $this->postJson('/api/v1/auth/reset-password', [
         'email' => 'ana@example.com',
         'token' => $token,
         'password' => 'brand-new-pass-1',
@@ -67,13 +69,13 @@ it('resets the password from the link and signs out every device', function () {
     ])->assertOk();
 
     expect(Hash::check('brand-new-pass-1', $agent->fresh()->password))->toBeTrue()
-        ->and($agent->tokens()->count())->toBe(0);
+        ->and(DB::table('sessions')->where('user_id', $agent->id)->count())->toBe(0);
 });
 
 it('rejects a bad reset token', function () {
     User::factory()->create(['email' => 'ana@example.com']);
 
-    $this->postJson(route('api.v1.auth.password.reset'), [
+    $this->postJson('/api/v1/auth/reset-password', [
         'email' => 'ana@example.com',
         'token' => 'made-up',
         'password' => 'brand-new-pass-1',

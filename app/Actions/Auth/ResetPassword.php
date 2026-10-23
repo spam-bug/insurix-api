@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Actions\Auth;
 
+use App\DataTransferObject\Auth\PasswordResetData;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ResetPassword
@@ -17,13 +19,13 @@ class ResetPassword
      *
      * @throws ValidationException
      */
-    public function handle(string $email, string $token, string $password): void
+    public function handle(PasswordResetData $data): void
     {
         $status = Password::reset(
-            ['email' => $email, 'token' => $token, 'password' => $password],
+            ['email' => Str::lower(trim($data->email)), 'token' => $data->token, 'password' => $data->password],
             fn (User $user, string $password) => DB::transaction(function () use ($user, $password) {
                 $user->forceFill(['password' => $password])->save();
-                $user->tokens()->delete();
+                DB::table('sessions')->where('user_id', $user->id)->delete();
             }),
         );
 

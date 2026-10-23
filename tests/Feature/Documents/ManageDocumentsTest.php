@@ -22,7 +22,7 @@ it('uploads a document for a client, linked to one of their policies', function 
     $policy = Policy::factory()->for($client)->create(['product_name' => 'Life Plus']);
 
     $response = $this->actingAs($agent)
-        ->postJson(route('api.v1.clients.documents.store', $client), [
+        ->postJson("/api/v1/clients/{$client->id}/documents", [
             'file' => UploadedFile::fake()->create('Life Plus contract.pdf', 300, 'application/pdf'),
             'category' => 'policy_contract',
             'policy_id' => $policy->id,
@@ -52,7 +52,7 @@ it('uses the given name over the file name', function () {
     $client = Client::factory()->create();
 
     $this->actingAs($client->user)
-        ->postJson(route('api.v1.clients.documents.store', $client), [
+        ->postJson("/api/v1/clients/{$client->id}/documents", [
             'file' => UploadedFile::fake()->image('IMG_2041.jpg'),
             'name' => 'Driver’s license',
             'category' => 'valid_id',
@@ -67,17 +67,17 @@ it('rejects files that are too big or of the wrong type, and policies of other c
     $otherPolicy = Policy::factory()->for(Client::factory()->for($client->user))->create();
     $this->actingAs($client->user);
 
-    $this->postJson(route('api.v1.clients.documents.store', $client), [
+    $this->postJson("/api/v1/clients/{$client->id}/documents", [
         'file' => UploadedFile::fake()->create('big.pdf', 11000, 'application/pdf'),
         'category' => 'other',
     ])->assertJsonValidationErrors(['file' => 'under 10 MB']);
 
-    $this->postJson(route('api.v1.clients.documents.store', $client), [
+    $this->postJson("/api/v1/clients/{$client->id}/documents", [
         'file' => UploadedFile::fake()->create('run.exe', 10, 'application/x-msdownload'),
         'category' => 'other',
     ])->assertJsonValidationErrors('file');
 
-    $this->postJson(route('api.v1.clients.documents.store', $client), [
+    $this->postJson("/api/v1/clients/{$client->id}/documents", [
         'file' => UploadedFile::fake()->create('ok.pdf', 10, 'application/pdf'),
         'category' => 'other',
         'policy_id' => $otherPolicy->id,
@@ -91,27 +91,27 @@ it('keeps agents out of each other’s clients and documents', function () {
     $theirs = Document::factory()->create();
     $this->actingAs($agent);
 
-    $this->postJson(route('api.v1.clients.documents.store', $theirs->client), [
+    $this->postJson("/api/v1/clients/{$theirs->client->id}/documents", [
         'file' => UploadedFile::fake()->create('x.pdf', 10, 'application/pdf'),
         'category' => 'other',
     ])->assertForbidden();
-    $this->getJson(route('api.v1.documents.show', $theirs))->assertForbidden();
-    $this->getJson(route('api.v1.documents.download', $theirs))->assertForbidden();
-    $this->putJson(route('api.v1.documents.update', $theirs), ['name' => 'Mine', 'category' => 'other'])->assertForbidden();
-    $this->deleteJson(route('api.v1.documents.destroy', $theirs))->assertForbidden();
-    $this->getJson(route('api.v1.documents.index'))->assertJsonCount(0, 'data');
+    $this->getJson("/api/v1/documents/{$theirs->id}")->assertForbidden();
+    $this->getJson("/api/v1/documents/{$theirs->id}/download")->assertForbidden();
+    $this->putJson("/api/v1/documents/{$theirs->id}", ['name' => 'Mine', 'category' => 'other'])->assertForbidden();
+    $this->deleteJson("/api/v1/documents/{$theirs->id}")->assertForbidden();
+    $this->getJson('/api/v1/documents')->assertJsonCount(0, 'data');
 });
 
 it('downloads the file under the document’s name', function () {
     $client = Client::factory()->create();
     $this->actingAs($client->user);
-    $this->postJson(route('api.v1.clients.documents.store', $client), [
+    $this->postJson("/api/v1/clients/{$client->id}/documents", [
         'file' => UploadedFile::fake()->create('scan-001.pdf', 50, 'application/pdf'),
         'name' => 'Application form',
         'category' => 'application_form',
     ])->assertCreated();
 
-    $this->get(route('api.v1.documents.download', Document::sole()))
+    $this->get('/api/v1/documents/'.Document::sole()->id.'/download')
         ->assertOk()
         ->assertDownload('Application form.pdf');
 });
@@ -120,14 +120,14 @@ it('edits the details and deletes the document with its file', function () {
     $client = Client::factory()->create();
     $policy = Policy::factory()->for($client)->create();
     $this->actingAs($client->user);
-    $this->postJson(route('api.v1.clients.documents.store', $client), [
+    $this->postJson("/api/v1/clients/{$client->id}/documents", [
         'file' => UploadedFile::fake()->create('scan.pdf', 50, 'application/pdf'),
         'category' => 'other',
     ])->assertCreated();
     $document = Document::sole();
 
-    $this->putJson(route('api.v1.documents.update', $document), ['name' => '', 'category' => 'receipt'])->assertJsonValidationErrors('name');
-    $this->putJson(route('api.v1.documents.update', $document), [
+    $this->putJson("/api/v1/documents/{$document->id}", ['name' => '', 'category' => 'receipt'])->assertJsonValidationErrors('name');
+    $this->putJson("/api/v1/documents/{$document->id}", [
         'name' => 'October receipt',
         'category' => 'receipt',
         'policy_id' => $policy->id,
@@ -137,7 +137,7 @@ it('edits the details and deletes the document with its file', function () {
         ->assertJsonPath('data.category.value', 'receipt')
         ->assertJsonPath('data.policy.id', $policy->id);
 
-    $this->deleteJson(route('api.v1.documents.destroy', $document))->assertNoContent();
+    $this->deleteJson("/api/v1/documents/{$document->id}")->assertNoContent();
     expect(Document::count())->toBe(0);
     Storage::disk(Document::DISK)->assertMissing($document->path);
 });
@@ -151,8 +151,8 @@ it('lists documents by client, category and search, newest first', function () {
     $bens = Document::factory()->for($ben)->create(['name' => 'Receipt']);
     $this->actingAs($agent);
 
-    expect($this->getJson(route('api.v1.documents.index'))->json('data.*.id'))->toBe([$bens->id, $newer->id, $older->id])
-        ->and($this->getJson(route('api.v1.documents.index', ['client_id' => $ana->id]))->json('data.*.id'))->toBe([$newer->id, $older->id])
-        ->and($this->getJson(route('api.v1.documents.index', ['category' => 'valid_id']))->json('data.*.id'))->toBe([$older->id])
-        ->and($this->getJson(route('api.v1.documents.index', ['search' => 'ben']))->json('data.*.id'))->toBe([$bens->id]);
+    expect($this->getJson('/api/v1/documents')->json('data.*.id'))->toBe([$bens->id, $newer->id, $older->id])
+        ->and($this->getJson('/api/v1/documents?'.http_build_query(['client_id' => $ana->id]))->json('data.*.id'))->toBe([$newer->id, $older->id])
+        ->and($this->getJson('/api/v1/documents?'.http_build_query(['category' => 'valid_id']))->json('data.*.id'))->toBe([$older->id])
+        ->and($this->getJson('/api/v1/documents?'.http_build_query(['search' => 'ben']))->json('data.*.id'))->toBe([$bens->id]);
 });

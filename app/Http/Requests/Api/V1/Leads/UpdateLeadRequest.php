@@ -10,6 +10,11 @@ use Illuminate\Validation\Rule;
 
 class UpdateLeadRequest extends StoreLeadRequest
 {
+    public function authorize(): bool
+    {
+        return $this->user()->can('update', $this->route('lead'));
+    }
+
     /**
      * An edit sends the full lead, so the source must be there; otherwise it would quietly reset to manual.
      *

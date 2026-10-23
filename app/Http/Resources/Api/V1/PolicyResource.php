@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Actions\Policies\FindNextPaymentDue;
+use App\Actions\Policies\FindNextRenewalDate;
+use App\Actions\Policies\FindRenewalAwaitingOutcome;
 use App\Models\ApplicationRequirement;
 use App\Models\Policy;
 use App\Models\PolicyEvent;
@@ -19,7 +22,7 @@ class PolicyResource extends JsonResource
 {
     /** What the policy's own page shows: the application checklist, renewals and timeline. */
     public const DETAIL_RELATIONS = [
-        'client:id,name',
+        'client:id,name,lead_id',
         'requirements.document:id,name',
         'renewals',
         'events.user:id,name',
@@ -35,7 +38,7 @@ class PolicyResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'client' => $this->whenLoaded('client', fn () => ['id' => $this->client->id, 'name' => $this->client->name]),
+            'client' => $this->whenLoaded('client', fn () => ['id' => $this->client->id, 'name' => $this->client->name, 'lead_id' => $this->client->lead_id]),
             'product_id' => $this->product_id,
             'product_name' => $this->product_name,
             'policy_number' => $this->policy_number,
@@ -46,15 +49,15 @@ class PolicyResource extends JsonResource
             'premium' => (float) $this->premium,
             'coverage_amount' => $this->coverage_amount === null ? null : (float) $this->coverage_amount,
             'payment_frequency' => ['value' => $this->payment_frequency->value, 'label' => $this->payment_frequency->label()],
-            'annual_premium' => $this->annualPremium(),
+            'annual_premium' => (float) $this->annual_premium,
             'commission_rate' => (float) $this->commission_rate,
-            'commission' => $this->commission(),
+            'commission' => (float) $this->commission,
             'effective_date' => $this->effective_date?->toDateString(),
             'renewal_term' => $this->renewal_term ? ['value' => $this->renewal_term->value, 'label' => $this->renewal_term->label()] : null,
             // The next renewal: worked out for set terms, the fixed date for a custom one.
-            'renewal_date' => $this->nextRenewalDate()?->toDateString(),
-            'tracks_renewal_outcomes' => $this->tracksRenewalOutcomes(),
-            'next_payment_due' => $this->nextPaymentDue()?->toDateString(),
+            'renewal_date' => app(FindNextRenewalDate::class)->handle($this->resource)?->toDateString(),
+            'tracks_renewal_outcomes' => $this->renewal_term?->tracksOutcomes() ?? false,
+            'next_payment_due' => app(FindNextPaymentDue::class)->handle($this->resource)?->toDateString(),
             'commission_received_at' => $this->commission_received_at?->toDateString(),
             'notes' => $this->notes,
             'requirements' => $this->whenLoaded('requirements', fn () => $this->requirements
@@ -66,7 +69,8 @@ class PolicyResource extends JsonResource
                     'received_on' => $requirement->received_on?->toDateString(),
                     'document' => $requirement->document ? ['id' => $requirement->document->id, 'name' => $requirement->document->name] : null,
                 ])),
-            'renewal_awaiting_outcome' => $this->whenLoaded('renewals', fn () => $this->renewalAwaitingOutcome(
+            'renewal_awaiting_outcome' => $this->whenLoaded('renewals', fn () => app(FindRenewalAwaitingOutcome::class)->handle(
+                $this->resource,
                 CarbonImmutable::now($request->user()?->timezone ?? config('app.timezone'))->startOfDay()
             )?->toDateString()),
             'renewals' => $this->whenLoaded('renewals', fn () => $this->renewals

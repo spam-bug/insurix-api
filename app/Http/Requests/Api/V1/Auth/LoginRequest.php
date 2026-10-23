@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Auth;
 
-use App\DataTransferObjects\Auth\LoginData;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LoginRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Anyone may try to sign in; the credentials are the check.
      */
     public function authorize(): bool
     {
@@ -28,16 +27,6 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'device_name' => ['required', 'string', 'max:255'],
         ];
-    }
-
-    public function toData(): LoginData
-    {
-        return new LoginData(
-            email: $this->string('email')->toString(),
-            password: $this->string('password')->toString(),
-            ipAddress: (string) $this->ip(),
-        );
     }
 }

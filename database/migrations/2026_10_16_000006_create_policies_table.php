@@ -32,6 +32,8 @@ return new class extends Migration
             $table->decimal('coverage_amount', 14, 2)->nullable();
             $table->string('payment_frequency', 30);
             $table->decimal('commission_rate', 5, 2)->default(0);
+            $table->decimal('annual_premium', 14, 2)->default(0);
+            $table->decimal('commission', 14, 2)->default(0);
             $table->date('effective_date')->nullable();
             $table->string('renewal_term', 20)->nullable();
             $table->date('renewal_date')->nullable();
@@ -41,6 +43,9 @@ return new class extends Migration
 
             $table->index(['user_id', 'status']);
             $table->index(['user_id', 'renewal_date']);
+            $table->index(['user_id', 'commission_received_at']);
+            $table->index('client_id');
+            $table->index('product_id');
         });
     }
 

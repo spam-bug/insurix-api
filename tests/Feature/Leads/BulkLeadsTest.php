@@ -14,7 +14,7 @@ it('sorts leads', function (string $sort, array $expectedNames) {
     Lead::factory()->for($agent)->create(['name' => 'Ana', 'created_at' => now()->subDay()]);
     Lead::factory()->for($agent)->create(['name' => 'Cyd', 'created_at' => now()]);
 
-    $names = $this->actingAs($agent)->getJson(route('api.v1.leads.index', ['sort' => $sort]))->assertOk()->json('data.*.name');
+    $names = $this->actingAs($agent)->getJson('/api/v1/leads?'.http_build_query(['sort' => $sort]))->assertOk()->json('data.*.name');
 
     expect($names)->toBe($expectedNames);
 })->with([
@@ -30,7 +30,7 @@ it('filters leads by source', function () {
     Lead::factory()->for($agent)->create(['name' => 'Walk-in', 'source' => LeadSource::Manual]);
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.leads.index', ['source' => 'referral']))
+        ->getJson('/api/v1/leads?'.http_build_query(['source' => 'referral']))
         ->assertOk()
         ->assertJsonPath('data.*.name', ['Referred']);
 });
@@ -42,7 +42,7 @@ it('changes the status of several leads at once, logging each change', function 
     $untouched = Lead::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.bulk.status'), ['ids' => [$first->id, $second->id, $alreadyQualified->id], 'status' => 'qualified'])
+        ->postJson('/api/v1/leads/bulk/status', ['ids' => [$first->id, $second->id, $alreadyQualified->id], 'status' => 'qualified'])
         ->assertOk()
         ->assertJson(['updated' => 2]);
 
@@ -58,7 +58,7 @@ it('deletes several leads at once', function () {
     [$first, $second, $kept] = Lead::factory()->for($agent)->count(3)->create();
 
     $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.bulk.delete'), ['ids' => [$first->id, $second->id]])
+        ->postJson('/api/v1/leads/bulk/delete', ['ids' => [$first->id, $second->id]])
         ->assertOk()
         ->assertJson(['deleted' => 2]);
 
@@ -67,13 +67,13 @@ it('deletes several leads at once', function () {
     $this->assertModelExists($kept);
 });
 
-it('rejects bulk changes that include another agent’s lead', function (string $routeName, array $extra) {
+it('rejects bulk changes that include another agent’s lead', function (string $url, array $extra) {
     $agent = User::factory()->create();
     $own = Lead::factory()->for($agent)->create();
     $foreign = Lead::factory()->create();
 
     $this->actingAs($agent)
-        ->postJson(route($routeName), ['ids' => [$own->id, $foreign->id], ...$extra])
+        ->postJson($url, ['ids' => [$own->id, $foreign->id], ...$extra])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('ids.1');
 
@@ -81,13 +81,13 @@ it('rejects bulk changes that include another agent’s lead', function (string 
     $this->assertModelExists($foreign);
     expect($own->fresh()->status)->toBe(LeadStatus::Prospect);
 })->with([
-    'status' => ['api.v1.leads.bulk.status', ['status' => 'lost']],
-    'delete' => ['api.v1.leads.bulk.delete', []],
+    'status' => ['/api/v1/leads/bulk/status', ['status' => 'lost']],
+    'delete' => ['/api/v1/leads/bulk/delete', []],
 ]);
 
 it('validates bulk requests', function () {
     $this->actingAs(User::factory()->create())
-        ->postJson(route('api.v1.leads.bulk.status'), ['ids' => []])
+        ->postJson('/api/v1/leads/bulk/status', ['ids' => []])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['ids', 'status']);
 });

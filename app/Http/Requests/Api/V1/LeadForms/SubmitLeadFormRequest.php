@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\LeadForms;
 
-use App\DataTransferObjects\Leads\LeadData;
 use App\Enums\LeadInterest;
-use App\Enums\LeadSource;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -14,7 +12,7 @@ use Illuminate\Validation\Rule;
 class SubmitLeadFormRequest extends FormRequest
 {
     /**
-     * Anyone with the link may submit; the token in the URL identifies the agent.
+     * A public form: anyone with the link may submit. An unknown link is a 404 from route binding.
      */
     public function authorize(): bool
     {
@@ -22,8 +20,6 @@ class SubmitLeadFormRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
@@ -36,37 +32,5 @@ class SubmitLeadFormRequest extends FormRequest
             'message' => ['nullable', 'string', 'max:2000'],
             'website' => ['nullable', 'string', 'max:255'],
         ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'email.required_without' => 'Enter an email or a phone number so we can reach you.',
-            'phone.required_without' => 'Enter a phone number or an email so we can reach you.',
-        ];
-    }
-
-    /**
-     * The hidden "website" field is a honeypot: people never see it, simple bots fill it in.
-     */
-    public function isLikelySpam(): bool
-    {
-        return $this->filled('website');
-    }
-
-    public function toData(): LeadData
-    {
-        return new LeadData(
-            name: $this->string('name')->trim()->toString(),
-            email: $this->filled('email') ? $this->string('email')->trim()->lower()->toString() : null,
-            phone: $this->filled('phone') ? $this->string('phone')->trim()->toString() : null,
-            address: null,
-            source: LeadSource::ShareableForm,
-            interest: $this->enum('interest', LeadInterest::class),
-            notes: $this->filled('message') ? $this->string('message')->trim()->toString() : null,
-        );
     }
 }

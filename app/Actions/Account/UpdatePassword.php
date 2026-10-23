@@ -13,12 +13,12 @@ class UpdatePassword
      * Sets a new password and signs the agent out everywhere else, keeping the session they
      * changed it from.
      */
-    public function handle(User $agent, string $password, ?string $keepTokenId): User
+    public function handle(User $agent, string $password): User
     {
-        DB::transaction(function () use ($agent, $password, $keepTokenId) {
+        DB::transaction(function () use ($agent, $password) {
             $agent->update(['password' => $password]);
 
-            $agent->tokens()->when($keepTokenId, fn ($query, $id) => $query->whereKeyNot($id))->delete();
+            DB::table('sessions')->where('user_id', $agent->id)->where('id', '!=', session()->getId())->delete();
         });
 
         return $agent;

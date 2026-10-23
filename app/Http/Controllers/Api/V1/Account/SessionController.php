@@ -10,14 +10,13 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
-use Laravel\Sanctum\PersonalAccessToken;
 
-/** The devices the agent is signed in on, one per access token. */
+/** The devices the agent is signed in on, one per browser session. */
 class SessionController extends Controller
 {
     public function index(#[CurrentUser] User $agent, ListSessions $listSessions): JsonResponse
     {
-        return response()->json(['data' => $listSessions->handle($agent, $this->currentTokenId($agent))]);
+        return response()->json(['data' => $listSessions->handle($agent)]);
     }
 
     /**
@@ -25,22 +24,6 @@ class SessionController extends Controller
      */
     public function destroy(string $session, #[CurrentUser] User $agent, RevokeSessions $revokeSessions): JsonResponse
     {
-        $revoked = $revokeSessions->handle($agent, $session, $this->currentTokenId($agent));
-
-        abort_if($revoked === 0, 404);
-
-        return response()->json(['data' => ['revoked' => $revoked]]);
-    }
-
-    public function destroyOthers(#[CurrentUser] User $agent, RevokeSessions $revokeSessions): JsonResponse
-    {
-        return response()->json(['data' => ['revoked' => $revokeSessions->handle($agent, null, $this->currentTokenId($agent))]]);
-    }
-
-    private function currentTokenId(User $agent): ?string
-    {
-        $token = $agent->currentAccessToken();
-
-        return $token instanceof PersonalAccessToken ? $token->id : null;
+        return response()->json(['data' => ['revoked' => $revokeSessions->handle($agent, $session)]]);
     }
 }

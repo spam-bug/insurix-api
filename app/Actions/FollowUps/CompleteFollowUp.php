@@ -8,6 +8,7 @@ use App\Actions\Leads\RecordLeadActivity;
 use App\Enums\LeadActivityType;
 use App\Models\FollowUp;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CompleteFollowUp
@@ -23,7 +24,7 @@ class CompleteFollowUp
             return $followUp;
         }
 
-        return DB::transaction(function () use ($followUp, $actor) {
+        $followUp = DB::transaction(function () use ($followUp, $actor) {
             $followUp->update(['completed_at' => now()]);
 
             $this->recordLeadActivity->handle($followUp->lead, LeadActivityType::FollowUpCompleted, $actor, properties: [
@@ -34,5 +35,9 @@ class CompleteFollowUp
 
             return $followUp;
         });
+
+        Cache::tags("agent:{$followUp->user_id}")->flush();
+
+        return $followUp;
     }
 }

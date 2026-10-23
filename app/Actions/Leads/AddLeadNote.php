@@ -8,6 +8,7 @@ use App\Enums\LeadActivityType;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 class AddLeadNote
 {
@@ -15,6 +16,10 @@ class AddLeadNote
 
     public function handle(Lead $lead, string $body, User $actor): LeadActivity
     {
-        return $this->recordLeadActivity->handle($lead, LeadActivityType::Note, $actor, $body);
+        $activity = $this->recordLeadActivity->handle($lead, LeadActivityType::Note, $actor, $body);
+
+        Cache::tags("agent:{$lead->user_id}")->flush();
+
+        return $activity;
     }
 }

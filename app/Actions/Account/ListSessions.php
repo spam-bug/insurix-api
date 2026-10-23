@@ -5,28 +5,29 @@ declare(strict_types=1);
 namespace App\Actions\Account;
 
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
-use Laravel\Sanctum\PersonalAccessToken;
+use Illuminate\Support\Facades\DB;
 
 class ListSessions
 {
     /**
-     * Where the agent is signed in: one entry per access token, most recently used first.
+     * Where the agent is signed in: one entry per browser session, most recently active first.
      *
-     * @return Collection<int, array{id: int, device: string, last_used_at: string|null, created_at: string|null, current: bool}>
+     * @return Collection<int, array{id: string, user_agent: string|null, ip_address: string|null, last_active_at: string, current: bool}>
      */
-    public function handle(User $agent, ?string $currentTokenId): Collection
+    public function handle(User $agent): Collection
     {
-        return $agent->tokens()
-            ->orderByDesc('last_used_at')
-            ->orderByDesc('id')
-            ->get()
-            ->map(fn (PersonalAccessToken $token) => [
-                'id' => $token->id,
-                'device' => $token->name,
-                'last_used_at' => $token->last_used_at?->toIso8601String(),
-                'created_at' => $token->created_at?->toIso8601String(),
-                'current' => $token->id === $currentTokenId,
+        return DB::table('sessions')
+            ->where('user_id', $agent->id)
+            ->orderByDesc('last_activity')
+            ->get(['id', 'user_agent', 'ip_address', 'last_activity'])
+            ->map(fn (object $session) => [
+                'id' => $session->id,
+                'user_agent' => $session->user_agent,
+                'ip_address' => $session->ip_address,
+                'last_active_at' => CarbonImmutable::createFromTimestamp($session->last_activity)->toIso8601String(),
+                'current' => $session->id === session()->getId(),
             ]);
     }
 }

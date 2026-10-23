@@ -10,12 +10,9 @@ use Illuminate\Validation\Rules\Password;
 
 class UpdatePasswordRequest extends FormRequest
 {
-    /**
-     * Agents only ever change their own password.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('update', $this->user());
     }
 
     /**
@@ -28,17 +25,6 @@ class UpdatePasswordRequest extends FormRequest
         return [
             'current_password' => ['required', 'string', 'current_password:sanctum'],
             'password' => ['required', 'string', 'confirmed', 'different:current_password', Password::defaults()],
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'current_password.current_password' => 'That isn’t your current password.',
-            'password.different' => 'Choose a password you haven’t been using.',
         ];
     }
 }

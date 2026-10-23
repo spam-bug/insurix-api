@@ -24,7 +24,7 @@ it('creates a lead as a prospect owned by the agent', function () {
     $agent = User::factory()->create();
 
     $response = $this->actingAs($agent)
-        ->postJson(route('api.v1.leads.store'), validLeadPayload(['status' => 'qualified']))
+        ->postJson('/api/v1/leads', validLeadPayload(['status' => 'qualified']))
         ->assertCreated()
         ->assertJsonPath('data.name', 'Ana Reyes')
         ->assertJsonPath('data.email', 'ana@example.com')
@@ -44,10 +44,10 @@ it('logs which fields an edit changed, and nothing for a no-op edit', function (
     $agent = User::factory()->create();
     $lead = Lead::factory()->for($agent)->create(validLeadPayload(['email' => 'ana@example.com']));
 
-    $this->actingAs($agent)->putJson(route('api.v1.leads.update', $lead), validLeadPayload())->assertOk();
+    $this->actingAs($agent)->putJson("/api/v1/leads/{$lead->id}", validLeadPayload())->assertOk();
     expect($lead->activities()->count())->toBe(0);
 
-    $this->putJson(route('api.v1.leads.update', $lead), validLeadPayload(['name' => 'Ana R. Santos', 'notes' => null]))->assertOk();
+    $this->putJson("/api/v1/leads/{$lead->id}", validLeadPayload(['name' => 'Ana R. Santos', 'notes' => null]))->assertOk();
     expect($lead->activities()->sole())
         ->type->toBe(LeadActivityType::Updated)
         ->properties->toBe(['fields' => ['name', 'notes']]);
@@ -55,7 +55,7 @@ it('logs which fields an edit changed, and nothing for a no-op edit', function (
 
 it('validates lead details', function (array $overrides, string|array $invalidFields) {
     $this->actingAs(User::factory()->create())
-        ->postJson(route('api.v1.leads.store'), validLeadPayload($overrides))
+        ->postJson('/api/v1/leads', validLeadPayload($overrides))
         ->assertUnprocessable()
         ->assertJsonValidationErrors($invalidFields);
 
@@ -70,7 +70,7 @@ it('validates lead details', function (array $overrides, string|array $invalidFi
 
 it('creates a lead from just a name and contact details', function () {
     $this->actingAs(User::factory()->create())
-        ->postJson(route('api.v1.leads.store'), ['name' => 'Ben Cruz', 'email' => 'ben@example.com', 'phone' => '0917 555 0100'])
+        ->postJson('/api/v1/leads', ['name' => 'Ben Cruz', 'email' => 'ben@example.com', 'phone' => '0917 555 0100'])
         ->assertCreated()
         ->assertJsonPath('data.source', ['value' => 'manual', 'label' => 'Manual entry'])
         ->assertJsonPath('data.interest', null)
@@ -82,7 +82,7 @@ it('requires the source when editing, so it is never reset by accident', functio
     $lead = Lead::factory()->for($agent)->create(['source' => 'shareable_form']);
 
     $this->actingAs($agent)
-        ->putJson(route('api.v1.leads.update', $lead), validLeadPayload(['source' => null]))
+        ->putJson("/api/v1/leads/{$lead->id}", validLeadPayload(['source' => null]))
         ->assertUnprocessable()
         ->assertJsonValidationErrors('source');
 
@@ -94,14 +94,14 @@ it('lets an edit clear the interest', function () {
     $lead = Lead::factory()->for($agent)->create(['interest' => 'life']);
 
     $this->actingAs($agent)
-        ->putJson(route('api.v1.leads.update', $lead), validLeadPayload(['interest' => null]))
+        ->putJson("/api/v1/leads/{$lead->id}", validLeadPayload(['interest' => null]))
         ->assertOk()
         ->assertJsonPath('data.interest', null);
 });
 
 it('accepts a lead with only a phone number', function () {
     $this->actingAs(User::factory()->create())
-        ->postJson(route('api.v1.leads.store'), validLeadPayload(['email' => null]))
+        ->postJson('/api/v1/leads', validLeadPayload(['email' => null]))
         ->assertCreated()
         ->assertJsonPath('data.email', null);
 });
@@ -110,16 +110,16 @@ it('shows, updates and deletes the agent’s own lead', function () {
     $agent = User::factory()->create();
     $lead = Lead::factory()->for($agent)->status(LeadStatus::Contacted)->create();
 
-    $this->actingAs($agent)->getJson(route('api.v1.leads.show', $lead))
+    $this->actingAs($agent)->getJson("/api/v1/leads/{$lead->id}")
         ->assertOk()
         ->assertJsonPath('data.id', $lead->id);
 
-    $this->putJson(route('api.v1.leads.update', $lead), validLeadPayload(['name' => 'Ana R. Santos']))
+    $this->putJson("/api/v1/leads/{$lead->id}", validLeadPayload(['name' => 'Ana R. Santos']))
         ->assertOk()
         ->assertJsonPath('data.name', 'Ana R. Santos')
         ->assertJsonPath('data.status.value', 'contacted');
 
-    $this->deleteJson(route('api.v1.leads.destroy', $lead))->assertNoContent();
+    $this->deleteJson("/api/v1/leads/{$lead->id}")->assertNoContent();
 
     $this->assertModelMissing($lead);
 });
@@ -129,15 +129,15 @@ it('changes a lead’s status', function () {
     $lead = Lead::factory()->for($agent)->create();
 
     $this->actingAs($agent)
-        ->patchJson(route('api.v1.leads.status', $lead), ['status' => 'meeting_scheduled'])
+        ->patchJson("/api/v1/leads/{$lead->id}/status", ['status' => 'meeting_scheduled'])
         ->assertOk()
         ->assertJsonPath('data.status', ['value' => 'meeting_scheduled', 'label' => 'Meeting scheduled']);
 
-    $this->patchJson(route('api.v1.leads.status', $lead), ['status' => 'client'])
+    $this->patchJson("/api/v1/leads/{$lead->id}/status", ['status' => 'client'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('status');
 
-    $this->patchJson(route('api.v1.leads.status', $lead), ['status' => 'meeting_scheduled'])->assertOk();
+    $this->patchJson("/api/v1/leads/{$lead->id}/status", ['status' => 'meeting_scheduled'])->assertOk();
 
     expect($lead->fresh()->status)->toBe(LeadStatus::MeetingScheduled)
         ->and($lead->activities()->sole())
@@ -145,19 +145,19 @@ it('changes a lead’s status', function () {
         ->properties->toBe(['from' => 'prospect', 'to' => 'meeting_scheduled']);
 });
 
-it('forbids access to another agent’s lead', function (string $method, string $routeName, array $payload) {
+it('forbids access to another agent’s lead', function (string $method, string $path, array $payload) {
     $lead = Lead::factory()->create(['name' => 'Original']);
 
     $this->actingAs(User::factory()->create())
-        ->json($method, route($routeName, $lead), $payload)
+        ->json($method, "/api/v1/leads/{$lead->id}{$path}", $payload)
         ->assertForbidden();
 
     expect($lead->fresh())->not->toBeNull()
         ->name->toBe('Original')
         ->status->toBe(LeadStatus::Prospect);
 })->with([
-    'show' => ['GET', 'api.v1.leads.show', []],
-    'update' => ['PUT', 'api.v1.leads.update', validLeadPayload()],
-    'status' => ['PATCH', 'api.v1.leads.status', ['status' => 'lost']],
-    'delete' => ['DELETE', 'api.v1.leads.destroy', []],
+    'show' => ['GET', '', []],
+    'update' => ['PUT', '', validLeadPayload()],
+    'status' => ['PATCH', '/status', ['status' => 'lost']],
+    'delete' => ['DELETE', '', []],
 ]);

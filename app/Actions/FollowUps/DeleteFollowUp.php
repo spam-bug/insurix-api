@@ -6,6 +6,7 @@ namespace App\Actions\FollowUps;
 
 use App\Actions\Leads\ScoreLead;
 use App\Models\FollowUp;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DeleteFollowUp
@@ -21,5 +22,7 @@ class DeleteFollowUp
 
             $this->scoreLead->handle($lead);
         });
+
+        Cache::tags("agent:{$followUp->user_id}")->flush();
     }
 }
