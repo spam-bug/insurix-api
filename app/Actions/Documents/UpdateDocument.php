@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Documents;
 
-use App\DataTransferObjects\Documents\DocumentData;
+use App\DataTransferObject\Documents\DocumentData;
 use App\Models\Document;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UpdateDocument
@@ -15,7 +16,9 @@ class UpdateDocument
      */
     public function handle(Document $document, DocumentData $data): Document
     {
-        DB::transaction(fn () => $document->update($data->toAttributes()));
+        DB::transaction(fn () => $document->update($data->toArray()));
+
+        Cache::tags("agent:{$document->user_id}")->flush();
 
         return $document;
     }

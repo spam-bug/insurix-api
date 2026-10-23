@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\Actions\Clients;
 
 use App\Actions\Leads\RecordLeadActivity;
-use App\DataTransferObjects\Clients\ClientProfileData;
+use App\DataTransferObject\Clients\ClientProfileData;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Client;
 use App\Models\Lead;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PromoteLead
 {
@@ -23,7 +25,11 @@ class PromoteLead
      */
     public function handle(Lead $lead, ClientProfileData $profile, User $actor): Client
     {
-        return DB::transaction(function () use ($lead, $profile, $actor) {
+        if ($lead->status === LeadStatus::Converted) {
+            throw ValidationException::withMessages(['lead' => 'This lead is already a client.']);
+        }
+
+        $client = DB::transaction(function () use ($lead, $profile, $actor) {
             $previousStatus = $lead->status;
 
             $client = $lead->user->clients()->create([
@@ -33,7 +39,7 @@ class PromoteLead
                 'phone' => $lead->phone,
                 'address' => $lead->address,
                 'notes' => $lead->notes,
-                ...$profile->toAttributes(),
+                ...$profile->toArray(),
             ]);
 
             $lead->update(['status' => LeadStatus::Converted]);
@@ -45,5 +51,9 @@ class PromoteLead
 
             return $client;
         });
+
+        Cache::tags("agent:{$lead->user_id}")->flush();
+
+        return $client;
     }
 }

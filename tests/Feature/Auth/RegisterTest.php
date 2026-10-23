@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
 it('registers an agent and returns an access token', function () {
-    $response = $this->postJson(route('api.v1.auth.register'), [
+    $response = $this->postJson('/api/v1/auth/register', [
         'name' => 'Jane Agent',
         'email' => 'jane@example.com',
         'password' => 'secret-password',
@@ -28,7 +28,7 @@ it('registers an agent and returns an access token', function () {
 it('rejects invalid registration data', function (array $payload, string $invalidField) {
     User::factory()->create(['email' => 'taken@example.com']);
 
-    $this->postJson(route('api.v1.auth.register'), array_merge([
+    $this->postJson('/api/v1/auth/register', array_merge([
         'name' => 'Jane Agent',
         'email' => 'jane@example.com',
         'password' => 'secret-password',

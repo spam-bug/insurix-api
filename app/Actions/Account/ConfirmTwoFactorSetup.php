@@ -23,7 +23,7 @@ class ConfirmTwoFactorSetup
     public function handle(User $agent, string $code): array
     {
         try {
-            ($this->confirmTwoFactorAuthentication)($agent, $code);
+            ($this->confirmTwoFactorAuthentication)($agent, preg_replace('/\s+/', '', $code));
         } catch (ValidationException) {
             throw ValidationException::withMessages(['code' => 'That code didn’t match. Check your authenticator app and try again.']);
         }

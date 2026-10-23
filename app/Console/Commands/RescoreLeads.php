@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Scores change with time as well as activity (days since contact, follow-ups falling due),
@@ -33,6 +34,7 @@ class RescoreLeads extends Command
                 $scored++;
             });
 
+            Cache::tags("agent:{$agent->id}")->flush();
             $notifyAgent->handle($agent->id, 'leads');
         });
 

@@ -11,7 +11,7 @@ it('lists where the agent is signed in and marks this device', function () {
     User::factory()->create()->createToken('Someone else');
 
     $this->withToken($current->plainTextToken)
-        ->getJson(route('api.v1.account.sessions.index'))
+        ->getJson('/api/v1/account/sessions')
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.device', 'Chrome on Windows')
@@ -26,10 +26,10 @@ it('signs out one other device', function () {
     $someoneElse = User::factory()->create()->createToken('Someone else');
 
     $this->withToken($current->plainTextToken)
-        ->deleteJson(route('api.v1.account.sessions.destroy', $someoneElse->accessToken->id))
+        ->deleteJson("/api/v1/account/sessions/{$someoneElse->accessToken->id}")
         ->assertNotFound();
-    $this->deleteJson(route('api.v1.account.sessions.destroy', $current->accessToken->id))->assertNotFound();
-    $this->deleteJson(route('api.v1.account.sessions.destroy', $phone->accessToken->id))->assertOk();
+    $this->deleteJson("/api/v1/account/sessions/{$current->accessToken->id}")->assertNotFound();
+    $this->deleteJson("/api/v1/account/sessions/{$phone->accessToken->id}")->assertOk();
 
     expect($agent->tokens()->pluck('name')->all())->toBe(['Chrome on Windows']);
 });
@@ -41,7 +41,7 @@ it('signs out every other device', function () {
     $agent->createToken('Firefox on Mac');
 
     $this->withToken($current->plainTextToken)
-        ->deleteJson(route('api.v1.account.sessions.destroy-others'))
+        ->deleteJson('/api/v1/account/sessions')
         ->assertOk()
         ->assertJsonPath('data.revoked', 2);
 

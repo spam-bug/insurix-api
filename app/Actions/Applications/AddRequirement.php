@@ -7,10 +7,13 @@ namespace App\Actions\Applications;
 use App\Actions\Policies\RecordPolicyEvent;
 use App\Enums\ApplicationStage;
 use App\Enums\PolicyEventType;
+use App\Enums\PolicyStatus;
 use App\Models\ApplicationRequirement;
 use App\Models\Policy;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AddRequirement
 {
@@ -25,7 +28,11 @@ class AddRequirement
      */
     public function handle(Policy $policy, string $title, ?User $actor): ApplicationRequirement
     {
-        return DB::transaction(function () use ($policy, $title, $actor) {
+        if ($policy->status !== PolicyStatus::Pending) {
+            throw ValidationException::withMessages(['status' => 'Only a pending application can change this way.']);
+        }
+
+        $requirement = DB::transaction(function () use ($policy, $title, $actor) {
             $requirement = $policy->requirements()->create(['title' => $title]);
 
             $this->recordPolicyEvent->handle($policy, PolicyEventType::RequirementAdded, $actor, ['title' => $title]);
@@ -33,5 +40,9 @@ class AddRequirement
 
             return $requirement;
         });
+
+        Cache::tags("agent:{$policy->user_id}")->flush();
+
+        return $requirement;
     }
 }

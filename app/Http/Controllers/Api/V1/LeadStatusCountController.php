@@ -13,7 +13,7 @@ use Illuminate\Http\JsonResponse;
 /** How many of the agent's leads sit in each pipeline stage, independent of any list filters. */
 class LeadStatusCountController extends Controller
 {
-    public function __invoke(#[CurrentUser] User $agent, CountLeadsByStatus $countLeadsByStatus): JsonResponse
+    public function index(#[CurrentUser] User $agent, CountLeadsByStatus $countLeadsByStatus): JsonResponse
     {
         return response()->json(['data' => $countLeadsByStatus->handle($agent)]);
     }

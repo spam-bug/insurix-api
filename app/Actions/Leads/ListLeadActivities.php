@@ -7,6 +7,8 @@ namespace App\Actions\Leads;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Cache;
 
 class ListLeadActivities
 {
@@ -15,10 +17,10 @@ class ListLeadActivities
      */
     public function handle(Lead $lead, int $perPage = 20): LengthAwarePaginator
     {
-        return $lead->activities()
+        return Cache::tags("agent:{$lead->user_id}")->rememberForever("leads:{$lead->user_id}:{$lead->id}:activities:page-".Paginator::resolveCurrentPage()."-{$perPage}", fn () => $lead->activities()
             ->with('user:id,name')
             ->latest()
             ->latest('id')
-            ->paginate($perPage);
+            ->paginate($perPage));
     }
 }

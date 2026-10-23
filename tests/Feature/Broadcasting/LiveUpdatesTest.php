@@ -16,7 +16,7 @@ it('tells the agent when someone fills in their shareable form', function () {
     Event::fake([AgentDataChanged::class]);
     $agent = User::factory()->create(['lead_form_token' => 'form-token']);
 
-    $this->postJson(route('api.v1.public.lead-forms.submit', 'form-token'), ['name' => 'Gregoria de Jesus', 'email' => 'gregoria@example.com'])->assertCreated();
+    $this->postJson('/api/v1/public/lead-forms/form-token', ['name' => 'Gregoria de Jesus', 'email' => 'gregoria@example.com'])->assertCreated();
 
     Event::assertDispatched(AgentDataChanged::class, fn (AgentDataChanged $event) => $event->agentId === $agent->id
         && $event->topic === 'leads'

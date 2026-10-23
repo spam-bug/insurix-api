@@ -9,6 +9,11 @@ use App\Models\User;
 
 class ClientPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return true;
+    }
+
     public function view(User $user, Client $client): bool
     {
         return $client->user_id === $user->id;

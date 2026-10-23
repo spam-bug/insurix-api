@@ -2,118 +2,157 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Api\V1\Account\LeadFormBrandingController;
+use App\Http\Controllers\Api\V1\Account\LeadFormBioController;
+use App\Http\Controllers\Api\V1\Account\LogoController;
+use App\Http\Controllers\Api\V1\Account\OtherSessionsController;
 use App\Http\Controllers\Api\V1\Account\PasswordController;
+use App\Http\Controllers\Api\V1\Account\PhotoController;
 use App\Http\Controllers\Api\V1\Account\ProfileController;
+use App\Http\Controllers\Api\V1\Account\RecoveryCodeController;
 use App\Http\Controllers\Api\V1\Account\SessionController;
+use App\Http\Controllers\Api\V1\Account\TwoFactorConfirmationController;
 use App\Http\Controllers\Api\V1\Account\TwoFactorController;
-use App\Http\Controllers\Api\V1\ApplicationController;
+use App\Http\Controllers\Api\V1\ApplicationApprovalController;
+use App\Http\Controllers\Api\V1\ApplicationDeclineController;
+use App\Http\Controllers\Api\V1\ApplicationRequirementController;
+use App\Http\Controllers\Api\V1\ApplicationStageController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
+use App\Http\Controllers\Api\V1\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
+use App\Http\Controllers\Api\V1\BulkLeadStatusController;
 use App\Http\Controllers\Api\V1\ClientController;
+use App\Http\Controllers\Api\V1\ClientDocumentController;
+use App\Http\Controllers\Api\V1\ClientHistoryController;
+use App\Http\Controllers\Api\V1\ClientPolicyController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\DocumentController;
+use App\Http\Controllers\Api\V1\DocumentDownloadController;
+use App\Http\Controllers\Api\V1\FollowUpCompletionController;
 use App\Http\Controllers\Api\V1\FollowUpController;
-use App\Http\Controllers\Api\V1\InsightController;
+use App\Http\Controllers\Api\V1\FollowUpSummaryController;
+use App\Http\Controllers\Api\V1\InsightReportController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
 use App\Http\Controllers\Api\V1\LeadController;
+use App\Http\Controllers\Api\V1\LeadFollowUpController;
 use App\Http\Controllers\Api\V1\LeadFormController;
+use App\Http\Controllers\Api\V1\LeadFormTokenController;
+use App\Http\Controllers\Api\V1\LeadMeetingController;
+use App\Http\Controllers\Api\V1\LeadNoteController;
+use App\Http\Controllers\Api\V1\LeadPromotionController;
+use App\Http\Controllers\Api\V1\LeadStatusController;
 use App\Http\Controllers\Api\V1\LeadStatusCountController;
+use App\Http\Controllers\Api\V1\NextActionController;
+use App\Http\Controllers\Api\V1\PolicyAttentionController;
 use App\Http\Controllers\Api\V1\PolicyController;
 use App\Http\Controllers\Api\V1\PolicyRenewalController;
 use App\Http\Controllers\Api\V1\ProductController;
-use App\Http\Controllers\Api\V1\PromoteLeadController;
 use App\Http\Controllers\Api\V1\PublicLeadFormController;
+use App\Http\Controllers\Api\V1\RequirementController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->name('api.v1.')->group(function () {
-    Route::post('/auth/register', RegisterController::class)->name('auth.register');
-    Route::post('/auth/login', LoginController::class)->name('auth.login');
+Route::prefix('v1')->group(function () {
+    Route::post('/auth/register', RegisterController::class);
+    Route::post('/auth/login', LoginController::class);
 
     Route::middleware('throttle:6,1')->group(function () {
-        Route::post('/auth/two-factor-challenge', TwoFactorChallengeController::class)->name('auth.two-factor-challenge');
-        Route::post('/auth/forgot-password', [PasswordResetController::class, 'sendLink'])->name('auth.password.email');
-        Route::post('/auth/reset-password', [PasswordResetController::class, 'reset'])->name('auth.password.reset');
+        Route::post('/auth/two-factor-challenge', TwoFactorChallengeController::class);
+        Route::post('/auth/forgot-password', [PasswordResetLinkController::class, 'store']);
+        Route::post('/auth/reset-password', [PasswordResetController::class, 'store']);
     });
 
-    Route::get('/public/lead-forms/{token}', [PublicLeadFormController::class, 'show'])->name('public.lead-forms.show');
-    Route::post('/public/lead-forms/{token}', [PublicLeadFormController::class, 'submit'])
-        ->middleware('throttle:lead-form')
-        ->name('public.lead-forms.submit');
+    Route::get('/public/lead-forms/{agent:lead_form_token}', [PublicLeadFormController::class, 'show']);
+    Route::post('/public/lead-forms/{agent:lead_form_token}', [PublicLeadFormController::class, 'store'])
+        ->middleware('throttle:lead-form');
 
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/auth/user', CurrentUserController::class)->name('auth.user');
-        Route::post('/auth/logout', LogoutController::class)->name('auth.logout');
+        Route::get('/auth/user', CurrentUserController::class);
+        Route::post('/auth/logout', LogoutController::class);
 
-        Route::prefix('account')->name('account.')->group(function () {
-            Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-            Route::post('/photo', [ProfileController::class, 'storePhoto'])->name('photo.store');
-            Route::delete('/photo', [ProfileController::class, 'destroyPhoto'])->name('photo.destroy');
+        Route::prefix('account')->group(function () {
+            Route::put('/profile', [ProfileController::class, 'update']);
+            Route::post('/photo', [PhotoController::class, 'store']);
+            Route::delete('/photo', [PhotoController::class, 'destroy']);
 
-            Route::put('/lead-form', [LeadFormBrandingController::class, 'updateBio'])->name('lead-form.update');
-            Route::post('/logo', [LeadFormBrandingController::class, 'storeLogo'])->name('logo.store');
-            Route::delete('/logo', [LeadFormBrandingController::class, 'destroyLogo'])->name('logo.destroy');
+            Route::put('/lead-form', [LeadFormBioController::class, 'update']);
+            Route::post('/logo', [LogoController::class, 'store']);
+            Route::delete('/logo', [LogoController::class, 'destroy']);
 
-            Route::put('/password', [PasswordController::class, 'update'])->name('password.update');
+            Route::put('/password', [PasswordController::class, 'update']);
 
-            Route::post('/two-factor', [TwoFactorController::class, 'store'])->name('two-factor.store');
-            Route::post('/two-factor/confirm', [TwoFactorController::class, 'confirm'])->name('two-factor.confirm');
-            Route::delete('/two-factor', [TwoFactorController::class, 'destroy'])->name('two-factor.destroy');
-            Route::post('/two-factor/recovery-codes', [TwoFactorController::class, 'regenerateRecoveryCodes'])->name('two-factor.recovery-codes');
+            Route::post('/two-factor', [TwoFactorController::class, 'store']);
+            Route::post('/two-factor/confirm', [TwoFactorConfirmationController::class, 'store']);
+            Route::delete('/two-factor', [TwoFactorController::class, 'destroy']);
+            Route::post('/two-factor/recovery-codes', [RecoveryCodeController::class, 'store']);
 
-            Route::get('/sessions', [SessionController::class, 'index'])->name('sessions.index');
-            Route::delete('/sessions', [SessionController::class, 'destroyOthers'])->name('sessions.destroy-others');
-            Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->whereUuid('session')->name('sessions.destroy');
+            Route::get('/sessions', [SessionController::class, 'index']);
+            Route::delete('/sessions', [OtherSessionsController::class, 'destroy']);
+            Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->whereUuid('session');
         });
 
-        Route::get('/lead-form', [LeadFormController::class, 'show'])->name('lead-form.show');
-        Route::post('/lead-form/regenerate', [LeadFormController::class, 'regenerate'])->name('lead-form.regenerate');
+        Route::get('/lead-form', [LeadFormController::class, 'show']);
+        Route::post('/lead-form/regenerate', [LeadFormTokenController::class, 'store']);
 
-        Route::get('/leads/status-counts', LeadStatusCountController::class)->name('leads.status-counts');
-        Route::post('/leads/bulk/status', [BulkLeadController::class, 'updateStatus'])->name('leads.bulk.status');
-        Route::post('/leads/bulk/delete', [BulkLeadController::class, 'destroy'])->name('leads.bulk.delete');
-        Route::apiResource('leads', LeadController::class);
-        Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.status');
-        Route::get('/leads/{lead}/activities', [LeadActivityController::class, 'index'])->name('leads.activities.index');
-        Route::post('/leads/{lead}/notes', [LeadActivityController::class, 'storeNote'])->name('leads.notes.store');
-        Route::post('/leads/{lead}/meeting', [LeadActivityController::class, 'scheduleMeeting'])->name('leads.meeting.store');
-        Route::post('/leads/{lead}/promote', PromoteLeadController::class)->name('leads.promote');
+        Route::get('/leads/status-counts', [LeadStatusCountController::class, 'index']);
+        Route::post('/leads/bulk/status', [BulkLeadStatusController::class, 'update']);
+        Route::post('/leads/bulk/delete', [BulkLeadController::class, 'destroy']);
+        Route::get('/leads', [LeadController::class, 'index']);
+        Route::post('/leads', [LeadController::class, 'store']);
+        Route::get('/leads/{lead}', [LeadController::class, 'show'])->can('view', 'lead');
+        Route::put('/leads/{lead}', [LeadController::class, 'update']);
+        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->can('delete', 'lead');
+        Route::patch('/leads/{lead}/status', [LeadStatusController::class, 'update']);
+        Route::get('/leads/{lead}/activities', [LeadActivityController::class, 'index'])->can('view', 'lead');
+        Route::post('/leads/{lead}/notes', [LeadNoteController::class, 'store']);
+        Route::post('/leads/{lead}/meeting', [LeadMeetingController::class, 'store']);
+        Route::post('/leads/{lead}/promote', [LeadPromotionController::class, 'store']);
 
-        Route::apiResource('clients', ClientController::class)->only(['index', 'show', 'update']);
-        Route::get('/clients/{client}/history', [ClientController::class, 'history'])->name('clients.history');
+        Route::get('/clients', [ClientController::class, 'index']);
+        Route::get('/clients/{client}', [ClientController::class, 'show'])->can('view', 'client');
+        Route::put('/clients/{client}', [ClientController::class, 'update']);
+        Route::get('/clients/{client}/history', [ClientHistoryController::class, 'index'])->can('view', 'client');
 
-        Route::apiResource('products', ProductController::class);
+        Route::get('/products', [ProductController::class, 'index']);
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::get('/products/{product}', [ProductController::class, 'show'])->can('view', 'product');
+        Route::put('/products/{product}', [ProductController::class, 'update']);
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->can('delete', 'product');
 
-        Route::get('/policies/attention', [PolicyController::class, 'attention'])->name('policies.attention');
-        Route::post('/clients/{client}/policies', [PolicyController::class, 'store'])->name('clients.policies.store');
-        Route::apiResource('policies', PolicyController::class)->except(['store']);
-        Route::post('/policies/{policy}/stage', [ApplicationController::class, 'stage'])->name('policies.stage');
-        Route::post('/policies/{policy}/approve', [ApplicationController::class, 'approve'])->name('policies.approve');
-        Route::post('/policies/{policy}/decline', [ApplicationController::class, 'decline'])->name('policies.decline');
-        Route::post('/policies/{policy}/requirements', [ApplicationController::class, 'storeRequirement'])->name('policies.requirements.store');
-        Route::put('/requirements/{requirement}', [ApplicationController::class, 'updateRequirement'])->name('requirements.update');
-        Route::delete('/requirements/{requirement}', [ApplicationController::class, 'destroyRequirement'])->name('requirements.destroy');
-        Route::post('/policies/{policy}/renewals', [PolicyRenewalController::class, 'store'])->name('policies.renewals.store');
-        Route::get('/commissions/summary', CommissionSummaryController::class)->name('commissions.summary');
+        Route::get('/policies/attention', [PolicyAttentionController::class, 'index']);
+        Route::post('/clients/{client}/policies', [ClientPolicyController::class, 'store']);
+        Route::get('/policies', [PolicyController::class, 'index']);
+        Route::get('/policies/{policy}', [PolicyController::class, 'show'])->can('view', 'policy');
+        Route::put('/policies/{policy}', [PolicyController::class, 'update']);
+        Route::delete('/policies/{policy}', [PolicyController::class, 'destroy'])->can('delete', 'policy');
+        Route::post('/policies/{policy}/stage', [ApplicationStageController::class, 'store']);
+        Route::post('/policies/{policy}/approve', [ApplicationApprovalController::class, 'store']);
+        Route::post('/policies/{policy}/decline', [ApplicationDeclineController::class, 'store']);
+        Route::post('/policies/{policy}/requirements', [ApplicationRequirementController::class, 'store']);
+        Route::put('/requirements/{requirement}', [RequirementController::class, 'update']);
+        Route::delete('/requirements/{requirement}', [RequirementController::class, 'destroy'])->can('delete', 'requirement');
+        Route::post('/policies/{policy}/renewals', [PolicyRenewalController::class, 'store']);
+        Route::get('/commissions/summary', [CommissionSummaryController::class, 'index']);
 
-        Route::post('/clients/{client}/documents', [DocumentController::class, 'store'])->name('clients.documents.store');
-        Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
-        Route::apiResource('documents', DocumentController::class)->except(['store']);
+        Route::post('/clients/{client}/documents', [ClientDocumentController::class, 'store']);
+        Route::get('/documents/{document}/download', [DocumentDownloadController::class, 'show'])->can('view', 'document');
+        Route::get('/documents', [DocumentController::class, 'index']);
+        Route::get('/documents/{document}', [DocumentController::class, 'show'])->can('view', 'document');
+        Route::put('/documents/{document}', [DocumentController::class, 'update']);
+        Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->can('delete', 'document');
 
-        Route::get('/insights/reports', [InsightController::class, 'reports'])->name('insights.reports');
-        Route::get('/insights/next-actions', [InsightController::class, 'nextActions'])->name('insights.next-actions');
+        Route::get('/insights/reports', [InsightReportController::class, 'index']);
+        Route::get('/insights/next-actions', [NextActionController::class, 'index']);
 
-        Route::get('/follow-ups', [FollowUpController::class, 'index'])->name('follow-ups.index');
-        Route::get('/follow-ups/summary', [FollowUpController::class, 'summary'])->name('follow-ups.summary');
-        Route::post('/leads/{lead}/follow-ups', [FollowUpController::class, 'store'])->name('leads.follow-ups.store');
-        Route::put('/follow-ups/{followUp}', [FollowUpController::class, 'update'])->name('follow-ups.update');
-        Route::delete('/follow-ups/{followUp}', [FollowUpController::class, 'destroy'])->name('follow-ups.destroy');
-        Route::post('/follow-ups/{followUp}/complete', [FollowUpController::class, 'complete'])->name('follow-ups.complete');
-        Route::post('/follow-ups/{followUp}/reopen', [FollowUpController::class, 'reopen'])->name('follow-ups.reopen');
+        Route::get('/follow-ups', [FollowUpController::class, 'index']);
+        Route::get('/follow-ups/summary', [FollowUpSummaryController::class, 'index']);
+        Route::post('/leads/{lead}/follow-ups', [LeadFollowUpController::class, 'store']);
+        Route::put('/follow-ups/{followUp}', [FollowUpController::class, 'update']);
+        Route::delete('/follow-ups/{followUp}', [FollowUpController::class, 'destroy'])->can('delete', 'followUp');
+        Route::post('/follow-ups/{followUp}/complete', [FollowUpCompletionController::class, 'store'])->can('update', 'followUp');
+        Route::post('/follow-ups/{followUp}/reopen', [FollowUpCompletionController::class, 'destroy'])->can('update', 'followUp');
     });
 });

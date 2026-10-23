@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Actions\Products;
 
-use App\DataTransferObjects\Products\ProductData;
+use App\DataTransferObject\Products\ProductData;
 use App\Models\Product;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UpdateProduct
@@ -16,7 +17,9 @@ class UpdateProduct
      */
     public function handle(Product $product, ProductData $data): Product
     {
-        DB::transaction(fn () => $product->update($data->toAttributes()));
+        DB::transaction(fn () => $product->update($data->toArray()));
+
+        Cache::tags("agent:{$product->user_id}")->flush();
 
         return $product;
     }

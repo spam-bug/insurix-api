@@ -53,7 +53,8 @@ class AppServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('lead-form', function (Request $request) {
-            $token = (string) $request->route('token');
+            $agent = $request->route('agent');
+            $token = $agent instanceof User ? $agent->lead_form_token : (string) $agent;
             $visitor = $request->header('X-Client-IP') ?: $request->ip();
 
             return [

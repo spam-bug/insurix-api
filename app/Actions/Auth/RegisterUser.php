@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Auth;
 
-use App\DataTransferObjects\Auth\RegisterUserData;
+use App\DataTransferObject\Auth\RegisterUserData;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 

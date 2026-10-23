@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Actions\Policies;
 
-use App\DataTransferObjects\Policies\PolicyData;
+use App\DataTransferObject\Policies\PolicyData;
 use App\Enums\PolicyEventType;
 use App\Models\Client;
 use App\Models\Policy;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CreatePolicy
 {
-    public function __construct(private RecordPolicyEvent $recordPolicyEvent) {}
+    public function __construct(
+        private PreparePolicyAttributes $preparePolicyAttributes,
+        private RecordPolicyEvent $recordPolicyEvent,
+    ) {}
 
     /**
      * Records a policy for the client, owned by the client's agent. A pending one starts as a
@@ -21,9 +25,11 @@ class CreatePolicy
      */
     public function handle(Client $client, PolicyData $data, ?User $actor = null): Policy
     {
-        return DB::transaction(function () use ($client, $data, $actor) {
+        $attributes = $this->preparePolicyAttributes->handle($client->user, $data);
+
+        $policy = DB::transaction(function () use ($client, $attributes, $actor) {
             $policy = $client->policies()->create([
-                ...$data->toAttributes(),
+                ...$attributes,
                 'user_id' => $client->user_id,
             ]);
 
@@ -31,5 +37,9 @@ class CreatePolicy
 
             return $policy;
         });
+
+        Cache::tags("agent:{$client->user_id}")->flush();
+
+        return $policy;
     }
 }

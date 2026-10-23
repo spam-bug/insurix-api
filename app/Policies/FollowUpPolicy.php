@@ -9,6 +9,11 @@ use App\Models\User;
 
 class FollowUpPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return true;
+    }
+
     public function update(User $user, FollowUp $followUp): bool
     {
         return $followUp->user_id === $user->id;

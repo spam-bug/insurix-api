@@ -24,7 +24,7 @@ it('flags renewals, premiums due, lapsed and long-pending policies, most urgent 
     Policy::factory()->for($client)->create($quiet);
     Policy::factory()->for($client)->status(PolicyStatus::Cancelled)->create($quiet);
 
-    $response = $this->actingAs($agent)->getJson(route('api.v1.policies.attention'))->assertOk();
+    $response = $this->actingAs($agent)->getJson('/api/v1/policies/attention')->assertOk();
 
     expect($response->json('data.*.policy.id'))->toBe([$lapsed->id, $stuck->id, $paymentDue->id, $renewing->id])
         ->and($response->json('data.0.reasons.0.code'))->toBe('lapsed')
@@ -38,7 +38,7 @@ it('flags a renewal date that has passed', function () {
     Policy::factory()->for(Client::factory()->for($agent))->create(['payment_frequency' => PaymentFrequency::Single, 'renewal_date' => '2026-10-01']);
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.policies.attention'))
+        ->getJson('/api/v1/policies/attention')
         ->assertJsonPath('data.0.reasons.0.code', 'renewal_overdue');
 });
 
@@ -56,7 +56,7 @@ it('summarizes commission received, receivable and expected', function () {
     Policy::factory()->create($monthly);
 
     $this->actingAs($agent)
-        ->getJson(route('api.v1.commissions.summary'))
+        ->getJson('/api/v1/commissions/summary')
         ->assertOk()
         ->assertExactJson(['data' => [
             'received_this_year' => 6000,

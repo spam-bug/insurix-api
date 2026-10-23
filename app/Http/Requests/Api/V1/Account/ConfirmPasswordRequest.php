@@ -10,12 +10,9 @@ use Illuminate\Foundation\Http\FormRequest;
 /** Sensitive security changes ask for the agent's password again. */
 class ConfirmPasswordRequest extends FormRequest
 {
-    /**
-     * Agents only ever change their own security settings.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('update', $this->user());
     }
 
     /**
@@ -27,16 +24,6 @@ class ConfirmPasswordRequest extends FormRequest
     {
         return [
             'password' => ['required', 'string', 'current_password:sanctum'],
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'password.current_password' => 'That isn’t your password.',
         ];
     }
 }

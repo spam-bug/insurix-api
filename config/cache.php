@@ -2,6 +2,22 @@
 
 declare(strict_types=1);
 
+use App\Models\ApplicationRequirement;
+use App\Models\Client;
+use App\Models\Document;
+use App\Models\FollowUp;
+use App\Models\Lead;
+use App\Models\LeadActivity;
+use App\Models\Policy;
+use App\Models\PolicyEvent;
+use App\Models\PolicyRenewal;
+use App\Models\Product;
+use App\Models\User;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 return [
@@ -38,7 +54,7 @@ return [
 
         'array' => [
             'driver' => 'array',
-            'serialize' => false,
+            'serialize' => true,
         ],
 
         'database' => [
@@ -133,6 +149,23 @@ return [
     |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => [
+        LengthAwarePaginator::class,
+        EloquentCollection::class,
+        Collection::class,
+        Carbon::class,
+        CarbonImmutable::class,
+        ApplicationRequirement::class,
+        Client::class,
+        Document::class,
+        FollowUp::class,
+        Lead::class,
+        LeadActivity::class,
+        Policy::class,
+        PolicyEvent::class,
+        PolicyRenewal::class,
+        Product::class,
+        User::class,
+    ],
 
 ];

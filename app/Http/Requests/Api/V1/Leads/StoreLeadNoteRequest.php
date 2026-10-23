@@ -9,17 +9,12 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreLeadNoteRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('update', $this->route('lead'));
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
@@ -27,10 +22,5 @@ class StoreLeadNoteRequest extends FormRequest
         return [
             'body' => ['required', 'string', 'max:5000'],
         ];
-    }
-
-    public function body(): string
-    {
-        return $this->string('body')->trim()->toString();
     }
 }

@@ -6,6 +6,7 @@ namespace App\Actions\Leads;
 
 use App\Enums\LeadStatus;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 class CountLeadsByStatus
 {
@@ -16,16 +17,18 @@ class CountLeadsByStatus
      */
     public function handle(User $agent): array
     {
-        $counts = $agent->leads()
-            ->toBase()
-            ->selectRaw('status, count(*) as aggregate')
-            ->groupBy('status')
-            ->pluck('aggregate', 'status');
+        return Cache::tags("agent:{$agent->id}")->rememberForever("leads:{$agent->id}:status-counts", function () use ($agent) {
+            $counts = $agent->leads()
+                ->toBase()
+                ->selectRaw('status, count(*) as aggregate')
+                ->groupBy('status')
+                ->pluck('aggregate', 'status');
 
-        $byStatus = collect(LeadStatus::cases())
-            ->mapWithKeys(fn (LeadStatus $status) => [$status->value => (int) ($counts[$status->value] ?? 0)])
-            ->all();
+            $byStatus = collect(LeadStatus::cases())
+                ->mapWithKeys(fn (LeadStatus $status) => [$status->value => (int) ($counts[$status->value] ?? 0)])
+                ->all();
 
-        return ['total' => array_sum($byStatus), ...$byStatus];
+            return ['total' => array_sum($byStatus), ...$byStatus];
+        });
     }
 }

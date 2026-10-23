@@ -9,12 +9,9 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateBioRequest extends FormRequest
 {
-    /**
-     * Agents only ever edit their own form.
-     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('update', $this->user());
     }
 
     /**
@@ -27,10 +24,5 @@ class UpdateBioRequest extends FormRequest
         return [
             'bio' => ['nullable', 'string', 'max:600'],
         ];
-    }
-
-    public function bio(): ?string
-    {
-        return $this->filled('bio') ? $this->string('bio')->trim()->toString() : null;
     }
 }

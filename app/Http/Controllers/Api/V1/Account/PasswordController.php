@@ -10,7 +10,6 @@ use App\Http\Requests\Api\V1\Account\UpdatePasswordRequest;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\Response;
-use Laravel\Sanctum\PersonalAccessToken;
 
 class PasswordController extends Controller
 {
@@ -19,9 +18,7 @@ class PasswordController extends Controller
      */
     public function update(UpdatePasswordRequest $request, #[CurrentUser] User $agent, UpdatePassword $updatePassword): Response
     {
-        $token = $agent->currentAccessToken();
-
-        $updatePassword->handle($agent, $request->string('password')->toString(), $token instanceof PersonalAccessToken ? $token->id : null);
+        $updatePassword->handle($agent, $request->validated('password'));
 
         return response()->noContent();
     }

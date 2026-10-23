@@ -14,7 +14,7 @@ it('changes the password and signs out other devices', function () {
     $agent->createToken('Safari on iPhone');
 
     $this->withToken($current->plainTextToken)
-        ->putJson(route('api.v1.account.password.update'), [
+        ->putJson('/api/v1/account/password', [
             'current_password' => 'old-password-123',
             'password' => 'new-password-456',
             'password_confirmation' => 'new-password-456',
@@ -29,7 +29,7 @@ it('needs the current password to change it', function () {
     $agent = User::factory()->create(['password' => 'old-password-123']);
 
     $this->actingAs($agent, 'sanctum')
-        ->putJson(route('api.v1.account.password.update'), [
+        ->putJson('/api/v1/account/password', [
             'current_password' => 'not-it',
             'password' => 'new-password-456',
             'password_confirmation' => 'new-password-456',
@@ -41,8 +41,8 @@ it('emails a reset link that opens the frontend, without revealing who has an ac
     Notification::fake();
     $agent = User::factory()->create(['email' => 'ana@example.com']);
 
-    $this->postJson(route('api.v1.auth.password.email'), ['email' => 'ANA@example.com'])->assertOk();
-    $this->postJson(route('api.v1.auth.password.email'), ['email' => 'nobody@example.com'])
+    $this->postJson('/api/v1/auth/forgot-password', ['email' => 'ANA@example.com'])->assertOk();
+    $this->postJson('/api/v1/auth/forgot-password', ['email' => 'nobody@example.com'])
         ->assertOk()
         ->assertJsonPath('message', 'If that email has an account, a reset link is on its way.');
 
@@ -59,7 +59,7 @@ it('resets the password from the link and signs out every device', function () {
     $agent->createToken('Chrome on Windows');
     $token = Password::createToken($agent);
 
-    $this->postJson(route('api.v1.auth.password.reset'), [
+    $this->postJson('/api/v1/auth/reset-password', [
         'email' => 'ana@example.com',
         'token' => $token,
         'password' => 'brand-new-pass-1',
@@ -73,7 +73,7 @@ it('resets the password from the link and signs out every device', function () {
 it('rejects a bad reset token', function () {
     User::factory()->create(['email' => 'ana@example.com']);
 
-    $this->postJson(route('api.v1.auth.password.reset'), [
+    $this->postJson('/api/v1/auth/reset-password', [
         'email' => 'ana@example.com',
         'token' => 'made-up',
         'password' => 'brand-new-pass-1',

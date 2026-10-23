@@ -8,7 +8,7 @@ use App\Models\User;
 it('logs an agent in and returns an access token', function () {
     $user = User::factory()->create(['email' => 'jane@example.com']);
 
-    $response = $this->postJson(route('api.v1.auth.login'), [
+    $response = $this->postJson('/api/v1/auth/login', [
         'email' => 'jane@example.com',
         'password' => 'password',
         'device_name' => 'insurix-web',
@@ -24,7 +24,7 @@ it('logs an agent in and returns an access token', function () {
 it('rejects wrong credentials without issuing a token', function (string $email, string $password) {
     $user = User::factory()->create(['email' => 'jane@example.com']);
 
-    $this->postJson(route('api.v1.auth.login'), [
+    $this->postJson('/api/v1/auth/login', [
         'email' => $email,
         'password' => $password,
         'device_name' => 'insurix-web',
@@ -41,16 +41,16 @@ it('locks out repeated failed attempts', function () {
     $credentials = ['email' => 'jane@example.com', 'password' => 'wrong-password', 'device_name' => 'insurix-web'];
 
     foreach (range(1, AuthenticateUser::MAX_ATTEMPTS) as $attempt) {
-        $this->postJson(route('api.v1.auth.login'), $credentials)->assertUnprocessable();
+        $this->postJson('/api/v1/auth/login', $credentials)->assertUnprocessable();
     }
 
-    $this->postJson(route('api.v1.auth.login'), [...$credentials, 'password' => 'password'])
+    $this->postJson('/api/v1/auth/login', [...$credentials, 'password' => 'password'])
         ->assertUnprocessable()
         ->assertJsonPath('errors.email.0', fn (string $message) => str_contains($message, 'Too many login attempts'));
 });
 
 it('requires email, password and device name', function () {
-    $this->postJson(route('api.v1.auth.login'), [])
+    $this->postJson('/api/v1/auth/login', [])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['email', 'password', 'device_name']);
 });

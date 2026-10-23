@@ -37,7 +37,7 @@ it('scores a qualified lead with a meeting coming up as hot', function () {
         'meeting_at' => now()->addDays(2),
         'created_at' => now()->subMonth(),
     ]);
-    $this->actingAs($agent)->postJson(route('api.v1.leads.notes.store', $lead), ['body' => 'Wants a quote for the family.'])->assertCreated();
+    $this->actingAs($agent)->postJson("/api/v1/leads/{$lead->id}/notes", ['body' => 'Wants a quote for the family.'])->assertCreated();
 
     $lead->refresh();
 
@@ -83,11 +83,11 @@ it('rescores a lead when its status changes and sorts the list by score', functi
     Lead::factory()->for($agent)->status(LeadStatus::Lost)->create();
     $this->actingAs($agent);
 
-    $this->patchJson(route('api.v1.leads.status', $cold), ['status' => 'contacted'])->assertOk();
-    $this->patchJson(route('api.v1.leads.status', $warm), ['status' => 'qualified'])
+    $this->patchJson("/api/v1/leads/{$cold->id}/status", ['status' => 'contacted'])->assertOk();
+    $this->patchJson("/api/v1/leads/{$warm->id}/status", ['status' => 'qualified'])
         ->assertJsonPath('data.score_band', 'hot');
 
-    $this->getJson(route('api.v1.leads.index', ['sort' => 'score']))
+    $this->getJson('/api/v1/leads?'.http_build_query(['sort' => 'score']))
         ->assertJsonPath('data.0.id', $warm->id)
         ->assertJsonPath('data.1.id', $cold->id)
         ->assertJsonPath('data.1.score_band', 'warm')
