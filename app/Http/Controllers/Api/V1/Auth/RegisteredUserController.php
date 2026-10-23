@@ -15,7 +15,7 @@ class RegisteredUserController extends Controller
 {
     public function store(RegisterRequest $request, RegisterUser $registerUser): JsonResponse
     {
-        return UserResource::make($registerUser->handle(RegisterUserData::fromArray($request->validated())))
+        return UserResource::make($registerUser->handle(RegisterUserData::fromArray($request->validated()))->load('workspaces'))
             ->response()
             ->setStatusCode(201);
     }

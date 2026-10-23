@@ -14,6 +14,6 @@ class TwoFactorChallengeController extends Controller
 {
     public function store(TwoFactorChallengeRequest $request, CompleteTwoFactorChallenge $completeTwoFactorChallenge): UserResource
     {
-        return UserResource::make($completeTwoFactorChallenge->handle(TwoFactorChallengeData::fromArray($request->validated())));
+        return UserResource::make($completeTwoFactorChallenge->handle(TwoFactorChallengeData::fromArray($request->validated()))->load('workspaces'));
     }
 }

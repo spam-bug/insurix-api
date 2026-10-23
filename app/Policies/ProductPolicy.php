@@ -6,9 +6,12 @@ namespace App\Policies;
 
 use App\Models\Product;
 use App\Models\User;
+use App\Policies\Concerns\ChecksMembership;
 
 class ProductPolicy
 {
+    use ChecksMembership;
+
     public function viewAny(User $user): bool
     {
         return true;
@@ -21,16 +24,16 @@ class ProductPolicy
 
     public function view(User $user, Product $product): bool
     {
-        return $product->user_id === $user->id;
+        return $this->isMember($user, $product->workspace_id);
     }
 
     public function update(User $user, Product $product): bool
     {
-        return $product->user_id === $user->id;
+        return $this->isMember($user, $product->workspace_id);
     }
 
     public function delete(User $user, Product $product): bool
     {
-        return $product->user_id === $user->id;
+        return $this->isMember($user, $product->workspace_id);
     }
 }

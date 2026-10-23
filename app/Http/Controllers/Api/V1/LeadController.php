@@ -17,6 +17,7 @@ use App\Http\Requests\Api\V1\Leads\UpdateLeadRequest;
 use App\Http\Resources\Api\V1\LeadResource;
 use App\Models\Lead;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -24,14 +25,14 @@ use Illuminate\Http\Response;
 
 class LeadController extends Controller
 {
-    public function index(ListLeadsRequest $request, #[CurrentUser] User $agent, ListLeads $listLeads): AnonymousResourceCollection
+    public function index(ListLeadsRequest $request, Workspace $workspace, ListLeads $listLeads): AnonymousResourceCollection
     {
-        return LeadResource::collection($listLeads->handle($agent, LeadFiltersData::fromArray($request->validated())));
+        return LeadResource::collection($listLeads->handle($workspace, LeadFiltersData::fromArray($request->validated())));
     }
 
-    public function store(StoreLeadRequest $request, #[CurrentUser] User $agent, CreateLead $createLead): JsonResponse
+    public function store(StoreLeadRequest $request, Workspace $workspace, #[CurrentUser] User $user, CreateLead $createLead): JsonResponse
     {
-        return LeadResource::make($createLead->handle($agent, LeadData::fromArray($request->validated())))
+        return LeadResource::make($createLead->handle($workspace, LeadData::fromArray($request->validated()), $user))
             ->response()
             ->setStatusCode(201);
     }
@@ -41,9 +42,9 @@ class LeadController extends Controller
         return LeadResource::make($lead);
     }
 
-    public function update(UpdateLeadRequest $request, Lead $lead, #[CurrentUser] User $agent, UpdateLead $updateLead): LeadResource
+    public function update(UpdateLeadRequest $request, Lead $lead, #[CurrentUser] User $user, UpdateLead $updateLead): LeadResource
     {
-        return LeadResource::make($updateLead->handle($lead, LeadData::fromArray($request->validated()), $agent));
+        return LeadResource::make($updateLead->handle($lead, LeadData::fromArray($request->validated()), $user));
     }
 
     public function destroy(Lead $lead, DeleteLead $deleteLead): Response

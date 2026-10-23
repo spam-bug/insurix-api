@@ -15,9 +15,9 @@ use Illuminate\Container\Attributes\CurrentUser;
 /** Ticking a follow-up off, and un-ticking it. */
 class FollowUpCompletionController extends Controller
 {
-    public function store(FollowUp $followUp, #[CurrentUser] User $agent, CompleteFollowUp $completeFollowUp): FollowUpResource
+    public function store(FollowUp $followUp, #[CurrentUser] User $user, CompleteFollowUp $completeFollowUp): FollowUpResource
     {
-        return FollowUpResource::make($completeFollowUp->handle($followUp, $agent)->load('lead'));
+        return FollowUpResource::make($completeFollowUp->handle($followUp, $user)->load('lead'));
     }
 
     public function destroy(FollowUp $followUp, ReopenFollowUp $reopenFollowUp): FollowUpResource

@@ -6,9 +6,12 @@ namespace App\Policies;
 
 use App\Models\Client;
 use App\Models\User;
+use App\Policies\Concerns\ChecksMembership;
 
 class ClientPolicy
 {
+    use ChecksMembership;
+
     public function viewAny(User $user): bool
     {
         return true;
@@ -16,11 +19,11 @@ class ClientPolicy
 
     public function view(User $user, Client $client): bool
     {
-        return $client->user_id === $user->id;
+        return $this->isMember($user, $client->workspace_id);
     }
 
     public function update(User $user, Client $client): bool
     {
-        return $client->user_id === $user->id;
+        return $this->isMember($user, $client->workspace_id);
     }
 }

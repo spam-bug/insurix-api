@@ -7,7 +7,7 @@ namespace App\Http\Requests\Api\V1\Account;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-/** A profile photo or logo upload. */
+/** A profile photo upload. */
 class UploadImageRequest extends FormRequest
 {
     public function authorize(): bool

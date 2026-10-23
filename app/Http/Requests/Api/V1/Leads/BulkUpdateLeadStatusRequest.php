@@ -6,6 +6,7 @@ namespace App\Http\Requests\Api\V1\Leads;
 
 use App\Enums\LeadStatus;
 use App\Models\Lead;
+use App\Models\Workspace;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,7 +27,7 @@ class BulkUpdateLeadStatusRequest extends FormRequest
     {
         return [
             'ids' => ['required', 'array', 'min:1', 'max:100'],
-            'ids.*' => ['uuid', 'distinct', Rule::exists(Lead::class, 'id')->where('user_id', $this->user()->id)],
+            'ids.*' => ['uuid', 'distinct', Rule::exists(Lead::class, 'id')->where('workspace_id', app(Workspace::class)->id)],
             'status' => ['required', Rule::enum(LeadStatus::class)->only(LeadStatus::manual())],
         ];
     }

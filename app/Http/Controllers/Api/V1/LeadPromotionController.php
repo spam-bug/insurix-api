@@ -16,9 +16,9 @@ use Illuminate\Http\JsonResponse;
 
 class LeadPromotionController extends Controller
 {
-    public function store(PromoteLeadRequest $request, Lead $lead, #[CurrentUser] User $agent, PromoteLead $promoteLead): JsonResponse
+    public function store(PromoteLeadRequest $request, Lead $lead, #[CurrentUser] User $user, PromoteLead $promoteLead): JsonResponse
     {
-        return ClientResource::make($promoteLead->handle($lead, ClientProfileData::fromArray($request->validated()), $agent))
+        return ClientResource::make($promoteLead->handle($lead, ClientProfileData::fromArray($request->validated()), $user))
             ->response()
             ->setStatusCode(201);
     }

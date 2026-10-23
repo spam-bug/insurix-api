@@ -16,11 +16,11 @@ class PhotoController extends Controller
 {
     public function store(UploadImageRequest $request, #[CurrentUser] User $agent, ReplaceAccountImage $replaceAccountImage): UserResource
     {
-        return UserResource::make($replaceAccountImage->handle($agent, 'avatar', $request->file('image')));
+        return UserResource::make($replaceAccountImage->handle($agent, $request->file('image')));
     }
 
     public function destroy(#[CurrentUser] User $agent, ReplaceAccountImage $replaceAccountImage): UserResource
     {
-        return UserResource::make($replaceAccountImage->handle($agent, 'avatar', null));
+        return UserResource::make($replaceAccountImage->handle($agent, null));
     }
 }

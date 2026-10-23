@@ -6,9 +6,12 @@ namespace App\Policies;
 
 use App\Models\Lead;
 use App\Models\User;
+use App\Policies\Concerns\ChecksMembership;
 
 class LeadPolicy
 {
+    use ChecksMembership;
+
     public function viewAny(User $user): bool
     {
         return true;
@@ -21,16 +24,16 @@ class LeadPolicy
 
     public function view(User $user, Lead $lead): bool
     {
-        return $lead->user_id === $user->id;
+        return $this->isMember($user, $lead->workspace_id);
     }
 
     public function update(User $user, Lead $lead): bool
     {
-        return $lead->user_id === $user->id;
+        return $this->isMember($user, $lead->workspace_id);
     }
 
     public function delete(User $user, Lead $lead): bool
     {
-        return $lead->user_id === $user->id;
+        return $this->isMember($user, $lead->workspace_id);
     }
 }

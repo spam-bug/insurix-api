@@ -16,9 +16,9 @@ use Illuminate\Container\Attributes\CurrentUser;
 
 class ApplicationApprovalController extends Controller
 {
-    public function store(ApproveApplicationRequest $request, Policy $policy, #[CurrentUser] User $agent, ApproveApplication $approveApplication, GetPolicy $getPolicy): PolicyResource
+    public function store(ApproveApplicationRequest $request, Policy $policy, #[CurrentUser] User $user, ApproveApplication $approveApplication, GetPolicy $getPolicy): PolicyResource
     {
-        $approveApplication->handle($policy, ApprovalData::fromArray($request->validated()), $agent);
+        $approveApplication->handle($policy, ApprovalData::fromArray($request->validated()), $user);
 
         return PolicyResource::make($getPolicy->handle($policy));
     }

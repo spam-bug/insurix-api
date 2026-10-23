@@ -15,9 +15,9 @@ use Illuminate\Container\Attributes\CurrentUser;
 
 class ApplicationRequirementController extends Controller
 {
-    public function store(StoreRequirementRequest $request, Policy $policy, #[CurrentUser] User $agent, AddRequirement $addRequirement, GetPolicy $getPolicy): PolicyResource
+    public function store(StoreRequirementRequest $request, Policy $policy, #[CurrentUser] User $user, AddRequirement $addRequirement, GetPolicy $getPolicy): PolicyResource
     {
-        $addRequirement->handle($policy, $request->validated('title'), $agent);
+        $addRequirement->handle($policy, $request->validated('title'), $user);
 
         return PolicyResource::make($getPolicy->handle($policy));
     }
