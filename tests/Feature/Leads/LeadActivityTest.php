@@ -39,6 +39,18 @@ it('adds a note to a lead', function () {
     expect($lead->activities()->sole())->type->toBe(LeadActivityType::Note)->user_id->toBe($agent->id);
 });
 
+it('shows a new note in activity that was already read and cached', function () {
+    $agent = User::factory()->create();
+    $lead = Lead::factory()->for($agent)->create();
+    $this->actingAs($agent)->getJson("/api/v1/leads/{$lead->id}/activities")->assertJsonCount(0, 'data');
+
+    $this->postJson("/api/v1/leads/{$lead->id}/notes", ['body' => 'Prefers WhatsApp.'])->assertCreated();
+
+    $this->getJson("/api/v1/leads/{$lead->id}/activities")
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.body', 'Prefers WhatsApp.');
+});
+
 it('requires a note body', function () {
     $agent = User::factory()->create();
     $lead = Lead::factory()->for($agent)->create();

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 return [
     'custom' => [
+        'code' => [
+            'required_without' => 'Enter the 6-digit code from your authenticator app.',
+        ],
         'current_password' => [
             'current_password' => 'That isn’t your current password.',
         ],

@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /*
@@ -18,6 +21,7 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(fn () => $this->withHeader('Referer', config('app.frontend_url')))
     ->in('Feature');
 
 /*
@@ -49,4 +53,32 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * A browser session for the agent in the sessions table, as the database session driver keeps
+ * them. Returns its id.
+ */
+function storeSession(User $agent, string $userAgent, int $lastActivity = 0): string
+{
+    $id = Str::random(40);
+
+    DB::table('sessions')->insert([
+        'id' => $id,
+        'user_id' => $agent->id,
+        'ip_address' => '127.0.0.1',
+        'user_agent' => $userAgent,
+        'payload' => '',
+        'last_activity' => $lastActivity ?: now()->timestamp,
+    ]);
+
+    return $id;
+}
+
+/**
+ * Sends the next requests as the given session, so the API treats it as the current device.
+ */
+function useSession(string $id): void
+{
+    test()->withCredentials()->withCookie(config('session.cookie'), $id);
 }

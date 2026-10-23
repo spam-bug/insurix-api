@@ -6,7 +6,6 @@ namespace App\Actions\Account;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Laravel\Sanctum\PersonalAccessToken;
 
 class UpdatePassword
 {
@@ -16,13 +15,10 @@ class UpdatePassword
      */
     public function handle(User $agent, string $password): User
     {
-        $token = $agent->currentAccessToken();
-        $keepTokenId = $token instanceof PersonalAccessToken ? $token->id : null;
-
-        DB::transaction(function () use ($agent, $password, $keepTokenId) {
+        DB::transaction(function () use ($agent, $password) {
             $agent->update(['password' => $password]);
 
-            $agent->tokens()->when($keepTokenId, fn ($query, $id) => $query->whereKeyNot($id))->delete();
+            DB::table('sessions')->where('user_id', $agent->id)->where('id', '!=', session()->getId())->delete();
         });
 
         return $agent;

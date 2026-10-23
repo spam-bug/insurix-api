@@ -15,14 +15,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'email', 'phone', 'password', 'timezone', 'bio'])]
 #[Hidden(['password', 'remember_token', 'lead_form_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
 
     /** Uploaded photos and logos live on this disk, served from /storage. */
     public const UPLOADS_DISK = 'public';

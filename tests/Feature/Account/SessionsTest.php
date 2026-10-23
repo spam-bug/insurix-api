@@ -3,47 +3,49 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 it('lists where the agent is signed in and marks this device', function () {
     $agent = User::factory()->create();
-    $current = $agent->createToken('Chrome on Windows');
-    $agent->createToken('Safari on iPhone');
-    User::factory()->create()->createToken('Someone else');
+    $current = storeSession($agent, 'Chrome on Windows', now()->timestamp);
+    storeSession($agent, 'Safari on iPhone', now()->subHour()->timestamp);
+    storeSession(User::factory()->create(), 'Someone else');
 
-    $this->withToken($current->plainTextToken)
+    useSession($current);
+    $this->actingAs($agent)
         ->getJson('/api/v1/account/sessions')
         ->assertOk()
         ->assertJsonCount(2, 'data')
-        ->assertJsonPath('data.0.device', 'Chrome on Windows')
+        ->assertJsonPath('data.0.user_agent', 'Chrome on Windows')
         ->assertJsonPath('data.0.current', true)
         ->assertJsonPath('data.1.current', false);
 });
 
 it('signs out one other device', function () {
     $agent = User::factory()->create();
-    $current = $agent->createToken('Chrome on Windows');
-    $phone = $agent->createToken('Safari on iPhone');
-    $someoneElse = User::factory()->create()->createToken('Someone else');
+    $current = storeSession($agent, 'Chrome on Windows');
+    $phone = storeSession($agent, 'Safari on iPhone');
+    $someoneElse = storeSession(User::factory()->create(), 'Someone else');
 
-    $this->withToken($current->plainTextToken)
-        ->deleteJson("/api/v1/account/sessions/{$someoneElse->accessToken->id}")
-        ->assertNotFound();
-    $this->deleteJson("/api/v1/account/sessions/{$current->accessToken->id}")->assertNotFound();
-    $this->deleteJson("/api/v1/account/sessions/{$phone->accessToken->id}")->assertOk();
+    useSession($current);
+    $this->actingAs($agent)->deleteJson("/api/v1/account/sessions/{$someoneElse}")->assertNotFound();
+    $this->deleteJson("/api/v1/account/sessions/{$current}")->assertNotFound();
+    $this->deleteJson("/api/v1/account/sessions/{$phone}")->assertOk();
 
-    expect($agent->tokens()->pluck('name')->all())->toBe(['Chrome on Windows']);
+    expect(DB::table('sessions')->where('user_id', $agent->id)->pluck('user_agent')->all())->toBe(['Chrome on Windows']);
 });
 
 it('signs out every other device', function () {
     $agent = User::factory()->create();
-    $current = $agent->createToken('Chrome on Windows');
-    $agent->createToken('Safari on iPhone');
-    $agent->createToken('Firefox on Mac');
+    $current = storeSession($agent, 'Chrome on Windows');
+    storeSession($agent, 'Safari on iPhone');
+    storeSession($agent, 'Firefox on Mac');
 
-    $this->withToken($current->plainTextToken)
+    useSession($current);
+    $this->actingAs($agent)
         ->deleteJson('/api/v1/account/sessions')
         ->assertOk()
         ->assertJsonPath('data.revoked', 2);
 
-    expect($agent->tokens()->count())->toBe(1);
+    expect(DB::table('sessions')->where('user_id', $agent->id)->pluck('id')->all())->toBe([$current]);
 });

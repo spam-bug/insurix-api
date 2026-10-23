@@ -52,44 +52,45 @@ it('sets up two-factor with a QR code and turns it on once a code is confirmed',
 it('asks for a code after the password when two-factor is on', function () {
     $agent = agentWithTwoFactor();
 
-    $login = $this->postJson('/api/v1/auth/login', ['email' => 'ana@example.com', 'password' => 'secret-password-1', 'device_name' => 'Chrome on Windows'])
+    $login = $this->postJson('/api/v1/auth/login', ['email' => 'ana@example.com', 'password' => 'secret-password-1'])
         ->assertOk()
         ->assertJsonPath('two_factor', true)
-        ->assertJsonMissingPath('token');
+        ->assertJsonMissingPath('data');
+    $this->assertGuest('web');
 
-    $this->postJson('/api/v1/auth/two-factor-challenge', ['challenge' => $login->json('challenge'), 'code' => '000000'])
+    $this->postJson('/api/v1/auth/two-factor-challenge', ['code' => '000000'])
         ->assertJsonValidationErrors('code');
 
-    $this->postJson('/api/v1/auth/two-factor-challenge', ['challenge' => $login->json('challenge'), 'code' => currentCode($agent)])
+    $this->postJson('/api/v1/auth/two-factor-challenge', ['code' => currentCode($agent)])
         ->assertOk()
-        ->assertJsonPath('data.id', $agent->id)
-        ->assertJsonStructure(['token']);
+        ->assertJsonPath('data.id', $agent->id);
+    $this->assertAuthenticatedAs($agent, 'web');
 
-    expect($agent->tokens()->sole()->name)->toBe('Chrome on Windows');
-
-    $this->postJson('/api/v1/auth/two-factor-challenge', ['challenge' => $login->json('challenge'), 'code' => currentCode($agent)])
+    $this->postJson('/api/v1/auth/two-factor-challenge', ['code' => currentCode($agent)])
         ->assertJsonValidationErrors(['code' => 'expired']);
 });
 
 it('accepts each recovery code once', function () {
     $agent = agentWithTwoFactor();
     $recoveryCode = $agent->recoveryCodes()[0];
-    $login = fn () => $this->postJson('/api/v1/auth/login', ['email' => 'ana@example.com', 'password' => 'secret-password-1', 'device_name' => 'web'])->json('challenge');
+    $login = fn () => $this->postJson('/api/v1/auth/login', ['email' => 'ana@example.com', 'password' => 'secret-password-1'])->assertJsonPath('two_factor', true);
 
-    $this->postJson('/api/v1/auth/two-factor-challenge', ['challenge' => $login(), 'recovery_code' => $recoveryCode])->assertOk();
-    $this->postJson('/api/v1/auth/two-factor-challenge', ['challenge' => $login(), 'recovery_code' => $recoveryCode])
+    $login();
+    $this->postJson('/api/v1/auth/two-factor-challenge', ['recovery_code' => $recoveryCode])->assertOk();
+    $login();
+    $this->postJson('/api/v1/auth/two-factor-challenge', ['recovery_code' => $recoveryCode])
         ->assertJsonValidationErrors('recovery_code');
 });
 
 it('gives up on a challenge after too many wrong codes', function () {
     agentWithTwoFactor();
-    $challenge = $this->postJson('/api/v1/auth/login', ['email' => 'ana@example.com', 'password' => 'secret-password-1', 'device_name' => 'web'])->json('challenge');
+    $this->postJson('/api/v1/auth/login', ['email' => 'ana@example.com', 'password' => 'secret-password-1'])->assertJsonPath('two_factor', true);
 
     foreach (range(1, 5) as $attempt) {
-        $this->postJson('/api/v1/auth/two-factor-challenge', ['challenge' => $challenge, 'code' => '000000']);
+        $this->postJson('/api/v1/auth/two-factor-challenge', ['code' => '000000']);
     }
 
-    $this->postJson('/api/v1/auth/two-factor-challenge', ['challenge' => $challenge, 'code' => '000000'])
+    $this->postJson('/api/v1/auth/two-factor-challenge', ['code' => '000000'])
         ->assertJsonValidationErrors(['code' => 'Too many']);
 });
 

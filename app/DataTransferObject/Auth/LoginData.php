@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\DataTransferObject\Auth;
 
-class LoginData
+use App\DataTransferObject\Data;
+
+class LoginData extends Data
 {
     public function __construct(
         public readonly string $email,
