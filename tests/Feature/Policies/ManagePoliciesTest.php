@@ -37,7 +37,7 @@ it('records a policy for a client, with its yearly figures', function () {
     $this->actingAs($agent)
         ->postJson("/api/v1/clients/{$client->id}/policies", policyPayload())
         ->assertCreated()
-        ->assertJsonPath('data.client', ['id' => $client->id, 'name' => $client->name])
+        ->assertJsonPath('data.client', ['id' => $client->id, 'name' => $client->name, 'lead_id' => null])
         ->assertJsonPath('data.status', ['value' => 'in_force', 'label' => 'In force'])
         ->assertJsonPath('data.premium', 2500.5)
         ->assertJsonPath('data.annual_premium', 30006)

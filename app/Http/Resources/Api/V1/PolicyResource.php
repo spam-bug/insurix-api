@@ -22,7 +22,7 @@ class PolicyResource extends JsonResource
 {
     /** What the policy's own page shows: the application checklist, renewals and timeline. */
     public const DETAIL_RELATIONS = [
-        'client:id,name',
+        'client:id,name,lead_id',
         'requirements.document:id,name',
         'renewals',
         'events.user:id,name',
@@ -38,7 +38,7 @@ class PolicyResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'client' => $this->whenLoaded('client', fn () => ['id' => $this->client->id, 'name' => $this->client->name]),
+            'client' => $this->whenLoaded('client', fn () => ['id' => $this->client->id, 'name' => $this->client->name, 'lead_id' => $this->client->lead_id]),
             'product_id' => $this->product_id,
             'product_name' => $this->product_name,
             'policy_number' => $this->policy_number,

@@ -37,7 +37,7 @@ class ListPoliciesNeedingAttention
             $today = CarbonImmutable::now($agent->timezone)->startOfDay();
 
             return $agent->policies()
-                ->with(['client:id,name', 'renewals:id,policy_id,due_on'])
+                ->with(['client:id,name,lead_id', 'renewals:id,policy_id,due_on'])
                 ->withCount(['requirements as outstanding_requirements' => fn ($query) => $query->whereNull('received_on')])
                 ->whereIn('status', [PolicyStatus::InForce, PolicyStatus::Lapsed, PolicyStatus::Pending])
                 ->get()

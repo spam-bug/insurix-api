@@ -34,7 +34,7 @@ class PolicyController extends Controller
 
     public function update(UpdatePolicyRequest $request, Policy $policy, UpdatePolicy $updatePolicy): PolicyResource
     {
-        return PolicyResource::make($updatePolicy->handle($policy, PolicyData::fromArray($request->validated()))->load('client:id,name'));
+        return PolicyResource::make($updatePolicy->handle($policy, PolicyData::fromArray($request->validated()))->load('client:id,name,lead_id'));
     }
 
     public function destroy(Policy $policy, DeletePolicy $deletePolicy): Response
