@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Agents, with their account settings, two-factor columns (Fortify) and the token for
-     * their shareable lead form. The timezone sets where their day starts.
+     * People who sign in, with their own profile and two-factor columns (Fortify). What they
+     * work on belongs to workspaces, not to them.
      */
     public function up(): void
     {
@@ -19,17 +19,13 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('phone', 50)->nullable();
-            $table->string('timezone', 64)->default('Asia/Manila');
             $table->string('avatar_path')->nullable();
-            $table->text('bio')->nullable();
-            $table->string('logo_path')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->text('two_factor_secret')->nullable();
             $table->text('two_factor_recovery_codes')->nullable();
             $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->rememberToken();
-            $table->string('lead_form_token', 64)->nullable()->unique();
             $table->timestamps();
         });
 

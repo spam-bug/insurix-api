@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('lead_id')->nullable()->unique()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('email')->nullable();
@@ -27,7 +27,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'created_at']);
+            $table->index(['workspace_id', 'created_at']);
         });
     }
 

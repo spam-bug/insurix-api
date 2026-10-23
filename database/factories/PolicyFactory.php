@@ -26,7 +26,7 @@ class PolicyFactory extends Factory
     {
         return [
             'client_id' => Client::factory(),
-            'user_id' => fn (array $attributes) => Client::find($attributes['client_id'])->user_id,
+            'workspace_id' => fn (array $attributes) => Client::find($attributes['client_id'])->workspace_id,
             'product_name' => fake()->words(2, true),
             'policy_number' => fake()->unique()->numerify('PH-########'),
             'type' => PolicyType::Life,

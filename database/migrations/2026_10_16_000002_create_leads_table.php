@@ -18,7 +18,7 @@ return new class extends Migration
     {
         Schema::create('leads', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('email')->nullable();
             $table->string('phone', 50)->nullable();
@@ -32,9 +32,9 @@ return new class extends Migration
             $table->timestamp('meeting_at')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'status']);
-            $table->index(['user_id', 'created_at']);
-            $table->index(['user_id', 'score']);
+            $table->index(['workspace_id', 'status']);
+            $table->index(['workspace_id', 'created_at']);
+            $table->index(['workspace_id', 'score']);
         });
     }
 

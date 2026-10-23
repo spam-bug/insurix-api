@@ -7,7 +7,7 @@ namespace Database\Factories;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyType;
 use App\Models\Product;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -23,7 +23,7 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'workspace_id' => Workspace::factory(),
             'name' => fake()->unique()->words(3, true),
             'type' => PolicyType::Life,
             'description' => fake()->optional()->sentence(),

@@ -23,7 +23,7 @@ class LeadActivityFactory extends Factory
     {
         return [
             'lead_id' => Lead::factory(),
-            'user_id' => fn (array $attributes) => Lead::find($attributes['lead_id'])?->user_id,
+            'user_id' => null,
             'type' => LeadActivityType::Note,
             'body' => fake()->sentence(),
             'properties' => null,

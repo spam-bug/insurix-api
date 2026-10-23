@@ -16,14 +16,14 @@ return new class extends Migration
         Schema::create('policy_renewals', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('policy_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
             $table->date('due_on');
             $table->string('outcome', 20);
             $table->text('notes')->nullable();
             $table->timestamps();
 
             $table->unique(['policy_id', 'due_on']);
-            $table->index(['user_id', 'due_on']);
+            $table->index(['workspace_id', 'due_on']);
         });
     }
 

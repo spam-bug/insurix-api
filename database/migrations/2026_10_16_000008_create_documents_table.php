@@ -17,7 +17,7 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('client_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('policy_id')->nullable()->constrained()->nullOnDelete();
             $table->string('category', 30);
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'created_at']);
+            $table->index(['workspace_id', 'created_at']);
             $table->index(['client_id', 'created_at']);
             $table->index('policy_id');
         });

@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Amounts are in pesos.
  */
 #[Fillable([
-    'user_id', 'client_id', 'product_id', 'product_name', 'policy_number', 'type', 'status', 'application_stage', 'stage_changed_at',
+    'workspace_id', 'client_id', 'product_id', 'product_name', 'policy_number', 'type', 'status', 'application_stage', 'stage_changed_at',
     'premium', 'coverage_amount', 'payment_frequency', 'commission_rate', 'effective_date', 'renewal_term', 'renewal_date',
     'commission_received_at', 'notes',
 ])]
@@ -53,11 +53,11 @@ class Policy extends Model
     }
 
     /**
-     * @return BelongsTo<User, $this>
+     * @return BelongsTo<Workspace, $this>
      */
-    public function user(): BelongsTo
+    public function workspace(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Workspace::class);
     }
 
     /**
