@@ -28,11 +28,8 @@ class FollowUpResource extends JsonResource
             'due_at' => $this->due_at->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'is_overdue' => $this->isOverdue(),
-            'lead' => $this->whenLoaded('lead', fn () => [
-                'id' => $this->lead->id,
-                'name' => $this->lead->name,
-                'client_id' => $this->lead->client?->id,
-            ]),
+            'lead' => $this->whenLoaded('lead', fn () => $this->lead ? ['id' => $this->lead->id, 'name' => $this->lead->name] : null),
+            'client' => $this->whenLoaded('client', fn () => $this->client ? ['id' => $this->client->id, 'name' => $this->client->name] : null),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

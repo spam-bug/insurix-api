@@ -24,10 +24,13 @@ use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\BulkLeadStatusController;
 use App\Http\Controllers\Api\V1\BulkPolicyFollowUpController;
 use App\Http\Controllers\Api\V1\BulkPolicyStatusController;
+use App\Http\Controllers\Api\V1\ClientBirthdayController;
 use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\ClientDocumentController;
+use App\Http\Controllers\Api\V1\ClientFollowUpController;
 use App\Http\Controllers\Api\V1\ClientHistoryController;
 use App\Http\Controllers\Api\V1\ClientPolicyController;
+use App\Http\Controllers\Api\V1\ClientSummaryController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DocumentDownloadController;
@@ -133,6 +136,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/leads/{lead}/promote', [LeadPromotionController::class, 'store']);
 
             Route::get('/clients', [ClientController::class, 'index']);
+            Route::post('/clients', [ClientController::class, 'store']);
+            Route::get('/clients/summary', [ClientSummaryController::class, 'index']);
+            Route::get('/clients/birthdays', [ClientBirthdayController::class, 'index']);
             Route::get('/clients/{client}', [ClientController::class, 'show'])->can('view', 'client');
             Route::put('/clients/{client}', [ClientController::class, 'update']);
             Route::get('/clients/{client}/history', [ClientHistoryController::class, 'index'])->can('view', 'client');
@@ -175,6 +181,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/follow-ups', [FollowUpController::class, 'index']);
             Route::get('/follow-ups/summary', [FollowUpSummaryController::class, 'index']);
             Route::post('/leads/{lead}/follow-ups', [LeadFollowUpController::class, 'store']);
+            Route::post('/clients/{client}/follow-ups', [ClientFollowUpController::class, 'store']);
             Route::put('/follow-ups/{followUp}', [FollowUpController::class, 'update']);
             Route::delete('/follow-ups/{followUp}', [FollowUpController::class, 'destroy'])->can('delete', 'followUp');
             Route::post('/follow-ups/{followUp}/complete', [FollowUpCompletionController::class, 'store'])->can('update', 'followUp');

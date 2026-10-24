@@ -20,7 +20,9 @@ class DeleteFollowUp
 
             $followUp->delete();
 
-            $this->scoreLead->handle($lead);
+            if ($lead) {
+                $this->scoreLead->handle($lead);
+            }
         });
 
         Cache::tags("workspace:{$followUp->workspace_id}")->flush();

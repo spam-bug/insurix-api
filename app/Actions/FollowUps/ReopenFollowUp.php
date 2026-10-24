@@ -21,7 +21,9 @@ class ReopenFollowUp
         DB::transaction(function () use ($followUp) {
             $followUp->update(['completed_at' => null]);
 
-            $this->scoreLead->handle($followUp->lead);
+            if ($followUp->lead) {
+                $this->scoreLead->handle($followUp->lead);
+            }
         });
 
         Cache::tags("workspace:{$followUp->workspace_id}")->flush();

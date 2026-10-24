@@ -12,6 +12,7 @@ class FollowUpFiltersData extends Data
     public function __construct(
         public readonly FollowUpWindow $window = FollowUpWindow::Open,
         public readonly ?string $leadId = null,
+        public readonly ?string $clientId = null,
         public readonly int $perPage = 10,
         public readonly int $page = 1,
     ) {}

@@ -57,17 +57,21 @@ it('lists upcoming, open and completed follow-ups', function () {
         ->assertJsonPath('data.0.id', $followUps['done']->id);
 });
 
-it('lists one lead’s follow-ups and links to its client', function () {
+it('lists one lead’s or one client’s follow-ups, with both people', function () {
     $agent = User::factory()->create();
     followUpsFor($agent);
     $lead = Lead::factory()->for(workspaceOf($agent))->create();
     $client = Client::factory()->for(workspaceOf($agent))->create(['lead_id' => $lead->id]);
-    FollowUp::factory()->for($lead)->create();
+    FollowUp::factory()->for($lead)->create(['client_id' => $client->id]);
 
     $this->actingAs($agent)
         ->getJson(ws($agent).'/follow-ups?'.http_build_query(['lead_id' => $lead->id]))
         ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.lead.client_id', $client->id);
+        ->assertJsonPath('data.0.client.id', $client->id);
+
+    $this->getJson(ws($agent).'/follow-ups?'.http_build_query(['client_id' => $client->id]))
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.lead.id', $lead->id);
 });
 
 it('summarizes open follow-ups', function () {

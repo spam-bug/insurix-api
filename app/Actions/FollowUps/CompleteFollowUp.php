@@ -17,6 +17,7 @@ class CompleteFollowUp
 
     /**
      * Marks the follow-up done and logs it on the lead, so the history shows what was done when.
+     * A client without a lead shows its completed follow-ups in its history directly.
      */
     public function handle(FollowUp $followUp, User $actor): FollowUp
     {
@@ -27,11 +28,13 @@ class CompleteFollowUp
         $followUp = DB::transaction(function () use ($followUp, $actor) {
             $followUp->update(['completed_at' => now()]);
 
-            $this->recordLeadActivity->handle($followUp->lead, LeadActivityType::FollowUpCompleted, $actor, properties: [
-                'follow_up_id' => $followUp->id,
-                'follow_up_type' => $followUp->type->value,
-                'title' => $followUp->title,
-            ]);
+            if ($followUp->lead) {
+                $this->recordLeadActivity->handle($followUp->lead, LeadActivityType::FollowUpCompleted, $actor, properties: [
+                    'follow_up_id' => $followUp->id,
+                    'follow_up_type' => $followUp->type->value,
+                    'title' => $followUp->title,
+                ]);
+            }
 
             return $followUp;
         });

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\Client;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -31,6 +32,10 @@ class ClientResource extends JsonResource
             'civil_status' => $this->civil_status ? ['value' => $this->civil_status->value, 'label' => $this->civil_status->label()] : null,
             'occupation' => $this->occupation,
             'notes' => $this->notes,
+            'in_force_policies' => $this->whenHas('in_force_policies'),
+            'annual_premium' => $this->whenHas('annual_premium', fn () => round((float) $this->annual_premium, 2)),
+            'next_renewal_on' => $this->whenHas('next_renewal_on', fn () => $this->next_renewal_on?->toDateString()),
+            'last_contact_at' => $this->whenHas('last_contact_at', fn () => $this->last_contact_at ? CarbonImmutable::parse($this->last_contact_at)->toIso8601String() : null),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

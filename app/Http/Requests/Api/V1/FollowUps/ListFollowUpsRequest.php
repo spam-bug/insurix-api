@@ -25,6 +25,7 @@ class ListFollowUpsRequest extends FormRequest
         return [
             'window' => ['nullable', Rule::enum(FollowUpWindow::class)],
             'lead_id' => ['nullable', 'uuid'],
+            'client_id' => ['nullable', 'uuid'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];

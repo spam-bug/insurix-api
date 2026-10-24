@@ -52,7 +52,7 @@ class QueuePolicyFollowUps
 
         foreach ($policies as $policy) {
             foreach ($this->remindersFor($policy, $today) as [$key, $type, $title, $dueOn]) {
-                if ($policy->client->lead === null || $policy->followUps->contains('reminder_key', $key)) {
+                if ($policy->followUps->contains('reminder_key', $key)) {
                     continue;
                 }
 
@@ -62,7 +62,7 @@ class QueuePolicyFollowUps
                 $dueAt = max($dueAt, CarbonImmutable::now($workspace->timezone))->utc();
 
                 $this->createFollowUp->handle(
-                    $policy->client->lead,
+                    $policy->client,
                     new FollowUpData(type: $type, title: $title, dueAt: $dueAt),
                     $policy,
                     $key,

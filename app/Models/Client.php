@@ -48,6 +48,14 @@ class Client extends Model
     }
 
     /**
+     * @return HasMany<FollowUp, $this>
+     */
+    public function followUps(): HasMany
+    {
+        return $this->hasMany(FollowUp::class);
+    }
+
+    /**
      * @return HasMany<Document, $this>
      */
     public function documents(): HasMany

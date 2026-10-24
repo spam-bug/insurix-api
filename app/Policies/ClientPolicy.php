@@ -22,6 +22,11 @@ class ClientPolicy
         return $this->isMember($user, $client->workspace_id);
     }
 
+    public function create(User $user): bool
+    {
+        return true;
+    }
+
     public function update(User $user, Client $client): bool
     {
         return $this->isMember($user, $client->workspace_id);
