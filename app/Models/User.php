@@ -31,6 +31,12 @@ class User extends Authenticatable
         return $this->avatar_path ? Storage::disk(self::UPLOADS_DISK)->url($this->avatar_path) : null;
     }
 
+    /** Bell notifications reach the user's open tabs on their own private channel. */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return "users.{$this->id}";
+    }
+
     /**
      * @return BelongsToMany<Workspace, $this, WorkspaceMember>
      */

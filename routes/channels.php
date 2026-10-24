@@ -11,3 +11,8 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::channel('workspaces.{workspace}', function (User $user, Workspace $workspace) {
     return $user->can('view', $workspace);
 });
+
+// Each user's bell notifications, from any workspace they belong to.
+Broadcast::channel('users.{id}', function (User $user, string $id) {
+    return $user->id === $id;
+});
