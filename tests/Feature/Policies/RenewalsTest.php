@@ -140,3 +140,17 @@ it('does not ask about renewals of policies that are no longer in force', functi
         ->getJson(ws($agent)."/policies/{$policy->id}")
         ->assertJsonPath('data.renewal_awaiting_outcome', null);
 });
+
+it('counts a renewal outcome recorded for today in the renewal rate', function () {
+    Carbon::setTestNow('2026-10-17 02:00:00');
+    $agent = User::factory()->create();
+    $policy = Policy::factory()->for(Client::factory()->for(workspaceOf($agent)))->create();
+    PolicyRenewal::forceCreate([
+        'policy_id' => $policy->id, 'workspace_id' => workspaceOf($agent)->id, 'due_on' => now(workspaceOf($agent)->timezone)->toDateString(), 'outcome' => RenewalOutcome::Renewed,
+    ]);
+
+    $this->actingAs($agent)
+        ->getJson(ws($agent).'/insights/reports')
+        ->assertJsonPath('data.retention.renewals_recorded', 1)
+        ->assertJsonPath('data.retention.renewal_rate_percent', 100);
+});

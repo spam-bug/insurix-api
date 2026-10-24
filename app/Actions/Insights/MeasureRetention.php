@@ -44,7 +44,7 @@ class MeasureRetention
 
         $outcomes = PolicyRenewal::query()
             ->where('workspace_id', $workspace->id)
-            ->whereBetween('due_on', [$today->subYear()->toDateString(), $today->toDateString()])
+            ->whereBetween('due_on', [$today->subYear()->toDateString(), $today->endOfDay()->toDateTimeString()])
             ->pluck('outcome');
         $renewed = $outcomes->filter(fn (RenewalOutcome $outcome) => $outcome === RenewalOutcome::Renewed)->count();
 
