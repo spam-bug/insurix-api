@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions\Insights;
 
+use App\DataTransferObject\Insights\InsightReportFiltersData;
 use App\Models\Lead;
 use App\Models\Workspace;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 
 class BuildInsightReport
@@ -23,18 +25,32 @@ class BuildInsightReport
     ) {}
 
     /**
-     * Every report on the Insights page, in one response.
+     * Every report on the Insights page, in one response. Pipeline speed and the commission chart
+     * follow the chosen period. The rest describes the workspace as it is now.
      *
      * @return array<string, mixed>
      */
-    public function handle(Workspace $workspace): array
+    public function handle(Workspace $workspace, InsightReportFiltersData $filters): array
     {
-        return Cache::tags("workspace:{$workspace->id}")->remember("insights:{$workspace->id}:reports", now()->addMinutes(5), function () use ($workspace) {
+        $key = "insights:{$workspace->id}:reports:{$filters->period->value}:{$filters->offset}";
+
+        return Cache::tags("workspace:{$workspace->id}")->remember($key, now()->addMinutes(5), function () use ($workspace, $filters) {
+            $today = CarbonImmutable::now($workspace->timezone);
+            [$start, $end] = $filters->period->range($today, $filters->offset);
+            [$previousStart] = $filters->period->range($today, $filters->offset + 1);
             $stalled = $this->listStalledLeads->handle($workspace);
 
             return [
+                'period' => [
+                    'value' => $filters->period->value,
+                    'offset' => $filters->offset,
+                    'label' => $filters->period->label($start),
+                    'previous_label' => $filters->period->label($previousStart),
+                    'starts_on' => $start->toDateString(),
+                    'ends_on' => $end->toDateString(),
+                ],
                 'lead_sources' => $this->measureLeadSources->handle($workspace),
-                'pipeline_speed' => $this->measurePipelineSpeed->handle($workspace),
+                'pipeline_speed' => $this->measurePipelineSpeed->handle($workspace, $start, $end),
                 'stalled_leads' => [
                     'quiet_days' => ListStalledLeads::QUIET_DAYS,
                     'total' => $stalled->count(),
@@ -48,7 +64,7 @@ class BuildInsightReport
                 ],
                 'retention' => $this->measureRetention->handle($workspace),
                 'top_products' => $this->rankProducts->handle($workspace),
-                'commission_by_month' => $this->chartCommissionByMonth->handle($workspace),
+                'commission_by_month' => $this->chartCommissionByMonth->handle($workspace, $end),
             ];
         });
     }

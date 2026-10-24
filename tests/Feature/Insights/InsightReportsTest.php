@@ -17,9 +17,9 @@ use Illuminate\Support\Carbon;
 
 beforeEach(fn () => Carbon::setTestNow('2026-10-17 02:00:00'));
 
-function reports(User $agent): array
+function reports(User $agent, string $query = ''): array
 {
-    return test()->actingAs($agent)->getJson(ws($agent).'/insights/reports')->assertOk()->json('data');
+    return test()->actingAs($agent)->getJson(ws($agent).'/insights/reports'.$query)->assertOk()->json('data');
 }
 
 it('needs a signed-in agent', function () {
@@ -45,7 +45,7 @@ it('measures conversion by lead source, sources with enough leads first', functi
     ]);
 });
 
-it('measures how long leads promoted in the last year took to become clients', function () {
+it('measures how long leads promoted in the period took to become clients', function () {
     $agent = User::factory()->create();
     $promoted = fn (string $added, string $promotedAt) => LeadActivity::factory()
         ->for(Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create(['created_at' => $added]))
@@ -57,7 +57,8 @@ it('measures how long leads promoted in the last year took to become clients', f
     $promoted('2025-01-01', '2025-02-01');
     LeadActivity::factory()->create(['type' => LeadActivityType::Promoted]);
 
-    expect(reports($agent)['pipeline_speed'])->toBe(['average_days' => 14, 'median_days' => 10, 'converted' => 3]);
+    expect(reports($agent, '?period=year')['pipeline_speed'])->toBe(['average_days' => 14, 'median_days' => 10, 'converted' => 3])
+        ->and(reports($agent)['pipeline_speed'])->toBe(['average_days' => null, 'median_days' => null, 'converted' => 0]);
 });
 
 it('has no pipeline speed before any lead is promoted', function () {
@@ -137,7 +138,7 @@ it('ranks products by the commission their policies earn', function () {
     ]);
 });
 
-it('charts commission received over the last twelve months', function () {
+it('charts commission received over the twelve months up to the period', function () {
     $agent = User::factory()->create();
     $client = Client::factory()->for(workspaceOf($agent))->create();
     $monthly = ['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25];
@@ -151,4 +152,32 @@ it('charts commission received over the last twelve months', function () {
         ->and($months[0])->toEqual(['month' => '2025-11', 'received' => 0, 'policies' => 0])
         ->and($months[1])->toEqual(['month' => '2025-12', 'received' => 6000, 'policies' => 1])
         ->and($months[11])->toEqual(['month' => '2026-10', 'received' => 12000, 'policies' => 2]);
+
+    $lastYear = reports($agent, '?period=year&offset=1')['commission_by_month'];
+
+    expect($lastYear[0]['month'])->toBe('2025-01')
+        ->and($lastYear[9])->toEqual(['month' => '2025-10', 'received' => 6000, 'policies' => 1])
+        ->and($lastYear[11])->toEqual(['month' => '2025-12', 'received' => 6000, 'policies' => 1]);
+});
+
+it('describes the chosen period and steps back to earlier ones', function () {
+    $agent = User::factory()->create();
+
+    expect(reports($agent)['period'])->toBe([
+        'value' => 'month', 'offset' => 0, 'label' => 'October 2026', 'previous_label' => 'September 2026',
+        'starts_on' => '2026-10-01', 'ends_on' => '2026-10-31',
+    ])
+        ->and(reports($agent, '?period=quarter&offset=1')['period'])->toBe([
+            'value' => 'quarter', 'offset' => 1, 'label' => 'Q3 2026', 'previous_label' => 'Q2 2026',
+            'starts_on' => '2026-07-01', 'ends_on' => '2026-09-30',
+        ])
+        ->and(reports($agent, '?period=year&offset=2')['period']['label'])->toBe('2024');
+});
+
+it('rejects an unknown period or a negative offset', function () {
+    $agent = User::factory()->create();
+
+    $this->actingAs($agent)->getJson(ws($agent).'/insights/reports?period=week&offset=-1')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['period', 'offset']);
 });
