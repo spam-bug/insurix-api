@@ -82,7 +82,14 @@ it('summarizes open follow-ups', function () {
     $this->actingAs($agent)
         ->getJson(ws($agent).'/follow-ups/summary')
         ->assertOk()
-        ->assertExactJson(['data' => ['overdue' => 1, 'due_today' => 1, 'upcoming' => 1, 'done_this_week' => 1]]);
+        ->assertJsonPath('data.overdue', 1)
+        ->assertJsonPath('data.due_today', 1)
+        ->assertJsonPath('data.upcoming', 1)
+        ->assertJsonPath('data.done_this_week', 1);
+
+    $byType = $this->getJson(ws($agent).'/follow-ups/summary')->json('data.open_by_type');
+    expect($byType)->toHaveKeys(['call', 'message', 'email', 'meeting', 'task'])
+        ->and(array_sum($byType))->toBe(4);
 });
 
 it('counts open follow-ups per day for the week strip, overdue apart', function () {
