@@ -13,6 +13,8 @@ class DocumentData extends Data
         public readonly DocumentCategory $category,
         /** An upload may leave the name out and be named after its file. */
         public readonly ?string $name = null,
+        /** Null keeps the document unassigned, in the Documents inbox. */
+        public readonly ?string $clientId = null,
         public readonly ?string $policyId = null,
         public readonly ?string $notes = null,
     ) {}
