@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Api\V1\Products;
 
 use App\Enums\PolicyType;
+use App\Enums\ProductSort;
 use App\Models\Product;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,6 +29,7 @@ class ListProductsRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:255'],
             'type' => ['nullable', Rule::enum(PolicyType::class)],
             'active' => ['nullable', 'boolean'],
+            'sort' => ['nullable', Rule::enum(ProductSort::class)],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:200'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];

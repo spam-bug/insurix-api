@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Builders\ProductBuilder;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyType;
 use Database\Factories\ProductFactory;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Builder;
 
 /**
  * A product the agent sells, with the agent's usual commission rate for it.
@@ -41,6 +43,14 @@ class Product extends Model
     /**
      * @return HasMany<Policy, $this>
      */
+    /**
+     * @param  Builder  $query
+     */
+    public function newEloquentBuilder($query): ProductBuilder
+    {
+        return new ProductBuilder($query);
+    }
+
     public function policies(): HasMany
     {
         return $this->hasMany(Policy::class);
