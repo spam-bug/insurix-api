@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\PaymentFrequency;
 use App\Events\WorkspaceDataChanged;
 use App\Models\Client;
@@ -12,6 +15,11 @@ use Illuminate\Broadcasting\BroadcastManager;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
 
+function changeBroadcast(callable $matches): void
+{
+    Event::assertDispatched(WorkspaceDataChanged::class, fn (WorkspaceDataChanged $event) => $matches($event->broadcastWith(), $event));
+}
+
 it('tells the workspace when someone fills in its shareable form', function () {
     Event::fake([WorkspaceDataChanged::class]);
     $agent = User::factory()->create();
@@ -19,9 +27,12 @@ it('tells the workspace when someone fills in its shareable form', function () {
 
     $this->postJson('/api/v1/public/lead-forms/form-token', ['name' => 'Gregoria de Jesus', 'email' => 'gregoria@example.com'])->assertCreated();
 
-    Event::assertDispatched(WorkspaceDataChanged::class, fn (WorkspaceDataChanged $event) => $event->workspaceId === workspaceOf($agent)->id
-        && $event->topic === 'leads'
-        && $event->message === 'Gregoria de Jesus just filled in your form');
+    changeBroadcast(fn (array $payload, WorkspaceDataChanged $event) => $event->workspaceId === workspaceOf($agent)->id
+        && $payload['topic'] === 'leads'
+        && $payload['action'] === 'created'
+        && $payload['record']['name'] === 'Gregoria de Jesus'
+        && $payload['actor'] === null
+        && $payload['message'] === 'Gregoria de Jesus just filled in your form');
 });
 
 it('tells the workspace when policy reminders are added to its follow-ups', function () {
@@ -33,15 +44,25 @@ it('tells the workspace when policy reminders are added to its follow-ups', func
 
     $this->artisan('policies:queue-follow-ups')->assertSuccessful();
 
-    Event::assertDispatched(WorkspaceDataChanged::class, fn (WorkspaceDataChanged $event) => $event->workspaceId === workspaceOf($agent)->id && $event->topic === 'follow-ups');
+    changeBroadcast(fn (array $payload, WorkspaceDataChanged $event) => $event->workspaceId === workspaceOf($agent)->id
+        && $payload['topic'] === 'follow-ups'
+        && $payload['action'] === 'created'
+        && $payload['actor'] === null);
 });
 
 it('broadcasts on the workspace’s private channel', function () {
-    $event = new WorkspaceDataChanged('workspace-7', 'leads', 'Hello');
+    $event = new WorkspaceDataChanged('workspace-7', new WorkspaceChangeData(ChangeTopic::Clients, ChangeAction::Updated, 'client-1', 'Juan Cruz'), ['id' => 'user-1', 'name' => 'Ana']);
 
     expect($event->broadcastOn()->name)->toBe('private-workspaces.workspace-7')
         ->and($event->broadcastAs())->toBe('data.changed')
-        ->and($event->broadcastWith())->toBe(['topic' => 'leads', 'message' => 'Hello']);
+        ->and($event->broadcastWith())->toBe([
+            'topic' => 'clients',
+            'action' => 'updated',
+            'record' => ['id' => 'client-1', 'name' => 'Juan Cruz'],
+            'count' => 1,
+            'actor' => ['id' => 'user-1', 'name' => 'Ana'],
+            'message' => null,
+        ]);
 });
 
 it('lets members listen on their workspace’s channel only', function () {

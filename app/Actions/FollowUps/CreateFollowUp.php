@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace App\Actions\FollowUps;
 
 use App\Actions\Leads\ScoreLead;
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\DataTransferObject\FollowUps\FollowUpData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Models\Client;
 use App\Models\FollowUp;
 use App\Models\Lead;
 use App\Models\Policy;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CreateFollowUp
 {
-    public function __construct(private ScoreLead $scoreLead) {}
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private ScoreLead $scoreLead) {}
 
     /**
      * Adds a follow-up for a lead or a client. It's linked to both when the person is both (a
@@ -44,7 +47,7 @@ class CreateFollowUp
             return $followUp;
         });
 
-        Cache::tags("workspace:{$person->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($person->workspace_id, new WorkspaceChangeData(ChangeTopic::FollowUps, ChangeAction::Created, $followUp->id, $followUp->title));
 
         return $followUp;
     }

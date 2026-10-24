@@ -6,9 +6,12 @@ namespace App\Actions\LeadForms;
 
 use App\Actions\FollowUps\CreateFollowUp;
 use App\Actions\Leads\RecordLeadActivity;
-use App\Actions\Notifications\NotifyWorkspace;
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\DataTransferObject\FollowUps\FollowUpData;
 use App\DataTransferObject\Leads\LeadFormSubmissionData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\FollowUpType;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadSource;
@@ -16,16 +19,15 @@ use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\Workspace;
 use App\Notifications\FormLeadNotification;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
 class SubmitLeadForm
 {
     public function __construct(
+        private AnnounceWorkspaceChange $announceWorkspaceChange,
         private RecordLeadActivity $recordLeadActivity,
         private CreateFollowUp $createFollowUp,
-        private NotifyWorkspace $notifyWorkspace,
     ) {}
 
     /**
@@ -60,12 +62,10 @@ class SubmitLeadForm
                 dueAt: now()->toImmutable(),
             ));
 
-            $this->notifyWorkspace->handle($workspace->id, 'leads', "{$lead->name} just filled in your form");
-
             return $lead;
         });
 
-        Cache::tags("workspace:{$workspace->id}")->flush();
+        $this->announceWorkspaceChange->handle($workspace->id, new WorkspaceChangeData(ChangeTopic::Leads, ChangeAction::Created, $lead->id, $lead->name, message: "{$lead->name} just filled in your form"));
 
         Notification::send($workspace->users, new FormLeadNotification($lead));
 
