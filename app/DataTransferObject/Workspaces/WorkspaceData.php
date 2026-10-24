@@ -12,5 +12,6 @@ class WorkspaceData extends Data
     public function __construct(
         public readonly string $name,
         public readonly WorkspaceType $type,
+        public readonly string $timezone,
     ) {}
 }

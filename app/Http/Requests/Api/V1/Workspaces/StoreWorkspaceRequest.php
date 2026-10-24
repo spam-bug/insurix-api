@@ -25,6 +25,7 @@ class StoreWorkspaceRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(WorkspaceType::class)],
+            'timezone' => ['required', 'timezone:all'],
         ];
     }
 }

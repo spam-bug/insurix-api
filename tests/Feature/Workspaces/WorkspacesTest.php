@@ -34,13 +34,16 @@ it('lists only the user’s workspaces, with their role in each', function () {
 it('creates another workspace owned by the user', function () {
     $agent = User::factory()->create();
 
-    $id = $this->actingAs($agent)->postJson('/api/v1/workspaces', ['name' => 'Second desk', 'type' => 'insurance'])
+    $id = $this->actingAs($agent)->postJson('/api/v1/workspaces', ['name' => 'Second desk', 'type' => 'insurance', 'timezone' => 'Asia/Singapore'])
         ->assertCreated()
         ->assertJsonPath('data.role.value', 'owner')
         ->json('data.id');
 
-    $this->getJson("/api/v1/workspaces/{$id}")->assertOk()->assertJsonPath('data.name', 'Second desk');
-    $this->postJson('/api/v1/workspaces', ['name' => 'Bad', 'type' => 'spaceship'])->assertJsonValidationErrors('type');
+    $this->getJson("/api/v1/workspaces/{$id}")->assertOk()
+        ->assertJsonPath('data.name', 'Second desk')
+        ->assertJsonPath('data.timezone', 'Asia/Singapore');
+    $this->postJson('/api/v1/workspaces', ['name' => 'Bad', 'type' => 'spaceship', 'timezone' => 'Mars/Olympus'])
+        ->assertJsonValidationErrors(['type', 'timezone']);
 });
 
 it('lets the owner change the workspace settings, but not a member', function () {
