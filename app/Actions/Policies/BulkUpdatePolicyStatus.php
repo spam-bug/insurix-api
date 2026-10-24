@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Actions\Policies;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\DataTransferObject\Policies\BulkPolicyStatusData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\PolicyStatus;
 use App\Models\Workspace;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class BulkUpdatePolicyStatus
 {
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange) {}
+
     /**
      * Moves the selected policies between in force, lapsed and cancelled. Pending and declined
      * policies are skipped, since applications are approved or declined through their own steps.
@@ -32,7 +37,7 @@ class BulkUpdatePolicyStatus
             return $policies->count();
         });
 
-        Cache::tags("workspace:{$workspace->id}")->flush();
+        $this->announceWorkspaceChange->handle($workspace->id, new WorkspaceChangeData(ChangeTopic::Policies, ChangeAction::Updated, null, null, $updated));
 
         return $updated;
     }

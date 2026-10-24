@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace App\Actions\Leads;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\DataTransferObject\Leads\LeadData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
 use App\Models\Workspace;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CreateLead
 {
-    public function __construct(private RecordLeadActivity $recordLeadActivity) {}
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private RecordLeadActivity $recordLeadActivity) {}
 
     /**
      * Every new lead starts as a prospect, whatever the caller sends.
@@ -33,7 +36,7 @@ class CreateLead
             return $lead;
         });
 
-        Cache::tags("workspace:{$workspace->id}")->flush();
+        $this->announceWorkspaceChange->handle($workspace->id, new WorkspaceChangeData(ChangeTopic::Leads, ChangeAction::Created, $lead->id, $lead->name));
 
         return $lead;
     }

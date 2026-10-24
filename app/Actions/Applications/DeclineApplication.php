@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace App\Actions\Applications;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\Actions\Policies\RecordPolicyEvent;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\PolicyEventType;
 use App\Enums\PolicyStatus;
 use App\Models\Policy;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class DeclineApplication
 {
-    public function __construct(private RecordPolicyEvent $recordPolicyEvent) {}
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private RecordPolicyEvent $recordPolicyEvent) {}
 
     /**
      * The insurer turned the application down. The reason goes on the timeline.
@@ -34,7 +37,7 @@ class DeclineApplication
             return $policy;
         });
 
-        Cache::tags("workspace:{$policy->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($policy->workspace_id, new WorkspaceChangeData(ChangeTopic::Policies, ChangeAction::Updated, $policy->id, $policy->product_name));
 
         return $policy;
     }

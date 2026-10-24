@@ -35,6 +35,40 @@ it('tells the workspace when someone fills in its shareable form', function () {
         && $payload['message'] === 'Gregoria de Jesus just filled in your form');
 });
 
+it('tells teammates what a member changed and who did it, but not the member’s own browser', function () {
+    Event::fake([WorkspaceDataChanged::class]);
+    $agent = User::factory()->create(['name' => 'Ana Reyes']);
+
+    $lead = $this->actingAs($agent)
+        ->withHeader('X-Socket-ID', '1234.5678')
+        ->postJson(ws($agent).'/leads', ['name' => 'Juan Cruz', 'email' => 'juan@example.com'])
+        ->assertCreated()
+        ->json('data');
+
+    changeBroadcast(fn (array $payload, WorkspaceDataChanged $event) => $payload === [
+        'topic' => 'leads',
+        'action' => 'created',
+        'record' => ['id' => $lead['id'], 'name' => 'Juan Cruz'],
+        'count' => 1,
+        'actor' => ['id' => $agent->id, 'name' => 'Ana Reyes'],
+        'message' => null,
+    ] && $event->socket === '1234.5678');
+});
+
+it('announces removals and bulk changes by area', function () {
+    Event::fake([WorkspaceDataChanged::class]);
+    $agent = User::factory()->create();
+    $leads = Lead::factory()->for(workspaceOf($agent))->count(3)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
+    $policy = Policy::factory()->for($client)->create(['product_name' => 'Life Plus']);
+
+    $this->actingAs($agent)->postJson(ws($agent).'/leads/bulk/status', ['ids' => $leads->modelKeys(), 'status' => 'contacted'])->assertOk();
+    $this->deleteJson(ws($agent)."/policies/{$policy->id}")->assertNoContent();
+
+    changeBroadcast(fn (array $payload) => $payload['topic'] === 'leads' && $payload['action'] === 'updated' && $payload['record'] === null && $payload['count'] === 3);
+    changeBroadcast(fn (array $payload) => $payload['topic'] === 'policies' && $payload['action'] === 'deleted' && $payload['record'] === ['id' => $policy->id, 'name' => 'Life Plus']);
+});
+
 it('tells the workspace when policy reminders are added to its follow-ups', function () {
     Carbon::setTestNow('2026-10-17 02:00:00');
     Event::fake([WorkspaceDataChanged::class]);

@@ -4,18 +4,23 @@ declare(strict_types=1);
 
 namespace App\Actions\Workspaces;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\WorkspaceRole;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
 use App\Notifications\MemberJoinedNotification;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 class AcceptInvitation
 {
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange) {}
+
     /**
      * Adds the signed-in user to the workspace with the invited role. The email check lives in
      * the invitation policy; here an invite works once and only until it expires. The owner
@@ -37,7 +42,7 @@ class AcceptInvitation
             $invitation->update(['accepted_at' => now()]);
         });
 
-        Cache::tags("workspace:{$workspace->id}")->flush();
+        $this->announceWorkspaceChange->handle($workspace->id, new WorkspaceChangeData(ChangeTopic::Team, ChangeAction::Created, $user->id, $user->name));
 
         Notification::send(
             $workspace->users()->wherePivot('role', WorkspaceRole::Owner->value)->get(),

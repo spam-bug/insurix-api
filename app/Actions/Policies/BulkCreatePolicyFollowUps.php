@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Actions\Policies;
 
 use App\Actions\FollowUps\CreateFollowUp;
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\DataTransferObject\FollowUps\FollowUpData;
 use App\DataTransferObject\Policies\BulkPolicyFollowUpData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Models\Workspace;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class BulkCreatePolicyFollowUps
 {
-    public function __construct(private CreateFollowUp $createFollowUp) {}
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private CreateFollowUp $createFollowUp) {}
 
     /**
      * Adds the same follow-up for each selected policy, on its client and linked to the policy.
@@ -38,7 +41,7 @@ class BulkCreatePolicyFollowUps
             return $policies->count();
         });
 
-        Cache::tags("workspace:{$workspace->id}")->flush();
+        $this->announceWorkspaceChange->handle($workspace->id, new WorkspaceChangeData(ChangeTopic::FollowUps, ChangeAction::Created, null, null, $created));
 
         return ['created' => $created, 'skipped' => count($data->ids) - $created];
     }

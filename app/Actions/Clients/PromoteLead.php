@@ -5,19 +5,22 @@ declare(strict_types=1);
 namespace App\Actions\Clients;
 
 use App\Actions\Leads\RecordLeadActivity;
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\DataTransferObject\Clients\ClientProfileData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Client;
 use App\Models\Lead;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PromoteLead
 {
-    public function __construct(private RecordLeadActivity $recordLeadActivity) {}
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private RecordLeadActivity $recordLeadActivity) {}
 
     /**
      * Turns the lead into a client owned by the same agent. The lead's details carry over and
@@ -54,7 +57,7 @@ class PromoteLead
             return $client;
         });
 
-        Cache::tags("workspace:{$lead->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($lead->workspace_id, new WorkspaceChangeData(ChangeTopic::Clients, ChangeAction::Created, $client->id, $client->name));
 
         return $client;
     }

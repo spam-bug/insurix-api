@@ -4,14 +4,19 @@ declare(strict_types=1);
 
 namespace App\Actions\Products;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\PolicyType;
 use App\Models\Product;
 use App\Models\Workspace;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AddSuggestedProduct
 {
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange) {}
+
     /**
      * Puts a typed-in product name into the catalog and links every policy that used it. A
      * product with that name (ignoring case) is reused; otherwise one is created with the type
@@ -37,7 +42,7 @@ class AddSuggestedProduct
             return ['product' => $product, 'linked' => $policies->update(['product_id' => $product->id])];
         });
 
-        Cache::tags("workspace:{$workspace->id}")->flush();
+        $this->announceWorkspaceChange->handle($workspace->id, new WorkspaceChangeData(ChangeTopic::Products, ChangeAction::Created, $result['product']->id, $result['product']->name));
 
         return $result;
     }

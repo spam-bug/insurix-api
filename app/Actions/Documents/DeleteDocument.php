@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions\Documents;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Models\Document;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class DeleteDocument
 {
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange) {}
+
     /**
      * Deletes the document and its file.
      */
@@ -18,7 +23,7 @@ class DeleteDocument
     {
         DB::transaction(fn () => $document->delete());
 
-        Cache::tags("workspace:{$document->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($document->workspace_id, new WorkspaceChangeData(ChangeTopic::Documents, ChangeAction::Deleted, $document->id, $document->name));
 
         Storage::disk(Document::DISK)->delete($document->path);
     }
