@@ -4,27 +4,28 @@ declare(strict_types=1);
 
 namespace App\Events;
 
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Tells an agent's open tabs that some of their data changed without them doing it, so the
- * page can re-fetch. Queued, so a slow or failing broadcaster never holds up the request.
+ * Tells the open tabs of a workspace's members that some of its data changed, so the page can
+ * re-fetch and point out what's new. Small on purpose: what changed and who did it, never the
+ * record's contents. Queued, so a slow or failing broadcaster never holds up the request.
  */
 class WorkspaceDataChanged implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets;
 
     /**
-     * @param  'leads'|'follow-ups'  $topic  what changed
-     * @param  string|null  $message  a short note worth showing the workspace's members, if any
+     * @param  array{id: string, name: string}|null  $actor  null when nobody signed in did it (the form, nightly jobs)
      */
     public function __construct(
         public readonly string $workspaceId,
-        public readonly string $topic,
-        public readonly ?string $message = null,
+        public readonly WorkspaceChangeData $change,
+        public readonly ?array $actor = null,
     ) {}
 
     public function broadcastOn(): PrivateChannel
@@ -38,10 +39,17 @@ class WorkspaceDataChanged implements ShouldBroadcast
     }
 
     /**
-     * @return array{topic: string, message: string|null}
+     * @return array{topic: string, action: string, record: array{id: string, name: string|null}|null, count: int, actor: array{id: string, name: string}|null, message: string|null}
      */
     public function broadcastWith(): array
     {
-        return ['topic' => $this->topic, 'message' => $this->message];
+        return [
+            'topic' => $this->change->topic->value,
+            'action' => $this->change->action->value,
+            'record' => $this->change->recordId ? ['id' => $this->change->recordId, 'name' => $this->change->recordName] : null,
+            'count' => $this->change->count,
+            'actor' => $this->actor,
+            'message' => $this->change->message,
+        ];
     }
 }

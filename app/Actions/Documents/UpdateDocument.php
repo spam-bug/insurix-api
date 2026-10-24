@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions\Documents;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\DataTransferObject\Documents\DocumentData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Models\Document;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UpdateDocument
 {
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange) {}
+
     /**
      * Changes the document's details. The file itself stays; upload a new document to replace it.
      */
@@ -18,7 +23,7 @@ class UpdateDocument
     {
         DB::transaction(fn () => $document->update($data->toArray()));
 
-        Cache::tags("workspace:{$document->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($document->workspace_id, new WorkspaceChangeData(ChangeTopic::Documents, ChangeAction::Updated, $document->id, $document->name));
 
         return $document;
     }

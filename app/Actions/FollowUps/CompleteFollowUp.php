@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Actions\FollowUps;
 
 use App\Actions\Leads\RecordLeadActivity;
+use App\Actions\Notifications\AnnounceWorkspaceChange;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\LeadActivityType;
 use App\Models\FollowUp;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CompleteFollowUp
 {
-    public function __construct(private RecordLeadActivity $recordLeadActivity) {}
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private RecordLeadActivity $recordLeadActivity) {}
 
     /**
      * Marks the follow-up done and logs it on the lead, so the history shows what was done when.
@@ -39,7 +42,7 @@ class CompleteFollowUp
             return $followUp;
         });
 
-        Cache::tags("workspace:{$followUp->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($followUp->workspace_id, new WorkspaceChangeData(ChangeTopic::FollowUps, ChangeAction::Updated, $followUp->id, $followUp->title));
 
         return $followUp;
     }

@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Actions\Renewals;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\Actions\Policies\FindRenewalAwaitingOutcome;
 use App\Actions\Policies\RecordPolicyEvent;
 use App\DataTransferObject\Renewals\RenewalData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\PolicyEventType;
 use App\Enums\RenewalOutcome;
 use App\Enums\RenewalTerm;
@@ -14,13 +18,13 @@ use App\Models\Policy;
 use App\Models\PolicyRenewal;
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class RecordRenewalOutcome
 {
     public function __construct(
+        private AnnounceWorkspaceChange $announceWorkspaceChange,
         private RecordPolicyEvent $recordPolicyEvent,
         private FindRenewalAwaitingOutcome $findRenewalAwaitingOutcome,
     ) {}
@@ -61,7 +65,7 @@ class RecordRenewalOutcome
             return $renewal;
         });
 
-        Cache::tags("workspace:{$policy->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($policy->workspace_id, new WorkspaceChangeData(ChangeTopic::Policies, ChangeAction::Updated, $policy->id, $policy->product_name));
 
         return $renewal;
     }

@@ -4,20 +4,24 @@ declare(strict_types=1);
 
 namespace App\Actions\Applications;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\Actions\Policies\RecordPolicyEvent;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
 use App\Enums\ApplicationStage;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\PolicyEventType;
 use App\Enums\PolicyStatus;
 use App\Models\ApplicationRequirement;
 use App\Models\Policy;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AddRequirement
 {
     public function __construct(
+        private AnnounceWorkspaceChange $announceWorkspaceChange,
         private MoveApplicationStage $moveApplicationStage,
         private RecordPolicyEvent $recordPolicyEvent,
     ) {}
@@ -41,7 +45,7 @@ class AddRequirement
             return $requirement;
         });
 
-        Cache::tags("workspace:{$policy->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($policy->workspace_id, new WorkspaceChangeData(ChangeTopic::Policies, ChangeAction::Updated, $policy->id, $policy->product_name));
 
         return $requirement;
     }

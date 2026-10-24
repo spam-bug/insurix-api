@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace App\Actions\Applications;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\Actions\Policies\RecordPolicyEvent;
 use App\DataTransferObject\Applications\RequirementData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\PolicyEventType;
 use App\Models\ApplicationRequirement;
 use App\Models\Document;
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UpdateRequirement
 {
-    public function __construct(private RecordPolicyEvent $recordPolicyEvent) {}
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private RecordPolicyEvent $recordPolicyEvent) {}
 
     /**
      * Ticks a requirement off as received today (or un-ticks it), and links the document that
@@ -41,7 +44,7 @@ class UpdateRequirement
             return $requirement;
         });
 
-        Cache::tags("workspace:{$requirement->policy->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($requirement->policy->workspace_id, new WorkspaceChangeData(ChangeTopic::Policies, ChangeAction::Updated, $requirement->policy->id, $requirement->policy->product_name));
 
         return $requirement;
     }

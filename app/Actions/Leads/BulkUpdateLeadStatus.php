@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace App\Actions\Leads;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\DataTransferObject\Leads\BulkLeadStatusData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\LeadStatus;
 use App\Models\User;
 use App\Models\Workspace;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class BulkUpdateLeadStatus
 {
-    public function __construct(private UpdateLeadStatus $updateLeadStatus) {}
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private UpdateLeadStatus $updateLeadStatus) {}
 
     /**
      * Changes the status of the workspace's leads among the selected ones, logging each change.
@@ -33,7 +36,7 @@ class BulkUpdateLeadStatus
             return $leads->count();
         });
 
-        Cache::tags("workspace:{$workspace->id}")->flush();
+        $this->announceWorkspaceChange->handle($workspace->id, new WorkspaceChangeData(ChangeTopic::Leads, ChangeAction::Updated, null, null, $updated));
 
         return $updated;
     }

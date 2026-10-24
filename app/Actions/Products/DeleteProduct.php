@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Actions\Products;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Models\Product;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class DeleteProduct
 {
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange) {}
+
     /**
      * Only a product no policy uses can be deleted; one that's been sold is deactivated
      * instead, so the clients holding it stay traceable to it.
@@ -27,6 +32,6 @@ class DeleteProduct
 
         DB::transaction(fn () => $product->delete());
 
-        Cache::tags("workspace:{$product->workspace_id}")->flush();
+        $this->announceWorkspaceChange->handle($product->workspace_id, new WorkspaceChangeData(ChangeTopic::Products, ChangeAction::Deleted, $product->id, $product->name));
     }
 }

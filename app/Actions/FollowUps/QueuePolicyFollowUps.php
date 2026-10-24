@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Actions\FollowUps;
 
-use App\Actions\Notifications\NotifyWorkspace;
 use App\Actions\Policies\FindNextPaymentDue;
 use App\Actions\Policies\FindNextRenewalDate;
 use App\Actions\Policies\ListPoliciesNeedingAttention;
@@ -35,7 +34,6 @@ class QueuePolicyFollowUps
 
     public function __construct(
         private CreateFollowUp $createFollowUp,
-        private NotifyWorkspace $notifyWorkspace,
         private FindNextRenewalDate $findNextRenewalDate,
         private FindNextPaymentDue $findNextPaymentDue,
     ) {}
@@ -77,10 +75,6 @@ class QueuePolicyFollowUps
                     $renewals[] = new RenewalComingUpNotification($policy, CarbonImmutable::parse(substr($key, 8)));
                 }
             }
-        }
-
-        if ($created > 0) {
-            $this->notifyWorkspace->handle($workspace->id, 'follow-ups');
         }
 
         if ($renewals !== []) {

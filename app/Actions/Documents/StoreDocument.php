@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Actions\Documents;
 
+use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\DataTransferObject\Documents\DocumentData;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
 use App\Enums\WorkspaceRole;
 use App\Models\Document;
 use App\Models\Workspace;
 use App\Notifications\StorageAlmostFullNotification;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -20,7 +23,7 @@ class StoreDocument
     /** The owner hears about storage once an upload takes usage past this share of the limit. */
     private const ALMOST_FULL = 0.9;
 
-    public function __construct(private MeasureStorage $measureStorage) {}
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private MeasureStorage $measureStorage) {}
 
     /**
      * Keeps an uploaded file in the workspace, for a client or unassigned in the inbox. Without
@@ -40,7 +43,7 @@ class StoreDocument
             'size' => $file->getSize(),
         ]));
 
-        Cache::tags("workspace:{$workspace->id}")->flush();
+        $this->announceWorkspaceChange->handle($workspace->id, new WorkspaceChangeData(ChangeTopic::Documents, ChangeAction::Created, $document->id, $document->name));
 
         ['used' => $used, 'limit' => $limit] = $this->measureStorage->handle($workspace);
         $threshold = $limit * self::ALMOST_FULL;
