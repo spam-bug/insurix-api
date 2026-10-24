@@ -24,6 +24,7 @@ class ListDocuments
             return $workspace->documents()
                 ->with(['client:id,name', 'policy:id,product_name,policy_number'])
                 ->when($filters->clientId, fn (Builder $query, string $clientId) => $query->where('client_id', $clientId))
+                ->when($filters->unassigned, fn (Builder $query) => $query->whereNull('client_id'))
                 ->when($filters->policyId, fn (Builder $query, string $policyId) => $query->where('policy_id', $policyId))
                 ->when($filters->category, fn (Builder $query, $category) => $query->where('category', $category))
                 ->when($filters->search, function (Builder $query, string $search) {

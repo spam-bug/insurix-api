@@ -11,14 +11,17 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class DownloadDocument
 {
     /**
-     * The file itself, as an attachment saved under the document's name.
+     * The file itself, saved under the document's name: as an attachment, or inline for the
+     * preview (the browser shows images and PDFs itself).
      */
-    public function handle(Document $document): StreamedResponse
+    public function handle(Document $document, bool $inline = false): StreamedResponse
     {
         $disk = Storage::disk(Document::DISK);
 
         abort_unless($disk->exists($document->path), 404, 'This file is missing. Upload it again.');
 
-        return $disk->download($document->path, $document->downloadName(), ['Content-Type' => $document->mime_type]);
+        return $inline
+            ? $disk->response($document->path, $document->downloadName(), ['Content-Type' => $document->mime_type])
+            : $disk->download($document->path, $document->downloadName(), ['Content-Type' => $document->mime_type]);
     }
 }

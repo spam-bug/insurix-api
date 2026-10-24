@@ -25,6 +25,7 @@ class ListDocumentsRequest extends FormRequest
         return [
             'search' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', Rule::enum(DocumentCategory::class)],
+            'unassigned' => ['nullable', 'boolean'],
             'client_id' => ['nullable', 'uuid'],
             'policy_id' => ['nullable', 'uuid'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
