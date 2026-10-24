@@ -13,11 +13,14 @@ use App\Enums\FollowUpType;
 use App\Enums\PolicyStatus;
 use App\Models\Policy;
 use App\Models\Workspace;
+use App\Notifications\RenewalComingUpNotification;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Notification;
 
 /**
  * Puts renewals and premiums coming due on the agent's follow-ups, so their Today list covers
- * policies as well as people. Each reminder is created once per renewal or premium date.
+ * policies as well as people. Each reminder is created once per renewal or premium date, and
+ * each new renewal reminder also reaches everyone in the workspace through the bell.
  */
 class QueuePolicyFollowUps
 {
@@ -44,6 +47,7 @@ class QueuePolicyFollowUps
     {
         $today = CarbonImmutable::now($workspace->timezone)->startOfDay();
         $created = 0;
+        $renewals = [];
 
         $policies = $workspace->policies()
             ->with('client.lead', 'followUps:id,policy_id,reminder_key', 'renewals:id,policy_id,due_on')
@@ -68,11 +72,22 @@ class QueuePolicyFollowUps
                     $key,
                 );
                 $created++;
+
+                if (str_starts_with($key, 'renewal:')) {
+                    $renewals[] = new RenewalComingUpNotification($policy, CarbonImmutable::parse(substr($key, 8)));
+                }
             }
         }
 
         if ($created > 0) {
             $this->notifyWorkspace->handle($workspace->id, 'follow-ups');
+        }
+
+        if ($renewals !== []) {
+            $members = $workspace->users()->get();
+            foreach ($renewals as $renewal) {
+                Notification::send($members, $renewal);
+            }
         }
 
         return $created;
