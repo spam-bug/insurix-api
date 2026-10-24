@@ -6,10 +6,13 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Models\Workspace;
+use App\Policies\NotificationPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -38,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
         // Bound for every route, not only those whose controller asks for it, so the membership
         // middleware always gets the model and scoped child bindings have their parent.
         Route::model('workspace', Workspace::class);
+
+        // Laravel's own notification model, so its policy isn't found by naming convention.
+        Gate::policy(DatabaseNotification::class, NotificationPolicy::class);
 
         // Reset links open the frontend's reset page, which posts the token back to the API.
         ResetPassword::createUrlUsing(fn (User $user, string $token) => config('app.frontend_url').'/reset-password?'.http_build_query([

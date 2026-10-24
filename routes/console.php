@@ -14,3 +14,7 @@ Artisan::command('inspire', function () {
 // that follow count any that are already due.
 Schedule::command('policies:queue-follow-ups')->dailyAt('05:00')->timezone('Asia/Manila');
 Schedule::command('leads:rescore')->dailyAt('05:15')->timezone('Asia/Manila');
+
+// After the reminders and scores are in: each member's morning count of follow-ups for today.
+Schedule::command('follow-ups:notify-due')->dailyAt('07:00')->timezone('Asia/Manila');
+Schedule::command('notifications:prune')->dailyAt('03:00')->timezone('Asia/Manila');

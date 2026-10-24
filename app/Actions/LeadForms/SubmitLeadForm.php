@@ -15,8 +15,10 @@ use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\Workspace;
+use App\Notifications\FormLeadNotification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class SubmitLeadForm
 {
@@ -28,7 +30,8 @@ class SubmitLeadForm
 
     /**
      * A prospective client filled in the agent's shareable form: create a prospect owned by
-     * that agent, and a follow-up due now so it tops the agent's list for today. Nobody is
+     * that agent, and a follow-up due now so it tops the agent's list for today, and tell
+     * everyone in the workspace through the bell. Nobody is
      * signed in, so the activity has no actor. A filled-in honeypot is dropped silently, so
      * bots get the same answer as people.
      */
@@ -63,6 +66,8 @@ class SubmitLeadForm
         });
 
         Cache::tags("workspace:{$workspace->id}")->flush();
+
+        Notification::send($workspace->users, new FormLeadNotification($lead));
 
         return $lead;
     }

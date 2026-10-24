@@ -53,6 +53,7 @@ use App\Http\Controllers\Api\V1\LeadPromotionController;
 use App\Http\Controllers\Api\V1\LeadStatusController;
 use App\Http\Controllers\Api\V1\LeadStatusCountController;
 use App\Http\Controllers\Api\V1\NextActionController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PolicyAttentionController;
 use App\Http\Controllers\Api\V1\PolicyController;
 use App\Http\Controllers\Api\V1\PolicyPremiumMixController;
@@ -62,7 +63,9 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductSuggestionController;
 use App\Http\Controllers\Api\V1\ProductSummaryController;
 use App\Http\Controllers\Api\V1\PublicLeadFormController;
+use App\Http\Controllers\Api\V1\ReadAllNotificationsController;
 use App\Http\Controllers\Api\V1\RequirementController;
+use App\Http\Controllers\Api\V1\UnreadNotificationCountController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
 use App\Http\Controllers\Api\V1\WorkspaceInvitationController;
 use App\Http\Controllers\Api\V1\WorkspaceLogoController;
@@ -122,6 +125,11 @@ Route::prefix('v1')->group(function () {
             Route::get('/invitations', [WorkspaceInvitationController::class, 'index']);
             Route::post('/invitations', [WorkspaceInvitationController::class, 'store']);
             Route::delete('/invitations/{invitation}', [WorkspaceInvitationController::class, 'destroy']);
+
+            Route::get('/notifications/unread-count', [UnreadNotificationCountController::class, 'index']);
+            Route::post('/notifications/read-all', [ReadAllNotificationsController::class, 'store']);
+            Route::get('/notifications', [NotificationController::class, 'index']);
+            Route::patch('/notifications/{notification}', [NotificationController::class, 'update']);
 
             Route::get('/lead-form', [LeadFormController::class, 'show']);
             Route::post('/lead-form/regenerate', [LeadFormTokenController::class, 'store']);

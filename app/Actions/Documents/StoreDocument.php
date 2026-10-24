@@ -5,18 +5,27 @@ declare(strict_types=1);
 namespace App\Actions\Documents;
 
 use App\DataTransferObject\Documents\DocumentData;
+use App\Enums\WorkspaceRole;
 use App\Models\Document;
 use App\Models\Workspace;
+use App\Notifications\StorageAlmostFullNotification;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 
 class StoreDocument
 {
+    /** The owner hears about storage once an upload takes usage past this share of the limit. */
+    private const ALMOST_FULL = 0.9;
+
+    public function __construct(private MeasureStorage $measureStorage) {}
+
     /**
      * Keeps an uploaded file in the workspace, for a client or unassigned in the inbox. Without
-     * a name, the document is named after the file. The storage limit is checked by the request.
+     * a name, the document is named after the file. The storage limit is checked by the request;
+     * the upload that takes usage past 90% of it tells the owner through the bell.
      */
     public function handle(Workspace $workspace, UploadedFile $file, DocumentData $data): Document
     {
@@ -32,6 +41,16 @@ class StoreDocument
         ]));
 
         Cache::tags("workspace:{$workspace->id}")->flush();
+
+        ['used' => $used, 'limit' => $limit] = $this->measureStorage->handle($workspace);
+        $threshold = $limit * self::ALMOST_FULL;
+
+        if ($used >= $threshold && $used - $document->size < $threshold) {
+            Notification::send(
+                $workspace->users()->wherePivot('role', WorkspaceRole::Owner->value)->get(),
+                new StorageAlmostFullNotification($workspace->id, $used, $limit),
+            );
+        }
 
         return $document;
     }
