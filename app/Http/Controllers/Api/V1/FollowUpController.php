@@ -27,7 +27,7 @@ class FollowUpController extends Controller
 
     public function update(UpdateFollowUpRequest $request, FollowUp $followUp, UpdateFollowUp $updateFollowUp): FollowUpResource
     {
-        return FollowUpResource::make($updateFollowUp->handle($followUp, FollowUpData::fromArray($request->validated()))->load('lead'));
+        return FollowUpResource::make($updateFollowUp->handle($followUp, FollowUpData::fromArray($request->validated()))->load(FollowUpResource::RELATIONS));
     }
 
     public function destroy(FollowUp $followUp, DeleteFollowUp $deleteFollowUp): Response
