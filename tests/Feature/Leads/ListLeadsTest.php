@@ -25,9 +25,9 @@ it('lists only the agent’s own leads, newest first', function () {
 
 it('filters leads by search, status and interest', function (array $query, array $expectedNames) {
     $agent = User::factory()->create();
-    Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Ana Reyes', 'email' => 'ana@example.com', 'interest' => LeadInterest::Life]);
-    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create(['name' => 'Ben Cruz', 'phone' => '0917 555 0100', 'interest' => LeadInterest::Auto]);
-    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Lost)->create(['name' => 'Carla Diaz', 'interest' => LeadInterest::Health]);
+    Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Ana Reyes', 'email' => 'ana@example.com', 'phone' => '0917 111 2222', 'interest' => LeadInterest::Life]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create(['name' => 'Ben Cruz', 'email' => 'ben@example.com', 'phone' => '0917 555 0100', 'interest' => LeadInterest::Auto]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Lost)->create(['name' => 'Carla Diaz', 'email' => 'carla@example.com', 'phone' => '0917 333 4444', 'interest' => LeadInterest::Health]);
 
     $names = $this->actingAs($agent)
         ->getJson(ws($agent).'/leads?'.http_build_query($query))
