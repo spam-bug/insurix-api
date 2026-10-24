@@ -16,6 +16,8 @@ use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -153,6 +155,8 @@ return [
         LengthAwarePaginator::class,
         EloquentCollection::class,
         Collection::class,
+        DatabaseNotification::class,
+        DatabaseNotificationCollection::class,
         Carbon::class,
         CarbonImmutable::class,
         ApplicationRequirement::class,

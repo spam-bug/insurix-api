@@ -109,3 +109,15 @@ it('deletes notifications older than 90 days', function () {
 
     expect($agent->notifications()->pluck('id')->all())->toBe([$kept]);
 });
+
+it('reads notifications and the count back from a cache that serializes, like Redis', function () {
+    config(['cache.stores.array.serialize' => true]);
+    cache()->forgetDriver('array');
+    $agent = User::factory()->create();
+    notify($agent);
+
+    foreach ([1, 2] as $attempt) {
+        $this->actingAs($agent)->getJson(ws($agent).'/notifications')->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson(ws($agent).'/notifications/unread-count')->assertExactJson(['data' => ['count' => 1]]);
+    }
+});
