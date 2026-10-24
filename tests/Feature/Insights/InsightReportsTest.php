@@ -7,11 +7,13 @@ use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
+use App\Enums\RenewalOutcome;
 use App\Enums\RenewalTerm;
 use App\Models\Client;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\Policy;
+use App\Models\PolicyRenewal;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -180,4 +182,35 @@ it('rejects an unknown period or a negative offset', function () {
     $this->actingAs($agent)->getJson(ws($agent).'/insights/reports?period=week&offset=-1')
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['period', 'offset']);
+});
+
+it('measures the period figures next to the period before', function () {
+    $agent = User::factory()->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
+    $policy = Policy::factory()->for($client)->create(['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25, 'commission_received_at' => '2026-10-02']);
+    Policy::factory()->for($client)->create(['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25, 'commission_received_at' => '2026-09-30']);
+    $lead = fn (string $addedAt) => Lead::factory()->for(workspaceOf($agent))->create(['created_at' => $addedAt]);
+    $closed = fn (string $at, ?LeadStatus $lostTo = null) => LeadActivity::factory()->for($lead('2026-08-01'))->create($lostTo
+        ? ['type' => LeadActivityType::StatusChanged, 'properties' => ['from' => 'contacted', 'to' => $lostTo->value], 'created_at' => $at]
+        : ['type' => LeadActivityType::Promoted, 'created_at' => $at]);
+    $outcome = fn (string $dueOn, RenewalOutcome $outcome) => PolicyRenewal::forceCreate([
+        'policy_id' => $policy->id, 'workspace_id' => workspaceOf($agent)->id, 'due_on' => $dueOn, 'outcome' => $outcome,
+    ]);
+
+    $lead('2026-10-05');
+    $lead('2026-10-10');
+    $lead('2026-09-15');
+    $closed('2026-10-03');
+    $closed('2026-10-04');
+    $closed('2026-10-06', LeadStatus::Lost);
+    $closed('2026-10-07', LeadStatus::Qualified);
+    $closed('2026-09-20', LeadStatus::Lost);
+    $outcome('2026-10-01', RenewalOutcome::Renewed);
+    $outcome('2026-10-09', RenewalOutcome::Lapsed);
+    Lead::factory()->create(['created_at' => '2026-10-05']);
+
+    expect(reports($agent)['figures'])->toEqual([
+        'current' => ['new_leads' => 2, 'won' => 2, 'lost' => 1, 'win_rate_percent' => 67, 'commission_received' => 6000, 'renewals_recorded' => 2, 'renewal_rate_percent' => 50],
+        'previous' => ['new_leads' => 1, 'won' => 0, 'lost' => 1, 'win_rate_percent' => 0, 'commission_received' => 6000, 'renewals_recorded' => 0, 'renewal_rate_percent' => null],
+    ]);
 });

@@ -22,11 +22,13 @@ class BuildInsightReport
         private MeasureRetention $measureRetention,
         private RankProducts $rankProducts,
         private ChartCommissionByMonth $chartCommissionByMonth,
+        private MeasurePeriodFigures $measurePeriodFigures,
     ) {}
 
     /**
-     * Every report on the Insights page, in one response. Pipeline speed and the commission chart
-     * follow the chosen period. The rest describes the workspace as it is now.
+     * Every report on the Insights page, in one response. Figures, pipeline speed and the
+     * commission chart follow the chosen period; figures come with the period before, for
+     * trends. The rest describes the workspace as it is now.
      *
      * @return array<string, mixed>
      */
@@ -37,7 +39,7 @@ class BuildInsightReport
         return Cache::tags("workspace:{$workspace->id}")->remember($key, now()->addMinutes(5), function () use ($workspace, $filters) {
             $today = CarbonImmutable::now($workspace->timezone);
             [$start, $end] = $filters->period->range($today, $filters->offset);
-            [$previousStart] = $filters->period->range($today, $filters->offset + 1);
+            [$previousStart, $previousEnd] = $filters->period->range($today, $filters->offset + 1);
             $stalled = $this->listStalledLeads->handle($workspace);
 
             return [
@@ -48,6 +50,10 @@ class BuildInsightReport
                     'previous_label' => $filters->period->label($previousStart),
                     'starts_on' => $start->toDateString(),
                     'ends_on' => $end->toDateString(),
+                ],
+                'figures' => [
+                    'current' => $this->measurePeriodFigures->handle($workspace, $start, $end),
+                    'previous' => $this->measurePeriodFigures->handle($workspace, $previousStart, $previousEnd),
                 ],
                 'lead_sources' => $this->measureLeadSources->handle($workspace),
                 'pipeline_speed' => $this->measurePipelineSpeed->handle($workspace, $start, $end),
