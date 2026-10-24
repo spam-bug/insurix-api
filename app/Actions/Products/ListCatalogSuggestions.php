@@ -13,7 +13,8 @@ class ListCatalogSuggestions
 {
     /**
      * Product names typed into policies without a catalog product, grouped ignoring case and
-     * spaces, most used first. in_catalog says a product with that name already exists, so the
+     * spaces, most used first. The name shown is the alphabetically first spelling, which
+     * prefers capitals ("Car Plus" over "car plus"). in_catalog says a product with that name already exists, so the
      * policies only need linking to it.
      *
      * @return Collection<int, array{name: string, type: array{value: string, label: string}, policies: int, commission_rate: float, in_catalog: bool}>
@@ -26,7 +27,7 @@ class ListCatalogSuggestions
             return $workspace->policies()
                 ->toBase()
                 ->whereNull('product_id')
-                ->selectRaw('max(product_name) as name, max(type) as type, count(*) as policies, avg(commission_rate) as commission_rate')
+                ->selectRaw('min(product_name) as name, max(type) as type, count(*) as policies, avg(commission_rate) as commission_rate')
                 ->groupByRaw('lower(trim(product_name))')
                 ->orderByDesc('policies')
                 ->limit(10)
