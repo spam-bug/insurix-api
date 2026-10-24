@@ -134,6 +134,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/leads/{lead}/promote', [LeadPromotionController::class, 'store']);
 
             Route::get('/clients', [ClientController::class, 'index']);
+            Route::post('/clients', [ClientController::class, 'store']);
             Route::get('/clients/{client}', [ClientController::class, 'show'])->can('view', 'client');
             Route::put('/clients/{client}', [ClientController::class, 'update']);
             Route::get('/clients/{client}/history', [ClientHistoryController::class, 'index'])->can('view', 'client');

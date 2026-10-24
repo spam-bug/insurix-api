@@ -85,3 +85,18 @@ it('requires authentication', function () {
     $agent = User::factory()->create();
     $this->getJson(ws($agent).'/clients')->assertUnauthorized();
 });
+
+it('adds a client directly, without a lead', function () {
+    $agent = User::factory()->create();
+
+    $id = $this->actingAs($agent)
+        ->postJson(ws($agent).'/clients', ['name' => '  Rosa Diaz ', 'email' => 'Rosa@Example.com', 'birthdate' => '1985-02-14', 'civil_status' => 'single'])
+        ->assertCreated()
+        ->assertJsonPath('data.name', 'Rosa Diaz')
+        ->assertJsonPath('data.email', 'rosa@example.com')
+        ->assertJsonPath('data.lead_id', null)
+        ->json('data.id');
+
+    expect(Client::findOrFail($id)->workspace_id)->toBe(workspaceOf($agent)->id);
+    $this->postJson(ws($agent).'/clients', ['email' => 'not-an-email'])->assertJsonValidationErrors(['name', 'email']);
+});
