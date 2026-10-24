@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
 
 /** Owns every lead, client, policy and the rest; its type comes from the template it was made from. */
@@ -103,6 +104,16 @@ class Workspace extends Model
     public function followUps(): HasMany
     {
         return $this->hasMany(FollowUp::class);
+    }
+
+    /**
+     * Bell notifications about this workspace, for any of its members.
+     *
+     * @return HasMany<DatabaseNotification, $this>
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(DatabaseNotification::class);
     }
 
     /**
