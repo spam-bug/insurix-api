@@ -6,14 +6,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Insights\BuildInsightReport;
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Container\Attributes\CurrentUser;
+use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 
 class InsightReportController extends Controller
 {
-    public function index(#[CurrentUser] User $agent, BuildInsightReport $buildInsightReport): JsonResponse
+    public function index(Workspace $workspace, BuildInsightReport $buildInsightReport): JsonResponse
     {
-        return response()->json(['data' => $buildInsightReport->handle($agent)]);
+        return response()->json(['data' => $buildInsightReport->handle($workspace)]);
     }
 }

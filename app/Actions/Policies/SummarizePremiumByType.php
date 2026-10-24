@@ -6,7 +6,7 @@ namespace App\Actions\Policies;
 
 use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 
 class SummarizePremiumByType
@@ -16,10 +16,10 @@ class SummarizePremiumByType
      *
      * @return array<int, array{type: array{value: string, label: string}, policies: int, annual_premium: float}>
      */
-    public function handle(User $agent): array
+    public function handle(Workspace $workspace): array
     {
-        return Cache::tags("agent:{$agent->id}")->rememberForever("policies:{$agent->id}:premium-by-type", function () use ($agent) {
-            return $agent->policies()
+        return Cache::tags("workspace:{$workspace->id}")->rememberForever("policies:{$workspace->id}:premium-by-type", function () use ($workspace) {
+            return $workspace->policies()
                 ->toBase()
                 ->where('status', PolicyStatus::InForce)
                 ->selectRaw('type, count(*) as policies, sum(annual_premium) as annual_premium')

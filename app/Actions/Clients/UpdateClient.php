@@ -15,7 +15,7 @@ class UpdateClient
     {
         DB::transaction(fn () => $client->update($data->toArray()));
 
-        Cache::tags("agent:{$client->user_id}")->flush();
+        Cache::tags("workspace:{$client->workspace_id}")->flush();
 
         return $client;
     }

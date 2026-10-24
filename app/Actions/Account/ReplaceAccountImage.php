@@ -12,23 +12,17 @@ use Illuminate\Support\Facades\Storage;
 class ReplaceAccountImage
 {
     /** Which image, and the folder it's kept in on the uploads disk. */
-    private const FOLDERS = ['avatar' => 'avatars', 'logo' => 'logos'];
-
     /**
-     * Stores the agent's new profile photo or logo and deletes the old one. Passing no file
-     * removes the image.
-     *
-     * @param  'avatar'|'logo'  $image
+     * Stores the person's new profile photo and deletes the old one. Passing no file removes it.
      */
-    public function handle(User $agent, string $image, ?UploadedFile $file): User
+    public function handle(User $agent, ?UploadedFile $file): User
     {
-        $column = "{$image}_path";
-        $previous = $agent->{$column};
+        $previous = $agent->avatar_path;
         $disk = Storage::disk(User::UPLOADS_DISK);
 
-        $path = $file?->store(self::FOLDERS[$image], User::UPLOADS_DISK);
+        $path = $file?->store('avatars', User::UPLOADS_DISK);
 
-        DB::transaction(fn () => $agent->forceFill([$column => $path])->save());
+        DB::transaction(fn () => $agent->forceFill(['avatar_path' => $path])->save());
 
         if ($previous) {
             $disk->delete($previous);

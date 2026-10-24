@@ -16,9 +16,9 @@ use Illuminate\Container\Attributes\CurrentUser;
 
 class ApplicationStageController extends Controller
 {
-    public function store(MoveApplicationStageRequest $request, Policy $policy, #[CurrentUser] User $agent, MoveApplicationStage $moveApplicationStage, GetPolicy $getPolicy): PolicyResource
+    public function store(MoveApplicationStageRequest $request, Policy $policy, #[CurrentUser] User $user, MoveApplicationStage $moveApplicationStage, GetPolicy $getPolicy): PolicyResource
     {
-        $moveApplicationStage->handle($policy, ApplicationStage::from($request->validated('stage')), $agent);
+        $moveApplicationStage->handle($policy, ApplicationStage::from($request->validated('stage')), $user);
 
         return PolicyResource::make($getPolicy->handle($policy));
     }

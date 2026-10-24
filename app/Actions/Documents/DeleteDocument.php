@@ -18,7 +18,7 @@ class DeleteDocument
     {
         DB::transaction(fn () => $document->delete());
 
-        Cache::tags("agent:{$document->user_id}")->flush();
+        Cache::tags("workspace:{$document->workspace_id}")->flush();
 
         Storage::disk(Document::DISK)->delete($document->path);
     }

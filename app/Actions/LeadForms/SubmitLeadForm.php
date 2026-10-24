@@ -6,7 +6,7 @@ namespace App\Actions\LeadForms;
 
 use App\Actions\FollowUps\CreateFollowUp;
 use App\Actions\Leads\RecordLeadActivity;
-use App\Actions\Notifications\NotifyAgent;
+use App\Actions\Notifications\NotifyWorkspace;
 use App\DataTransferObject\FollowUps\FollowUpData;
 use App\DataTransferObject\Leads\LeadFormSubmissionData;
 use App\Enums\FollowUpType;
@@ -14,7 +14,7 @@ use App\Enums\LeadActivityType;
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -23,7 +23,7 @@ class SubmitLeadForm
     public function __construct(
         private RecordLeadActivity $recordLeadActivity,
         private CreateFollowUp $createFollowUp,
-        private NotifyAgent $notifyAgent,
+        private NotifyWorkspace $notifyWorkspace,
     ) {}
 
     /**
@@ -32,14 +32,14 @@ class SubmitLeadForm
      * signed in, so the activity has no actor. A filled-in honeypot is dropped silently, so
      * bots get the same answer as people.
      */
-    public function handle(User $agent, LeadFormSubmissionData $data): ?Lead
+    public function handle(Workspace $workspace, LeadFormSubmissionData $data): ?Lead
     {
         if ($data->website !== null) {
             return null;
         }
 
-        $lead = DB::transaction(function () use ($agent, $data) {
-            $lead = $agent->leads()->create([
+        $lead = DB::transaction(function () use ($workspace, $data) {
+            $lead = $workspace->leads()->create([
                 'name' => $data->name,
                 'email' => $data->email,
                 'phone' => $data->phone,
@@ -57,12 +57,12 @@ class SubmitLeadForm
                 dueAt: now()->toImmutable(),
             ));
 
-            $this->notifyAgent->handle($agent->id, 'leads', "{$lead->name} just filled in your form");
+            $this->notifyWorkspace->handle($workspace->id, 'leads', "{$lead->name} just filled in your form");
 
             return $lead;
         });
 
-        Cache::tags("agent:{$agent->id}")->flush();
+        Cache::tags("workspace:{$workspace->id}")->flush();
 
         return $lead;
     }

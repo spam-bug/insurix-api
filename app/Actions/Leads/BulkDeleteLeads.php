@@ -5,22 +5,22 @@ declare(strict_types=1);
 namespace App\Actions\Leads;
 
 use App\DataTransferObject\Leads\LeadSelectionData;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class BulkDeleteLeads
 {
     /**
-     * Deletes the agent's own leads among the selected ones.
+     * Deletes the workspace's leads among the selected ones.
      *
      * @return int how many leads were deleted
      */
-    public function handle(User $agent, LeadSelectionData $data): int
+    public function handle(Workspace $workspace, LeadSelectionData $data): int
     {
-        $deleted = DB::transaction(fn () => $agent->leads()->whereKey($data->ids)->delete());
+        $deleted = DB::transaction(fn () => $workspace->leads()->whereKey($data->ids)->delete());
 
-        Cache::tags("agent:{$agent->id}")->flush();
+        Cache::tags("workspace:{$workspace->id}")->flush();
 
         return $deleted;
     }

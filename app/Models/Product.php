@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * A product the agent sells, with the agent's usual commission rate for it.
  */
-#[Fillable(['user_id', 'name', 'type', 'description', 'commission_rate', 'payment_frequency', 'is_active'])]
+#[Fillable(['workspace_id', 'name', 'type', 'description', 'commission_rate', 'payment_frequency', 'is_active'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -31,11 +31,11 @@ class Product extends Model
     ];
 
     /**
-     * @return BelongsTo<User, $this>
+     * @return BelongsTo<Workspace, $this>
      */
-    public function user(): BelongsTo
+    public function workspace(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Workspace::class);
     }
 
     /**

@@ -8,7 +8,7 @@ use App\Enums\LeadInterest;
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -24,7 +24,7 @@ class LeadFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
+            'workspace_id' => Workspace::factory(),
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'phone' => fake()->phoneNumber(),

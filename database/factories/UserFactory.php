@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -24,6 +25,12 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
+    /** Everyone starts with a workspace of their own, as registering gives them. */
+    public function configure(): static
+    {
+        return $this->afterCreating(fn (User $user) => Workspace::factory()->ownedBy($user)->create());
+    }
+
     public function definition(): array
     {
         return [

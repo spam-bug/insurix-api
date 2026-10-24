@@ -13,6 +13,6 @@ class CurrentUserController extends Controller
 {
     public function show(#[CurrentUser] User $user): UserResource
     {
-        return UserResource::make($user);
+        return UserResource::make($user->load(['workspaces' => fn ($query) => $query->oldest('workspaces.created_at')]));
     }
 }

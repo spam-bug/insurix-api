@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace App\Actions\Leads;
 
 use App\Enums\LeadStatus;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 
 class CountLeadsByStatus
 {
     /**
-     * Counts every status for the agent, including those with no leads, plus a total.
+     * Counts every status in the workspace, including those with no leads, plus a total.
      *
      * @return array<string, int>
      */
-    public function handle(User $agent): array
+    public function handle(Workspace $workspace): array
     {
-        return Cache::tags("agent:{$agent->id}")->rememberForever("leads:{$agent->id}:status-counts", function () use ($agent) {
-            $counts = $agent->leads()
+        return Cache::tags("workspace:{$workspace->id}")->rememberForever("leads:{$workspace->id}:status-counts", function () use ($workspace) {
+            $counts = $workspace->leads()
                 ->toBase()
                 ->selectRaw('status, count(*) as aggregate')
                 ->groupBy('status')

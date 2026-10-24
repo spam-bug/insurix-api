@@ -6,7 +6,7 @@ namespace App\Actions\Insights;
 
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
-use App\Models\User;
+use App\Models\Workspace;
 
 class MeasureLeadSources
 {
@@ -20,9 +20,9 @@ class MeasureLeadSources
      *
      * @return array<int, array{source: string, label: string, leads: int, clients: int, lost: int, rate_percent: int, enough_data: bool}>
      */
-    public function handle(User $agent): array
+    public function handle(Workspace $workspace): array
     {
-        return $agent->leads()
+        return $workspace->leads()
             ->toBase()
             ->selectRaw('source, count(*) as leads')
             ->selectRaw('sum(case when status = ? then 1 else 0 end) as clients', [LeadStatus::Converted->value])

@@ -32,12 +32,12 @@ it('scores a brand new prospect low, with its reasons', function () {
 
 it('scores a qualified lead with a meeting coming up as hot', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for($agent)->status(LeadStatus::Qualified)->create([
+    $lead = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create([
         'interest' => LeadInterest::Life,
         'meeting_at' => now()->addDays(2),
         'created_at' => now()->subMonth(),
     ]);
-    $this->actingAs($agent)->postJson("/api/v1/leads/{$lead->id}/notes", ['body' => 'Wants a quote for the family.'])->assertCreated();
+    $this->actingAs($agent)->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => 'Wants a quote for the family.'])->assertCreated();
 
     $lead->refresh();
 
@@ -65,9 +65,9 @@ it('counts an overdue follow-up against the lead', function () {
 
 it('rewards sources that convert well for the agent', function () {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->count(2)->create(['source' => LeadSource::Referral]);
-    Lead::factory()->for($agent)->status(LeadStatus::Converted)->create(['source' => LeadSource::Referral]);
-    $lead = Lead::factory()->for($agent)->create(['source' => LeadSource::Referral]);
+    Lead::factory()->for(workspaceOf($agent))->count(2)->create(['source' => LeadSource::Referral]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create(['source' => LeadSource::Referral]);
+    $lead = Lead::factory()->for(workspaceOf($agent))->create(['source' => LeadSource::Referral]);
 
     expect(scored($lead)->score_reasons)->toContain(['label' => 'Referral leads convert well for you (25%)', 'points' => 5]);
 });
@@ -78,16 +78,16 @@ it('leaves clients and lost leads unscored', function (LeadStatus $status) {
 
 it('rescores a lead when its status changes and sorts the list by score', function () {
     $agent = User::factory()->create();
-    $cold = Lead::factory()->for($agent)->create();
-    $warm = Lead::factory()->for($agent)->create();
-    Lead::factory()->for($agent)->status(LeadStatus::Lost)->create();
+    $cold = Lead::factory()->for(workspaceOf($agent))->create();
+    $warm = Lead::factory()->for(workspaceOf($agent))->create();
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Lost)->create();
     $this->actingAs($agent);
 
-    $this->patchJson("/api/v1/leads/{$cold->id}/status", ['status' => 'contacted'])->assertOk();
-    $this->patchJson("/api/v1/leads/{$warm->id}/status", ['status' => 'qualified'])
+    $this->patchJson(ws($agent)."/leads/{$cold->id}/status", ['status' => 'contacted'])->assertOk();
+    $this->patchJson(ws($agent)."/leads/{$warm->id}/status", ['status' => 'qualified'])
         ->assertJsonPath('data.score_band', 'hot');
 
-    $this->getJson('/api/v1/leads?'.http_build_query(['sort' => 'score']))
+    $this->getJson(ws($agent).'/leads?'.http_build_query(['sort' => 'score']))
         ->assertJsonPath('data.0.id', $warm->id)
         ->assertJsonPath('data.1.id', $cold->id)
         ->assertJsonPath('data.1.score_band', 'warm')

@@ -6,7 +6,7 @@ namespace App\Actions\Policies;
 
 use App\DataTransferObject\Policies\BulkPolicyStatusData;
 use App\Enums\PolicyStatus;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -18,10 +18,10 @@ class BulkUpdatePolicyStatus
      *
      * @return int how many policies were changed
      */
-    public function handle(User $agent, BulkPolicyStatusData $data): int
+    public function handle(Workspace $workspace, BulkPolicyStatusData $data): int
     {
-        $updated = DB::transaction(function () use ($agent, $data) {
-            $policies = $agent->policies()
+        $updated = DB::transaction(function () use ($workspace, $data) {
+            $policies = $workspace->policies()
                 ->whereKey($data->ids)
                 ->whereIn('status', PolicyStatus::bulkSettable())
                 ->where('status', '!=', $data->status)
@@ -32,7 +32,7 @@ class BulkUpdatePolicyStatus
             return $policies->count();
         });
 
-        Cache::tags("agent:{$agent->id}")->flush();
+        Cache::tags("workspace:{$workspace->id}")->flush();
 
         return $updated;
     }

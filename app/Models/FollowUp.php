@@ -15,18 +15,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Something the agent means to do for a lead (or the client it became) by a due time.
  */
-#[Fillable(['user_id', 'lead_id', 'policy_id', 'reminder_key', 'type', 'title', 'notes', 'due_at', 'completed_at'])]
+#[Fillable(['workspace_id', 'lead_id', 'policy_id', 'reminder_key', 'type', 'title', 'notes', 'due_at', 'completed_at'])]
 class FollowUp extends Model
 {
     /** @use HasFactory<FollowUpFactory> */
     use HasFactory, HasUuids;
 
     /**
-     * @return BelongsTo<User, $this>
+     * @return BelongsTo<Workspace, $this>
      */
-    public function user(): BelongsTo
+    public function workspace(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Workspace::class);
     }
 
     /**

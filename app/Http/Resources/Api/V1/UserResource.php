@@ -27,11 +27,9 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
-            'timezone' => $this->timezone,
             'avatar_url' => $this->avatarUrl(),
-            'bio' => $this->bio,
-            'logo_url' => $this->logoUrl(),
             'two_factor_enabled' => $this->hasEnabledTwoFactorAuthentication(),
+            'workspaces' => WorkspaceResource::collection($this->whenLoaded('workspaces')),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

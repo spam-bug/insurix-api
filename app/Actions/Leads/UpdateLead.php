@@ -32,7 +32,7 @@ class UpdateLead
             return $lead;
         });
 
-        Cache::tags("agent:{$lead->user_id}")->flush();
+        Cache::tags("workspace:{$lead->workspace_id}")->flush();
 
         return $lead;
     }

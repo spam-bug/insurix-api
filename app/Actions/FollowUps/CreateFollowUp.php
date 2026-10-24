@@ -28,7 +28,7 @@ class CreateFollowUp
                 ...$data->toArray(),
                 'policy_id' => $policy?->id,
                 'reminder_key' => $reminderKey,
-                'user_id' => $lead->user_id,
+                'workspace_id' => $lead->workspace_id,
             ]);
 
             $this->scoreLead->handle($lead);
@@ -36,7 +36,7 @@ class CreateFollowUp
             return $followUp;
         });
 
-        Cache::tags("agent:{$lead->user_id}")->flush();
+        Cache::tags("workspace:{$lead->workspace_id}")->flush();
 
         return $followUp;
     }

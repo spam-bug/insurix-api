@@ -2,27 +2,25 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\Api\V1\Account;
+namespace App\Http\Requests\Api\V1\Workspaces;
 
+use App\Models\Workspace;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBioRequest extends FormRequest
+/** For owner-only requests without input: the logo, the form link, members and invites. */
+class ManageWorkspaceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->user());
+        return $this->user()->can('manage', app(Workspace::class));
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
-        return [
-            'bio' => ['nullable', 'string', 'max:600'],
-        ];
+        return [];
     }
 }

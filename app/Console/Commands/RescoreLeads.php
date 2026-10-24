@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Actions\Leads\ScoreLead;
-use App\Actions\Notifications\NotifyAgent;
+use App\Actions\Notifications\NotifyWorkspace;
 use App\Models\Lead;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -21,21 +21,21 @@ use Illuminate\Support\Facades\Cache;
 #[Description('Recalculate every lead’s likelihood-to-convert score')]
 class RescoreLeads extends Command
 {
-    public function handle(ScoreLead $scoreLead, NotifyAgent $notifyAgent): int
+    public function handle(ScoreLead $scoreLead, NotifyWorkspace $notifyWorkspace): int
     {
         $scored = 0;
 
-        User::query()->whereHas('leads')->each(function (User $agent) use ($scoreLead, $notifyAgent, &$scored) {
+        Workspace::query()->whereHas('leads')->each(function (Workspace $workspace) use ($scoreLead, $notifyWorkspace, &$scored) {
             $sourceRates = null;
 
-            $agent->leads()->with('user')->each(function (Lead $lead) use ($scoreLead, &$sourceRates, &$scored) {
+            $workspace->leads()->each(function (Lead $lead) use ($scoreLead, &$sourceRates, &$scored) {
                 $sourceRates ??= $scoreLead->sourceRates($lead);
                 $scoreLead->handle($lead, $sourceRates);
                 $scored++;
             });
 
-            Cache::tags("agent:{$agent->id}")->flush();
-            $notifyAgent->handle($agent->id, 'leads');
+            Cache::tags("workspace:{$workspace->id}")->flush();
+            $notifyWorkspace->handle($workspace->id, 'leads');
         });
 
         $this->info("Scored {$scored} leads.");

@@ -14,6 +14,6 @@ class DeleteLead
     {
         DB::transaction(fn () => $lead->delete());
 
-        Cache::tags("agent:{$lead->user_id}")->flush();
+        Cache::tags("workspace:{$lead->workspace_id}")->flush();
     }
 }

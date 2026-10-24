@@ -15,8 +15,8 @@ use Illuminate\Container\Attributes\CurrentUser;
 
 class LeadStatusController extends Controller
 {
-    public function update(UpdateLeadStatusRequest $request, Lead $lead, #[CurrentUser] User $agent, UpdateLeadStatus $updateLeadStatus): LeadResource
+    public function update(UpdateLeadStatusRequest $request, Lead $lead, #[CurrentUser] User $user, UpdateLeadStatus $updateLeadStatus): LeadResource
     {
-        return LeadResource::make($updateLeadStatus->handle($lead, LeadStatus::from($request->validated('status')), $agent));
+        return LeadResource::make($updateLeadStatus->handle($lead, LeadStatus::from($request->validated('status')), $user));
     }
 }

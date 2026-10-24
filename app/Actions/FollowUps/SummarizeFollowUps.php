@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\FollowUps;
 
-use App\Models\User;
+use App\Models\Workspace;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 
@@ -16,14 +16,14 @@ class SummarizeFollowUps
      *
      * @return array{overdue: int, due_today: int, upcoming: int}
      */
-    public function handle(User $agent): array
+    public function handle(Workspace $workspace): array
     {
-        return Cache::tags("agent:{$agent->id}")->remember("follow-ups:{$agent->id}:summary", now()->addMinutes(5), function () use ($agent) {
+        return Cache::tags("workspace:{$workspace->id}")->remember("follow-ups:{$workspace->id}:summary", now()->addMinutes(5), function () use ($workspace) {
             $now = CarbonImmutable::now();
-            $endOfToday = CarbonImmutable::now($agent->timezone)->endOfDay()->utc();
+            $endOfToday = CarbonImmutable::now($workspace->timezone)->endOfDay()->utc();
             $endOfWeek = $endOfToday->addDays(7);
 
-            $counts = $agent->followUps()
+            $counts = $workspace->followUps()
                 ->whereNull('completed_at')
                 ->toBase()
                 ->selectRaw('sum(case when due_at < ? then 1 else 0 end) as overdue', [$now])

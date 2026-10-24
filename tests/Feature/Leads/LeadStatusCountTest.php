@@ -8,12 +8,12 @@ use App\Models\User;
 
 it('counts every status for the agent’s own leads', function () {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->count(2)->create();
-    Lead::factory()->for($agent)->status(LeadStatus::Qualified)->create();
+    Lead::factory()->for(workspaceOf($agent))->count(2)->create();
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create();
     Lead::factory()->status(LeadStatus::Lost)->create();
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/leads/status-counts')
+        ->getJson(ws($agent).'/leads/status-counts')
         ->assertOk()
         ->assertExactJson(['data' => [
             'total' => 3,
@@ -28,14 +28,15 @@ it('counts every status for the agent’s own leads', function () {
 
 it('ignores the list filters', function () {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->count(2)->create();
+    Lead::factory()->for(workspaceOf($agent))->count(2)->create();
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/leads/status-counts?'.http_build_query(['status' => 'lost']))
+        ->getJson(ws($agent).'/leads/status-counts?'.http_build_query(['status' => 'lost']))
         ->assertOk()
         ->assertJsonPath('data.total', 2);
 });
 
 it('requires authentication', function () {
-    $this->getJson('/api/v1/leads/status-counts')->assertUnauthorized();
+    $agent = User::factory()->create();
+    $this->getJson(ws($agent).'/leads/status-counts')->assertUnauthorized();
 });

@@ -15,9 +15,9 @@ use Illuminate\Container\Attributes\CurrentUser;
 
 class ApplicationDeclineController extends Controller
 {
-    public function store(DeclineApplicationRequest $request, Policy $policy, #[CurrentUser] User $agent, DeclineApplication $declineApplication, GetPolicy $getPolicy): PolicyResource
+    public function store(DeclineApplicationRequest $request, Policy $policy, #[CurrentUser] User $user, DeclineApplication $declineApplication, GetPolicy $getPolicy): PolicyResource
     {
-        $declineApplication->handle($policy, $request->validated('reason'), $agent);
+        $declineApplication->handle($policy, $request->validated('reason'), $user);
 
         return PolicyResource::make($getPolicy->handle($policy));
     }

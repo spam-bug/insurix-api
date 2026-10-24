@@ -9,6 +9,7 @@ use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
 use App\Enums\RenewalTerm;
 use App\Models\Product;
+use App\Models\Workspace;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -26,7 +27,7 @@ class StorePolicyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => ['nullable', 'uuid', Rule::exists(Product::class, 'id')->where('user_id', $this->user()->id)],
+            'product_id' => ['nullable', 'uuid', Rule::exists(Product::class, 'id')->where('workspace_id', app(Workspace::class)->id)],
             'product_name' => ['required_without:product_id', 'nullable', 'string', 'max:255'],
             'policy_number' => ['nullable', 'string', 'max:100'],
             'type' => ['required_without:product_id', 'nullable', Rule::enum(PolicyType::class)],

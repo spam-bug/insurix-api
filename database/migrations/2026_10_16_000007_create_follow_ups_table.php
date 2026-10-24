@@ -17,7 +17,7 @@ return new class extends Migration
     {
         Schema::create('follow_ups', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('lead_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('policy_id')->nullable()->constrained()->nullOnDelete();
             $table->string('reminder_key', 60)->nullable();
@@ -28,7 +28,7 @@ return new class extends Migration
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'completed_at', 'due_at']);
+            $table->index(['workspace_id', 'completed_at', 'due_at']);
             $table->index(['lead_id', 'completed_at']);
             $table->unique(['policy_id', 'reminder_key']);
         });

@@ -16,7 +16,7 @@ beforeEach(fn () => Carbon::setTestNow('2026-10-17 02:00:00'));
 
 function clientWithLead(User $agent): Client
 {
-    return Client::factory()->for($agent)->create(['lead_id' => Lead::factory()->for($agent)->create()->id]);
+    return Client::factory()->for(workspaceOf($agent))->create(['lead_id' => Lead::factory()->for(workspaceOf($agent))->create()->id]);
 }
 
 it('reminds the agent about a renewal two weeks ahead, once', function () {
@@ -61,7 +61,7 @@ it('skips policies that are not in force or whose client has no lead', function 
     $agent = User::factory()->create();
     $dueSoon = ['payment_frequency' => PaymentFrequency::Annual, 'effective_date' => '2026-03-01', 'renewal_date' => '2026-11-01'];
     Policy::factory()->for(clientWithLead($agent))->status(PolicyStatus::Lapsed)->create($dueSoon);
-    Policy::factory()->for(Client::factory()->for($agent))->create($dueSoon);
+    Policy::factory()->for(Client::factory()->for(workspaceOf($agent)))->create($dueSoon);
 
     $this->artisan('policies:queue-follow-ups')->expectsOutputToContain('Created 0 policy follow-ups.');
 });

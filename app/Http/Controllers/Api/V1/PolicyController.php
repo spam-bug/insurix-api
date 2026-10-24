@@ -15,16 +15,15 @@ use App\Http\Requests\Api\V1\Policies\ListPoliciesRequest;
 use App\Http\Requests\Api\V1\Policies\UpdatePolicyRequest;
 use App\Http\Resources\Api\V1\PolicyResource;
 use App\Models\Policy;
-use App\Models\User;
-use Illuminate\Container\Attributes\CurrentUser;
+use App\Models\Workspace;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class PolicyController extends Controller
 {
-    public function index(ListPoliciesRequest $request, #[CurrentUser] User $agent, ListPolicies $listPolicies): AnonymousResourceCollection
+    public function index(ListPoliciesRequest $request, Workspace $workspace, ListPolicies $listPolicies): AnonymousResourceCollection
     {
-        return PolicyResource::collection($listPolicies->handle($agent, PolicyFiltersData::fromArray($request->validated())));
+        return PolicyResource::collection($listPolicies->handle($workspace, PolicyFiltersData::fromArray($request->validated())));
     }
 
     public function show(Policy $policy, GetPolicy $getPolicy): PolicyResource

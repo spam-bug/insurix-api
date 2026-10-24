@@ -6,17 +6,17 @@ namespace App\Actions\Products;
 
 use App\DataTransferObject\Products\ProductData;
 use App\Models\Product;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class CreateProduct
 {
-    public function handle(User $agent, ProductData $data): Product
+    public function handle(Workspace $workspace, ProductData $data): Product
     {
-        $product = DB::transaction(fn () => $agent->products()->create($data->toArray()));
+        $product = DB::transaction(fn () => $workspace->products()->create($data->toArray()));
 
-        Cache::tags("agent:{$agent->id}")->flush();
+        Cache::tags("workspace:{$workspace->id}")->flush();
 
         return $product;
     }

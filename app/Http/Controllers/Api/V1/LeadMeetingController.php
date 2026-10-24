@@ -15,8 +15,8 @@ use Illuminate\Container\Attributes\CurrentUser;
 
 class LeadMeetingController extends Controller
 {
-    public function store(ScheduleLeadMeetingRequest $request, Lead $lead, #[CurrentUser] User $agent, ScheduleLeadMeeting $scheduleLeadMeeting): LeadResource
+    public function store(ScheduleLeadMeetingRequest $request, Lead $lead, #[CurrentUser] User $user, ScheduleLeadMeeting $scheduleLeadMeeting): LeadResource
     {
-        return LeadResource::make($scheduleLeadMeeting->handle($lead, LeadMeetingData::fromArray($request->validated()), $agent));
+        return LeadResource::make($scheduleLeadMeeting->handle($lead, LeadMeetingData::fromArray($request->validated()), $user));
     }
 }

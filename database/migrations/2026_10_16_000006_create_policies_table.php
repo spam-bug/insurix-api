@@ -19,7 +19,7 @@ return new class extends Migration
     {
         Schema::create('policies', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('client_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('product_id')->nullable()->constrained()->nullOnDelete();
             $table->string('product_name');
@@ -41,9 +41,9 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'status']);
-            $table->index(['user_id', 'renewal_date']);
-            $table->index(['user_id', 'commission_received_at']);
+            $table->index(['workspace_id', 'status']);
+            $table->index(['workspace_id', 'renewal_date']);
+            $table->index(['workspace_id', 'commission_received_at']);
             $table->index('client_id');
             $table->index('product_id');
         });

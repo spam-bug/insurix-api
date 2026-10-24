@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Api\V1\Account\LeadFormBioController;
-use App\Http\Controllers\Api\V1\Account\LogoController;
 use App\Http\Controllers\Api\V1\Account\OtherSessionsController;
 use App\Http\Controllers\Api\V1\Account\PasswordController;
 use App\Http\Controllers\Api\V1\Account\PhotoController;
@@ -37,6 +35,7 @@ use App\Http\Controllers\Api\V1\FollowUpCompletionController;
 use App\Http\Controllers\Api\V1\FollowUpController;
 use App\Http\Controllers\Api\V1\FollowUpSummaryController;
 use App\Http\Controllers\Api\V1\InsightReportController;
+use App\Http\Controllers\Api\V1\InvitationController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadFollowUpController;
@@ -56,6 +55,11 @@ use App\Http\Controllers\Api\V1\PolicyStatusCountController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\PublicLeadFormController;
 use App\Http\Controllers\Api\V1\RequirementController;
+use App\Http\Controllers\Api\V1\WorkspaceController;
+use App\Http\Controllers\Api\V1\WorkspaceInvitationController;
+use App\Http\Controllers\Api\V1\WorkspaceLogoController;
+use App\Http\Controllers\Api\V1\WorkspaceMemberController;
+use App\Http\Middleware\EnsureWorkspaceMember;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -68,8 +72,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/reset-password', [PasswordResetController::class, 'store']);
     });
 
-    Route::get('/public/lead-forms/{agent:lead_form_token}', [PublicLeadFormController::class, 'show']);
-    Route::post('/public/lead-forms/{agent:lead_form_token}', [PublicLeadFormController::class, 'store'])
+    Route::get('/public/lead-forms/{leadForm:lead_form_token}', [PublicLeadFormController::class, 'show']);
+    Route::post('/public/lead-forms/{leadForm:lead_form_token}', [PublicLeadFormController::class, 'store'])
         ->middleware('throttle:lead-form');
 
     Route::middleware('auth:sanctum')->group(function () {
@@ -80,10 +84,6 @@ Route::prefix('v1')->group(function () {
             Route::put('/profile', [ProfileController::class, 'update']);
             Route::post('/photo', [PhotoController::class, 'store']);
             Route::delete('/photo', [PhotoController::class, 'destroy']);
-
-            Route::put('/lead-form', [LeadFormBioController::class, 'update']);
-            Route::post('/logo', [LogoController::class, 'store']);
-            Route::delete('/logo', [LogoController::class, 'destroy']);
 
             Route::put('/password', [PasswordController::class, 'update']);
 
@@ -97,69 +97,88 @@ Route::prefix('v1')->group(function () {
             Route::delete('/sessions/{session}', [SessionController::class, 'destroy'])->whereAlphaNumeric('session');
         });
 
-        Route::get('/lead-form', [LeadFormController::class, 'show']);
-        Route::post('/lead-form/regenerate', [LeadFormTokenController::class, 'store']);
+        Route::get('/workspaces', [WorkspaceController::class, 'index']);
+        Route::post('/workspaces', [WorkspaceController::class, 'store']);
+        Route::get('/invitations/{invitation:token}', [InvitationController::class, 'show'])->can('accept', 'invitation');
+        Route::post('/invitations/{invitation:token}/accept', [InvitationController::class, 'update'])->can('accept', 'invitation');
 
-        Route::get('/leads/status-counts', [LeadStatusCountController::class, 'index']);
-        Route::post('/leads/bulk/status', [BulkLeadStatusController::class, 'update']);
-        Route::post('/leads/bulk/delete', [BulkLeadController::class, 'destroy']);
-        Route::get('/leads', [LeadController::class, 'index']);
-        Route::post('/leads', [LeadController::class, 'store']);
-        Route::get('/leads/{lead}', [LeadController::class, 'show'])->can('view', 'lead');
-        Route::put('/leads/{lead}', [LeadController::class, 'update']);
-        Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->can('delete', 'lead');
-        Route::patch('/leads/{lead}/status', [LeadStatusController::class, 'update']);
-        Route::get('/leads/{lead}/activities', [LeadActivityController::class, 'index'])->can('view', 'lead');
-        Route::post('/leads/{lead}/notes', [LeadNoteController::class, 'store']);
-        Route::post('/leads/{lead}/meeting', [LeadMeetingController::class, 'store']);
-        Route::post('/leads/{lead}/promote', [LeadPromotionController::class, 'store']);
+        // Everything a workspace owns. Members only (others get a 404), and child records must
+        // belong to the workspace in the URL.
+        Route::prefix('workspaces/{workspace}')->middleware(EnsureWorkspaceMember::class)->scopeBindings()->group(function () {
+            Route::get('/', [WorkspaceController::class, 'show']);
+            Route::put('/', [WorkspaceController::class, 'update']);
+            Route::post('/logo', [WorkspaceLogoController::class, 'store']);
+            Route::delete('/logo', [WorkspaceLogoController::class, 'destroy']);
+            Route::get('/members', [WorkspaceMemberController::class, 'index']);
+            Route::delete('/members/{member}', [WorkspaceMemberController::class, 'destroy']);
+            Route::get('/invitations', [WorkspaceInvitationController::class, 'index']);
+            Route::post('/invitations', [WorkspaceInvitationController::class, 'store']);
+            Route::delete('/invitations/{invitation}', [WorkspaceInvitationController::class, 'destroy']);
 
-        Route::get('/clients', [ClientController::class, 'index']);
-        Route::get('/clients/{client}', [ClientController::class, 'show'])->can('view', 'client');
-        Route::put('/clients/{client}', [ClientController::class, 'update']);
-        Route::get('/clients/{client}/history', [ClientHistoryController::class, 'index'])->can('view', 'client');
+            Route::get('/lead-form', [LeadFormController::class, 'show']);
+            Route::post('/lead-form/regenerate', [LeadFormTokenController::class, 'store']);
 
-        Route::get('/products', [ProductController::class, 'index']);
-        Route::post('/products', [ProductController::class, 'store']);
-        Route::get('/products/{product}', [ProductController::class, 'show'])->can('view', 'product');
-        Route::put('/products/{product}', [ProductController::class, 'update']);
-        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->can('delete', 'product');
+            Route::get('/leads/status-counts', [LeadStatusCountController::class, 'index']);
+            Route::post('/leads/bulk/status', [BulkLeadStatusController::class, 'update']);
+            Route::post('/leads/bulk/delete', [BulkLeadController::class, 'destroy']);
+            Route::get('/leads', [LeadController::class, 'index']);
+            Route::post('/leads', [LeadController::class, 'store']);
+            Route::get('/leads/{lead}', [LeadController::class, 'show'])->can('view', 'lead');
+            Route::put('/leads/{lead}', [LeadController::class, 'update']);
+            Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->can('delete', 'lead');
+            Route::patch('/leads/{lead}/status', [LeadStatusController::class, 'update']);
+            Route::get('/leads/{lead}/activities', [LeadActivityController::class, 'index'])->can('view', 'lead');
+            Route::post('/leads/{lead}/notes', [LeadNoteController::class, 'store']);
+            Route::post('/leads/{lead}/meeting', [LeadMeetingController::class, 'store']);
+            Route::post('/leads/{lead}/promote', [LeadPromotionController::class, 'store']);
 
-        Route::get('/policies/attention', [PolicyAttentionController::class, 'index']);
-        Route::get('/policies/status-counts', [PolicyStatusCountController::class, 'index']);
-        Route::get('/policies/premium-mix', [PolicyPremiumMixController::class, 'index']);
-        Route::post('/policies/bulk/follow-ups', [BulkPolicyFollowUpController::class, 'store']);
-        Route::post('/policies/bulk/status', [BulkPolicyStatusController::class, 'update']);
-        Route::post('/clients/{client}/policies', [ClientPolicyController::class, 'store']);
-        Route::get('/policies', [PolicyController::class, 'index']);
-        Route::get('/policies/{policy}', [PolicyController::class, 'show'])->can('view', 'policy');
-        Route::put('/policies/{policy}', [PolicyController::class, 'update']);
-        Route::delete('/policies/{policy}', [PolicyController::class, 'destroy'])->can('delete', 'policy');
-        Route::post('/policies/{policy}/stage', [ApplicationStageController::class, 'store']);
-        Route::post('/policies/{policy}/approve', [ApplicationApprovalController::class, 'store']);
-        Route::post('/policies/{policy}/decline', [ApplicationDeclineController::class, 'store']);
-        Route::post('/policies/{policy}/requirements', [ApplicationRequirementController::class, 'store']);
-        Route::put('/requirements/{requirement}', [RequirementController::class, 'update']);
-        Route::delete('/requirements/{requirement}', [RequirementController::class, 'destroy'])->can('delete', 'requirement');
-        Route::post('/policies/{policy}/renewals', [PolicyRenewalController::class, 'store']);
-        Route::get('/commissions/summary', [CommissionSummaryController::class, 'index']);
+            Route::get('/clients', [ClientController::class, 'index']);
+            Route::get('/clients/{client}', [ClientController::class, 'show'])->can('view', 'client');
+            Route::put('/clients/{client}', [ClientController::class, 'update']);
+            Route::get('/clients/{client}/history', [ClientHistoryController::class, 'index'])->can('view', 'client');
 
-        Route::post('/clients/{client}/documents', [ClientDocumentController::class, 'store']);
-        Route::get('/documents/{document}/download', [DocumentDownloadController::class, 'show'])->can('view', 'document');
-        Route::get('/documents', [DocumentController::class, 'index']);
-        Route::get('/documents/{document}', [DocumentController::class, 'show'])->can('view', 'document');
-        Route::put('/documents/{document}', [DocumentController::class, 'update']);
-        Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->can('delete', 'document');
+            Route::get('/products', [ProductController::class, 'index']);
+            Route::post('/products', [ProductController::class, 'store']);
+            Route::get('/products/{product}', [ProductController::class, 'show'])->can('view', 'product');
+            Route::put('/products/{product}', [ProductController::class, 'update']);
+            Route::delete('/products/{product}', [ProductController::class, 'destroy'])->can('delete', 'product');
 
-        Route::get('/insights/reports', [InsightReportController::class, 'index']);
-        Route::get('/insights/next-actions', [NextActionController::class, 'index']);
+            Route::get('/policies/attention', [PolicyAttentionController::class, 'index']);
+            Route::get('/policies/status-counts', [PolicyStatusCountController::class, 'index']);
+            Route::get('/policies/premium-mix', [PolicyPremiumMixController::class, 'index']);
+            Route::post('/policies/bulk/follow-ups', [BulkPolicyFollowUpController::class, 'store']);
+            Route::post('/policies/bulk/status', [BulkPolicyStatusController::class, 'update']);
+            Route::post('/clients/{client}/policies', [ClientPolicyController::class, 'store']);
+            Route::get('/policies', [PolicyController::class, 'index']);
+            Route::get('/policies/{policy}', [PolicyController::class, 'show'])->can('view', 'policy');
+            Route::put('/policies/{policy}', [PolicyController::class, 'update']);
+            Route::delete('/policies/{policy}', [PolicyController::class, 'destroy'])->can('delete', 'policy');
+            Route::post('/policies/{policy}/stage', [ApplicationStageController::class, 'store']);
+            Route::post('/policies/{policy}/approve', [ApplicationApprovalController::class, 'store']);
+            Route::post('/policies/{policy}/decline', [ApplicationDeclineController::class, 'store']);
+            Route::post('/policies/{policy}/requirements', [ApplicationRequirementController::class, 'store']);
+            Route::put('/requirements/{requirement}', [RequirementController::class, 'update'])->withoutScopedBindings();
+            Route::delete('/requirements/{requirement}', [RequirementController::class, 'destroy'])->withoutScopedBindings()->can('delete', 'requirement');
+            Route::post('/policies/{policy}/renewals', [PolicyRenewalController::class, 'store']);
+            Route::get('/commissions/summary', [CommissionSummaryController::class, 'index']);
 
-        Route::get('/follow-ups', [FollowUpController::class, 'index']);
-        Route::get('/follow-ups/summary', [FollowUpSummaryController::class, 'index']);
-        Route::post('/leads/{lead}/follow-ups', [LeadFollowUpController::class, 'store']);
-        Route::put('/follow-ups/{followUp}', [FollowUpController::class, 'update']);
-        Route::delete('/follow-ups/{followUp}', [FollowUpController::class, 'destroy'])->can('delete', 'followUp');
-        Route::post('/follow-ups/{followUp}/complete', [FollowUpCompletionController::class, 'store'])->can('update', 'followUp');
-        Route::post('/follow-ups/{followUp}/reopen', [FollowUpCompletionController::class, 'destroy'])->can('update', 'followUp');
+            Route::post('/clients/{client}/documents', [ClientDocumentController::class, 'store']);
+            Route::get('/documents/{document}/download', [DocumentDownloadController::class, 'show'])->can('view', 'document');
+            Route::get('/documents', [DocumentController::class, 'index']);
+            Route::get('/documents/{document}', [DocumentController::class, 'show'])->can('view', 'document');
+            Route::put('/documents/{document}', [DocumentController::class, 'update']);
+            Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->can('delete', 'document');
+
+            Route::get('/insights/reports', [InsightReportController::class, 'index']);
+            Route::get('/insights/next-actions', [NextActionController::class, 'index']);
+
+            Route::get('/follow-ups', [FollowUpController::class, 'index']);
+            Route::get('/follow-ups/summary', [FollowUpSummaryController::class, 'index']);
+            Route::post('/leads/{lead}/follow-ups', [LeadFollowUpController::class, 'store']);
+            Route::put('/follow-ups/{followUp}', [FollowUpController::class, 'update']);
+            Route::delete('/follow-ups/{followUp}', [FollowUpController::class, 'destroy'])->can('delete', 'followUp');
+            Route::post('/follow-ups/{followUp}/complete', [FollowUpCompletionController::class, 'store'])->can('update', 'followUp');
+            Route::post('/follow-ups/{followUp}/reopen', [FollowUpCompletionController::class, 'destroy'])->can('update', 'followUp');
+        });
     });
 });

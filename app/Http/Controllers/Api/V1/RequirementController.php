@@ -18,9 +18,9 @@ use Illuminate\Http\Response;
 
 class RequirementController extends Controller
 {
-    public function update(UpdateRequirementRequest $request, ApplicationRequirement $requirement, #[CurrentUser] User $agent, UpdateRequirement $updateRequirement, GetPolicy $getPolicy): PolicyResource
+    public function update(UpdateRequirementRequest $request, ApplicationRequirement $requirement, #[CurrentUser] User $user, UpdateRequirement $updateRequirement, GetPolicy $getPolicy): PolicyResource
     {
-        $updateRequirement->handle($requirement, RequirementData::fromArray($request->validated()), $agent);
+        $updateRequirement->handle($requirement, RequirementData::fromArray($request->validated()), $user);
 
         return PolicyResource::make($getPolicy->handle($requirement->policy));
     }

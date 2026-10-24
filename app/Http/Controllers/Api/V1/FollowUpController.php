@@ -14,16 +14,15 @@ use App\Http\Requests\Api\V1\FollowUps\ListFollowUpsRequest;
 use App\Http\Requests\Api\V1\FollowUps\UpdateFollowUpRequest;
 use App\Http\Resources\Api\V1\FollowUpResource;
 use App\Models\FollowUp;
-use App\Models\User;
-use Illuminate\Container\Attributes\CurrentUser;
+use App\Models\Workspace;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class FollowUpController extends Controller
 {
-    public function index(ListFollowUpsRequest $request, #[CurrentUser] User $agent, ListFollowUps $listFollowUps): AnonymousResourceCollection
+    public function index(ListFollowUpsRequest $request, Workspace $workspace, ListFollowUps $listFollowUps): AnonymousResourceCollection
     {
-        return FollowUpResource::collection($listFollowUps->handle($agent, FollowUpFiltersData::fromArray($request->validated())));
+        return FollowUpResource::collection($listFollowUps->handle($workspace, FollowUpFiltersData::fromArray($request->validated())));
     }
 
     public function update(UpdateFollowUpRequest $request, FollowUp $followUp, UpdateFollowUp $updateFollowUp): FollowUpResource

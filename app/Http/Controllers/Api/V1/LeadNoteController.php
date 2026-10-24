@@ -15,9 +15,9 @@ use Illuminate\Http\JsonResponse;
 
 class LeadNoteController extends Controller
 {
-    public function store(StoreLeadNoteRequest $request, Lead $lead, #[CurrentUser] User $agent, AddLeadNote $addLeadNote): JsonResponse
+    public function store(StoreLeadNoteRequest $request, Lead $lead, #[CurrentUser] User $user, AddLeadNote $addLeadNote): JsonResponse
     {
-        return LeadActivityResource::make($addLeadNote->handle($lead, $request->validated('body'), $agent)->load('user:id,name'))
+        return LeadActivityResource::make($addLeadNote->handle($lead, $request->validated('body'), $user)->load('user:id,name'))
             ->response()
             ->setStatusCode(201);
     }

@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * A file the agent keeps for a client, such as a policy contract or a valid ID.
  */
-#[Fillable(['user_id', 'client_id', 'policy_id', 'category', 'name', 'original_name', 'path', 'mime_type', 'size', 'notes'])]
+#[Fillable(['workspace_id', 'client_id', 'policy_id', 'category', 'name', 'original_name', 'path', 'mime_type', 'size', 'notes'])]
 class Document extends Model
 {
     /** @use HasFactory<DocumentFactory> */
@@ -25,11 +25,11 @@ class Document extends Model
     public const DISK = 'local';
 
     /**
-     * @return BelongsTo<User, $this>
+     * @return BelongsTo<Workspace, $this>
      */
-    public function user(): BelongsTo
+    public function workspace(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Workspace::class);
     }
 
     /**

@@ -15,11 +15,11 @@ class UpdatePolicy
 
     public function handle(Policy $policy, PolicyData $data): Policy
     {
-        $attributes = $this->preparePolicyAttributes->handle($policy->user, $data, $policy);
+        $attributes = $this->preparePolicyAttributes->handle($policy->workspace, $data, $policy);
 
         DB::transaction(fn () => $policy->update($attributes));
 
-        Cache::tags("agent:{$policy->user_id}")->flush();
+        Cache::tags("workspace:{$policy->workspace_id}")->flush();
 
         return $policy;
     }

@@ -8,37 +8,38 @@ use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
 
-it('creates the agent’s form token on first request and keeps it', function () {
+it('creates the workspace’s form token on first request and keeps it', function () {
     $agent = User::factory()->create();
 
-    $token = $this->actingAs($agent)->getJson('/api/v1/lead-form')->assertOk()->json('data.token');
+    $token = $this->actingAs($agent)->getJson(ws($agent).'/lead-form')->assertOk()->json('data.token');
 
     expect($token)->toHaveLength(40)
-        ->and($agent->fresh()->lead_form_token)->toBe($token);
+        ->and(workspaceOf($agent)->fresh()->lead_form_token)->toBe($token);
 
-    $this->getJson('/api/v1/lead-form')->assertJsonPath('data.token', $token);
+    $this->getJson(ws($agent).'/lead-form')->assertJsonPath('data.token', $token);
 });
 
 it('regenerates the token so old links stop working', function () {
-    $agent = User::factory()->create(['lead_form_token' => 'old-token']);
+    $agent = withLeadForm(User::factory()->create(), 'old-token');
 
-    $newToken = $this->actingAs($agent)->postJson('/api/v1/lead-form/regenerate')->assertOk()->json('data.token');
+    $newToken = $this->actingAs($agent)->postJson(ws($agent).'/lead-form/regenerate')->assertOk()->json('data.token');
 
     expect($newToken)->not->toBe('old-token');
     $this->getJson('/api/v1/public/lead-forms/old-token')->assertNotFound();
     $this->getJson("/api/v1/public/lead-forms/{$newToken}")->assertOk();
 });
 
-it('shows only the agent’s name on the public form', function () {
-    User::factory()->create(['name' => 'Jane Agent', 'email' => 'jane@example.com', 'lead_form_token' => 'abc123']);
+it('shows only the workspace’s name on the public form', function () {
+    $agent = withLeadForm(User::factory()->create(['name' => 'Jane Agent', 'email' => 'jane@example.com']), 'abc123');
+    workspaceOf($agent)->update(['name' => 'Jane Agent Insurance']);
 
     $this->getJson('/api/v1/public/lead-forms/abc123')
         ->assertOk()
-        ->assertExactJson(['data' => ['agent' => ['name' => 'Jane Agent', 'bio' => null, 'avatar_url' => null, 'logo_url' => null]]]);
+        ->assertExactJson(['data' => ['agent' => ['name' => 'Jane Agent Insurance', 'bio' => null, 'avatar_url' => null, 'logo_url' => null]]]);
 });
 
-it('turns a public submission into a prospect for that agent', function () {
-    $agent = User::factory()->create(['lead_form_token' => 'abc123']);
+it('turns a public submission into a prospect in that workspace', function () {
+    $agent = withLeadForm(User::factory()->create(), 'abc123');
 
     $this->postJson('/api/v1/public/lead-forms/abc123', [
         'name' => 'Maria Santos',
@@ -47,7 +48,7 @@ it('turns a public submission into a prospect for that agent', function () {
         'message' => 'Family of four, looking for health coverage.',
     ])->assertCreated()->assertJson(['data' => ['submitted' => true]]);
 
-    $lead = $agent->leads()->sole();
+    $lead = workspaceOf($agent)->leads()->sole();
     expect($lead)
         ->name->toBe('Maria Santos')
         ->email->toBe('maria@example.com')
@@ -60,7 +61,7 @@ it('turns a public submission into a prospect for that agent', function () {
 });
 
 it('validates public submissions', function () {
-    User::factory()->create(['lead_form_token' => 'abc123']);
+    withLeadForm(User::factory()->create(), 'abc123');
 
     $this->postJson('/api/v1/public/lead-forms/abc123', ['name' => ''])
         ->assertUnprocessable()
@@ -70,7 +71,7 @@ it('validates public submissions', function () {
 });
 
 it('quietly drops submissions that fill the honeypot', function () {
-    User::factory()->create(['lead_form_token' => 'abc123']);
+    withLeadForm(User::factory()->create(), 'abc123');
 
     $this->postJson('/api/v1/public/lead-forms/abc123', [
         'name' => 'Bot',
@@ -86,7 +87,7 @@ it('returns 404 for unknown form links', function () {
 });
 
 it('rate limits each visitor per form by their own IP', function () {
-    User::factory()->create(['lead_form_token' => 'abc123']);
+    withLeadForm(User::factory()->create(), 'abc123');
     $payload = ['name' => 'Ana', 'phone' => '0917 555 0100'];
     $submitFrom = fn (string $ip, array $headers = []) => $this->withServerVariables(['REMOTE_ADDR' => $ip])
         ->postJson('/api/v1/public/lead-forms/abc123', $payload, $headers);
@@ -99,8 +100,9 @@ it('rate limits each visitor per form by their own IP', function () {
     $submitFrom('198.51.100.9')->assertCreated();
 });
 
-it('never exposes the form token on the user resource', function () {
-    $agent = User::factory()->create(['lead_form_token' => 'secret-token']);
+it('never exposes the form token on the user or workspace resources', function () {
+    $agent = withLeadForm(User::factory()->create(), 'secret-token');
 
-    $this->actingAs($agent)->getJson('/api/v1/auth/user')->assertOk()->assertJsonMissingPath('data.lead_form_token');
+    $this->actingAs($agent)->getJson('/api/v1/auth/user')->assertOk()->assertJsonMissingPath('data.workspaces.0.lead_form_token');
+    $this->getJson(ws($agent))->assertOk()->assertJsonMissingPath('data.lead_form_token');
 });

@@ -17,22 +17,21 @@ use App\Http\Requests\Api\V1\Products\StoreProductRequest;
 use App\Http\Requests\Api\V1\Products\UpdateProductRequest;
 use App\Http\Resources\Api\V1\ProductResource;
 use App\Models\Product;
-use App\Models\User;
-use Illuminate\Container\Attributes\CurrentUser;
+use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 
 class ProductController extends Controller
 {
-    public function index(ListProductsRequest $request, #[CurrentUser] User $agent, ListProducts $listProducts): AnonymousResourceCollection
+    public function index(ListProductsRequest $request, Workspace $workspace, ListProducts $listProducts): AnonymousResourceCollection
     {
-        return ProductResource::collection($listProducts->handle($agent, ProductFiltersData::fromArray($request->validated())));
+        return ProductResource::collection($listProducts->handle($workspace, ProductFiltersData::fromArray($request->validated())));
     }
 
-    public function store(StoreProductRequest $request, #[CurrentUser] User $agent, CreateProduct $createProduct): JsonResponse
+    public function store(StoreProductRequest $request, Workspace $workspace, CreateProduct $createProduct): JsonResponse
     {
-        return ProductResource::make($createProduct->handle($agent, ProductData::fromArray($request->validated())))
+        return ProductResource::make($createProduct->handle($workspace, ProductData::fromArray($request->validated())))
             ->response()
             ->setStatusCode(201);
     }

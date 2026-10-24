@@ -30,7 +30,7 @@ class UpdateRequirement
 
         $requirement = DB::transaction(function () use ($requirement, $received, $wasReceived, $document, $actor) {
             $requirement->update([
-                'received_on' => $received ? ($requirement->received_on ?? CarbonImmutable::now($actor->timezone)->toDateString()) : null,
+                'received_on' => $received ? ($requirement->received_on ?? CarbonImmutable::now($requirement->policy->workspace->timezone)->toDateString()) : null,
                 'document_id' => $document?->id,
             ]);
 
@@ -41,7 +41,7 @@ class UpdateRequirement
             return $requirement;
         });
 
-        Cache::tags("agent:{$requirement->policy->user_id}")->flush();
+        Cache::tags("workspace:{$requirement->policy->workspace_id}")->flush();
 
         return $requirement;
     }

@@ -6,7 +6,7 @@ namespace App\Actions\Documents;
 
 use App\DataTransferObject\Documents\DocumentFiltersData;
 use App\Models\Document;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
@@ -14,14 +14,14 @@ use Illuminate\Support\Facades\Cache;
 class ListDocuments
 {
     /**
-     * The agent's documents, newest first. Search matches the document, file or client name.
+     * The workspace's documents, newest first. Search matches the document, file or client name.
      *
      * @return LengthAwarePaginator<int, Document>
      */
-    public function handle(User $agent, DocumentFiltersData $filters): LengthAwarePaginator
+    public function handle(Workspace $workspace, DocumentFiltersData $filters): LengthAwarePaginator
     {
-        return Cache::tags("agent:{$agent->id}")->rememberForever("documents:{$agent->id}:index:".md5(json_encode($filters)), function () use ($agent, $filters) {
-            return $agent->documents()
+        return Cache::tags("workspace:{$workspace->id}")->rememberForever("documents:{$workspace->id}:index:".md5(json_encode($filters)), function () use ($workspace, $filters) {
+            return $workspace->documents()
                 ->with(['client:id,name', 'policy:id,product_name,policy_number'])
                 ->when($filters->clientId, fn (Builder $query, string $clientId) => $query->where('client_id', $clientId))
                 ->when($filters->policyId, fn (Builder $query, string $policyId) => $query->where('policy_id', $policyId))

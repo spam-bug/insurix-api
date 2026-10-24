@@ -9,12 +9,12 @@ use App\Models\User;
 
 it('lists only the agent’s own leads, newest first', function () {
     $agent = User::factory()->create();
-    $older = Lead::factory()->for($agent)->create(['created_at' => now()->subDay()]);
-    $newer = Lead::factory()->for($agent)->create();
+    $older = Lead::factory()->for(workspaceOf($agent))->create(['created_at' => now()->subDay()]);
+    $newer = Lead::factory()->for(workspaceOf($agent))->create();
     Lead::factory()->create();
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/leads')
+        ->getJson(ws($agent).'/leads')
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('data.0.id', $newer->id)
@@ -25,12 +25,12 @@ it('lists only the agent’s own leads, newest first', function () {
 
 it('filters leads by search, status and interest', function (array $query, array $expectedNames) {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->create(['name' => 'Ana Reyes', 'email' => 'ana@example.com', 'interest' => LeadInterest::Life]);
-    Lead::factory()->for($agent)->status(LeadStatus::Qualified)->create(['name' => 'Ben Cruz', 'phone' => '0917 555 0100', 'interest' => LeadInterest::Auto]);
-    Lead::factory()->for($agent)->status(LeadStatus::Lost)->create(['name' => 'Carla Diaz', 'interest' => LeadInterest::Health]);
+    Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Ana Reyes', 'email' => 'ana@example.com', 'interest' => LeadInterest::Life]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create(['name' => 'Ben Cruz', 'phone' => '0917 555 0100', 'interest' => LeadInterest::Auto]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Lost)->create(['name' => 'Carla Diaz', 'interest' => LeadInterest::Health]);
 
     $names = $this->actingAs($agent)
-        ->getJson('/api/v1/leads?'.http_build_query($query))
+        ->getJson(ws($agent).'/leads?'.http_build_query($query))
         ->assertOk()
         ->json('data.*.name');
 
@@ -47,11 +47,11 @@ it('filters leads by search, status and interest', function (array $query, array
 
 it('leaves clients out of the open leads', function () {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->create(['name' => 'Ana Reyes']);
-    Lead::factory()->for($agent)->status(LeadStatus::Converted)->create(['name' => 'Ben Cruz']);
+    Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Ana Reyes']);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create(['name' => 'Ben Cruz']);
 
     $names = $this->actingAs($agent)
-        ->getJson('/api/v1/leads?'.http_build_query(['open' => 1]))
+        ->getJson(ws($agent).'/leads?'.http_build_query(['open' => 1]))
         ->assertOk()
         ->json('data.*.name');
 
@@ -60,10 +60,10 @@ it('leaves clients out of the open leads', function () {
 
 it('paginates leads', function () {
     $agent = User::factory()->create();
-    Lead::factory()->for($agent)->count(12)->create();
+    Lead::factory()->for(workspaceOf($agent))->count(12)->create();
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/leads?'.http_build_query(['per_page' => 5, 'page' => 3]))
+        ->getJson(ws($agent).'/leads?'.http_build_query(['per_page' => 5, 'page' => 3]))
         ->assertOk()
         ->assertJsonCount(2, 'data')
         ->assertJsonPath('meta.current_page', 3)
@@ -71,12 +71,13 @@ it('paginates leads', function () {
 });
 
 it('rejects invalid filters', function () {
-    $this->actingAs(User::factory()->create())
-        ->getJson('/api/v1/leads?'.http_build_query(['status' => 'client', 'per_page' => 500]))
+    $this->actingAs($agent = User::factory()->create())
+        ->getJson(ws($agent).'/leads?'.http_build_query(['status' => 'client', 'per_page' => 500]))
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['status', 'per_page']);
 });
 
 it('requires authentication', function () {
-    $this->getJson('/api/v1/leads')->assertUnauthorized();
+    $agent = User::factory()->create();
+    $this->getJson(ws($agent).'/leads')->assertUnauthorized();
 });

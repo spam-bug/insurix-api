@@ -16,6 +16,6 @@ class GetProduct
      */
     public function handle(Product $product): Product
     {
-        return Cache::tags("agent:{$product->user_id}")->rememberForever("products:{$product->user_id}:{$product->id}", fn () => $product->loadCount(['policies as policies_count' => fn (Builder $query) => $query->where('status', '!=', PolicyStatus::Cancelled)]));
+        return Cache::tags("workspace:{$product->workspace_id}")->rememberForever("products:{$product->workspace_id}:{$product->id}", fn () => $product->loadCount(['policies as policies_count' => fn (Builder $query) => $query->where('status', '!=', PolicyStatus::Cancelled)]));
     }
 }

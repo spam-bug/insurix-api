@@ -23,7 +23,7 @@ class FollowUpFactory extends Factory
     {
         return [
             'lead_id' => Lead::factory(),
-            'user_id' => fn (array $attributes) => Lead::find($attributes['lead_id'])->user_id,
+            'workspace_id' => fn (array $attributes) => Lead::find($attributes['lead_id'])->workspace_id,
             'type' => fake()->randomElement(FollowUpType::cases()),
             'title' => fake()->sentence(4),
             'notes' => fake()->optional()->sentence(),

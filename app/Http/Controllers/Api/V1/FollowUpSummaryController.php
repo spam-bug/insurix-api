@@ -6,14 +6,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\FollowUps\SummarizeFollowUps;
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Container\Attributes\CurrentUser;
+use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 
 class FollowUpSummaryController extends Controller
 {
-    public function index(#[CurrentUser] User $agent, SummarizeFollowUps $summarizeFollowUps): JsonResponse
+    public function index(Workspace $workspace, SummarizeFollowUps $summarizeFollowUps): JsonResponse
     {
-        return response()->json(['data' => $summarizeFollowUps->handle($agent)]);
+        return response()->json(['data' => $summarizeFollowUps->handle($workspace)]);
     }
 }

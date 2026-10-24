@@ -19,7 +19,7 @@ class AuthenticatedSessionController extends Controller
     {
         $user = $logIn->handle(LoginData::fromArray([...$request->validated(), 'ip_address' => (string) $request->ip()]));
 
-        return $user ? UserResource::make($user) : response()->json(['two_factor' => true]);
+        return $user ? UserResource::make($user->load('workspaces')) : response()->json(['two_factor' => true]);
     }
 
     public function destroy(LogOut $logOut): Response

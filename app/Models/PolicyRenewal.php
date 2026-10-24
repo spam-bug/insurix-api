@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * What the agent recorded for one of a policy's renewal dates.
  */
-#[Fillable(['user_id', 'due_on', 'outcome', 'notes'])]
+#[Fillable(['workspace_id', 'due_on', 'outcome', 'notes'])]
 class PolicyRenewal extends Model
 {
     use HasUuids;

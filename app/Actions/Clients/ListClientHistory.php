@@ -22,7 +22,7 @@ class ListClientHistory
      */
     public function handle(Client $client, int $limit = 50): Collection
     {
-        return Cache::tags("agent:{$client->user_id}")->rememberForever("clients:{$client->user_id}:{$client->id}:history-{$limit}", function () use ($client, $limit) {
+        return Cache::tags("workspace:{$client->workspace_id}")->rememberForever("clients:{$client->workspace_id}:{$client->id}:history-{$limit}", function () use ($client, $limit) {
             $leadActivity = $client->lead
                 ? $client->lead->activities()->with('user:id,name')->latest()->latest('id')->limit($limit)->get()
                     ->map(fn (LeadActivity $activity) => $this->entry('lead', $activity->id, $activity->type->value, $activity->created_at, $activity->user, [
@@ -43,13 +43,14 @@ class ListClientHistory
                     'policy' => ['id' => $event->policy->id, 'product_name' => $event->policy->product_name],
                 ]));
 
+            // Documents don't record who uploaded them, so their entries have no actor.
             $documents = $client->documents()
-                ->with(['user:id,name', 'policy:id,product_name'])
+                ->with('policy:id,product_name')
                 ->latest()
                 ->latest('id')
                 ->limit($limit)
                 ->get()
-                ->map(fn (Document $document) => $this->entry('document', $document->id, 'uploaded', $document->created_at, $document->user, [
+                ->map(fn (Document $document) => $this->entry('document', $document->id, 'uploaded', $document->created_at, null, [
                     'document' => ['id' => $document->id, 'name' => $document->name, 'category' => $document->category->label()],
                     'policy' => $document->policy ? ['id' => $document->policy->id, 'product_name' => $document->policy->product_name] : null,
                 ]));

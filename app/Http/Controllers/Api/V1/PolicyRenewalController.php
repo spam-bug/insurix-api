@@ -18,9 +18,9 @@ use Illuminate\Http\JsonResponse;
 /** Renewal outcomes the agent records for a policy, answered with the updated policy. */
 class PolicyRenewalController extends Controller
 {
-    public function store(RecordRenewalRequest $request, Policy $policy, #[CurrentUser] User $agent, RecordRenewalOutcome $recordRenewalOutcome, GetPolicy $getPolicy): JsonResponse
+    public function store(RecordRenewalRequest $request, Policy $policy, #[CurrentUser] User $user, RecordRenewalOutcome $recordRenewalOutcome, GetPolicy $getPolicy): JsonResponse
     {
-        $recordRenewalOutcome->handle($policy, RenewalData::fromArray($request->validated()), $agent);
+        $recordRenewalOutcome->handle($policy, RenewalData::fromArray($request->validated()), $user);
 
         return PolicyResource::make($getPolicy->handle($policy))
             ->response()

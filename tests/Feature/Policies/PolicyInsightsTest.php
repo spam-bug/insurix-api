@@ -13,7 +13,7 @@ beforeEach(fn () => Carbon::setTestNow('2026-10-17 02:00:00'));
 
 it('flags renewals, premiums due, lapsed and long-pending policies, most urgent first', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
     $quiet = ['payment_frequency' => PaymentFrequency::Annual, 'effective_date' => '2026-03-01', 'renewal_date' => '2027-03-01'];
 
     $renewing = Policy::factory()->for($client)->create([...$quiet, 'renewal_date' => '2026-11-05']);
@@ -24,7 +24,7 @@ it('flags renewals, premiums due, lapsed and long-pending policies, most urgent 
     Policy::factory()->for($client)->create($quiet);
     Policy::factory()->for($client)->status(PolicyStatus::Cancelled)->create($quiet);
 
-    $response = $this->actingAs($agent)->getJson('/api/v1/policies/attention')->assertOk();
+    $response = $this->actingAs($agent)->getJson(ws($agent).'/policies/attention')->assertOk();
 
     expect($response->json('data.*.policy.id'))->toBe([$lapsed->id, $stuck->id, $paymentDue->id, $renewing->id])
         ->and($response->json('data.0.reasons.0.code'))->toBe('lapsed')
@@ -35,16 +35,16 @@ it('flags renewals, premiums due, lapsed and long-pending policies, most urgent 
 
 it('flags a renewal date that has passed', function () {
     $agent = User::factory()->create();
-    Policy::factory()->for(Client::factory()->for($agent))->create(['payment_frequency' => PaymentFrequency::Single, 'renewal_date' => '2026-10-01']);
+    Policy::factory()->for(Client::factory()->for(workspaceOf($agent)))->create(['payment_frequency' => PaymentFrequency::Single, 'renewal_date' => '2026-10-01']);
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/policies/attention')
+        ->getJson(ws($agent).'/policies/attention')
         ->assertJsonPath('data.0.reasons.0.code', 'renewal_overdue');
 });
 
 it('summarizes commission received, receivable and expected', function () {
     $agent = User::factory()->create();
-    $client = Client::factory()->for($agent)->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
     // 2,000 a month at 25% is 6,000 a year in commission.
     $monthly = ['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25];
 
@@ -56,7 +56,7 @@ it('summarizes commission received, receivable and expected', function () {
     Policy::factory()->create($monthly);
 
     $this->actingAs($agent)
-        ->getJson('/api/v1/commissions/summary')
+        ->getJson(ws($agent).'/commissions/summary')
         ->assertOk()
         ->assertExactJson(['data' => [
             'received_this_year' => 6000,

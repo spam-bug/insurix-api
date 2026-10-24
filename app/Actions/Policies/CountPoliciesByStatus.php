@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace App\Actions\Policies;
 
 use App\Enums\PolicyStatus;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Cache;
 
 class CountPoliciesByStatus
 {
     /**
-     * Counts every status for the agent, including those with no policies, plus a total.
+     * Counts every status in the workspace, including those with no policies, plus a total.
      *
      * @return array<string, int>
      */
-    public function handle(User $agent): array
+    public function handle(Workspace $workspace): array
     {
-        return Cache::tags("agent:{$agent->id}")->rememberForever("policies:{$agent->id}:status-counts", function () use ($agent) {
-            $counts = $agent->policies()
+        return Cache::tags("workspace:{$workspace->id}")->rememberForever("policies:{$workspace->id}:status-counts", function () use ($workspace) {
+            $counts = $workspace->policies()
                 ->toBase()
                 ->selectRaw('status, count(*) as aggregate')
                 ->groupBy('status')

@@ -13,15 +13,14 @@ use App\Http\Requests\Api\V1\Clients\ListClientsRequest;
 use App\Http\Requests\Api\V1\Clients\UpdateClientRequest;
 use App\Http\Resources\Api\V1\ClientResource;
 use App\Models\Client;
-use App\Models\User;
-use Illuminate\Container\Attributes\CurrentUser;
+use App\Models\Workspace;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ClientController extends Controller
 {
-    public function index(ListClientsRequest $request, #[CurrentUser] User $agent, ListClients $listClients): AnonymousResourceCollection
+    public function index(ListClientsRequest $request, Workspace $workspace, ListClients $listClients): AnonymousResourceCollection
     {
-        return ClientResource::collection($listClients->handle($agent, ClientFiltersData::fromArray($request->validated())));
+        return ClientResource::collection($listClients->handle($workspace, ClientFiltersData::fromArray($request->validated())));
     }
 
     public function show(Client $client): ClientResource

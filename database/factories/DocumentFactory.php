@@ -23,7 +23,7 @@ class DocumentFactory extends Factory
     {
         return [
             'client_id' => Client::factory(),
-            'user_id' => fn (array $attributes) => Client::find($attributes['client_id'])->user_id,
+            'workspace_id' => fn (array $attributes) => Client::find($attributes['client_id'])->workspace_id,
             'policy_id' => null,
             'category' => DocumentCategory::Other,
             'name' => fake()->words(3, true),
