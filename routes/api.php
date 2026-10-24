@@ -59,6 +59,8 @@ use App\Http\Controllers\Api\V1\PolicyPremiumMixController;
 use App\Http\Controllers\Api\V1\PolicyRenewalController;
 use App\Http\Controllers\Api\V1\PolicyStatusCountController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ProductSuggestionController;
+use App\Http\Controllers\Api\V1\ProductSummaryController;
 use App\Http\Controllers\Api\V1\PublicLeadFormController;
 use App\Http\Controllers\Api\V1\RequirementController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
@@ -148,6 +150,9 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/products', [ProductController::class, 'index']);
             Route::post('/products', [ProductController::class, 'store']);
+            Route::get('/products/summary', [ProductSummaryController::class, 'index']);
+            Route::get('/products/suggestions', [ProductSuggestionController::class, 'index']);
+            Route::post('/products/suggestions', [ProductSuggestionController::class, 'store']);
             Route::get('/products/{product}', [ProductController::class, 'show'])->can('view', 'product');
             Route::put('/products/{product}', [ProductController::class, 'update']);
             Route::delete('/products/{product}', [ProductController::class, 'destroy'])->can('delete', 'product');
