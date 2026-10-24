@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\FollowUps;
 
+use App\Enums\FollowUpType;
 use App\Enums\FollowUpWindow;
 use App\Models\FollowUp;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -26,6 +27,9 @@ class ListFollowUpsRequest extends FormRequest
             'window' => ['nullable', Rule::enum(FollowUpWindow::class)],
             'lead_id' => ['nullable', 'uuid'],
             'client_id' => ['nullable', 'uuid'],
+            'type' => ['nullable', Rule::enum(FollowUpType::class)],
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];

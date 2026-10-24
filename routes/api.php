@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\V1\ClientSummaryController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DocumentDownloadController;
+use App\Http\Controllers\Api\V1\FollowUpCalendarController;
 use App\Http\Controllers\Api\V1\FollowUpCompletionController;
 use App\Http\Controllers\Api\V1\FollowUpController;
 use App\Http\Controllers\Api\V1\FollowUpSummaryController;
@@ -180,6 +181,7 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/follow-ups', [FollowUpController::class, 'index']);
             Route::get('/follow-ups/summary', [FollowUpSummaryController::class, 'index']);
+            Route::get('/follow-ups/calendar', [FollowUpCalendarController::class, 'index']);
             Route::post('/leads/{lead}/follow-ups', [LeadFollowUpController::class, 'store']);
             Route::post('/clients/{client}/follow-ups', [ClientFollowUpController::class, 'store']);
             Route::put('/follow-ups/{followUp}', [FollowUpController::class, 'update']);

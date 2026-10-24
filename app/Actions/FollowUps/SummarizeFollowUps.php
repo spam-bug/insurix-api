@@ -12,9 +12,9 @@ class SummarizeFollowUps
 {
     /**
      * Counts of the agent's open follow-ups: overdue, still due later today, and due in the
-     * seven days after today.
+     * seven days after today. Also how many were done since Monday, in the workspace's timezone.
      *
-     * @return array{overdue: int, due_today: int, upcoming: int}
+     * @return array{overdue: int, due_today: int, upcoming: int, done_this_week: int}
      */
     public function handle(Workspace $workspace): array
     {
@@ -35,6 +35,9 @@ class SummarizeFollowUps
                 'overdue' => (int) ($counts->overdue ?? 0),
                 'due_today' => (int) ($counts->due_today ?? 0),
                 'upcoming' => (int) ($counts->upcoming ?? 0),
+                'done_this_week' => $workspace->followUps()
+                    ->where('completed_at', '>=', CarbonImmutable::now($workspace->timezone)->startOfWeek()->utc())
+                    ->count(),
             ];
         });
     }
