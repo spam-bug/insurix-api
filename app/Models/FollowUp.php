@@ -46,6 +46,16 @@ class FollowUp extends Model
         return $this->belongsTo(Client::class);
     }
 
+    /**
+     * The policy a renewal or premium reminder is for.
+     *
+     * @return BelongsTo<Policy, $this>
+     */
+    public function policy(): BelongsTo
+    {
+        return $this->belongsTo(Policy::class);
+    }
+
     public function isOverdue(): bool
     {
         return $this->completed_at === null && $this->due_at->isPast();

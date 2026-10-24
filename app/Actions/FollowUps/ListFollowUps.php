@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Actions\FollowUps;
 
 use App\DataTransferObject\FollowUps\FollowUpFiltersData;
+use App\Enums\FollowUpType;
 use App\Enums\FollowUpWindow;
+use App\Http\Resources\Api\V1\FollowUpResource;
 use App\Models\FollowUp;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -26,9 +28,12 @@ class ListFollowUps
             $endOfToday = CarbonImmutable::now($workspace->timezone)->endOfDay()->utc();
 
             $query = $workspace->followUps()
-                ->with(['lead:id,name,status', 'client:id,name'])
+                ->with(FollowUpResource::RELATIONS)
                 ->when($filters->leadId, fn (Builder $query, string $leadId) => $query->where('lead_id', $leadId))
-                ->when($filters->clientId, fn (Builder $query, string $clientId) => $query->where('client_id', $clientId));
+                ->when($filters->clientId, fn (Builder $query, string $clientId) => $query->where('client_id', $clientId))
+                ->when($filters->type, fn (Builder $query, FollowUpType $type) => $query->where('type', $type))
+                ->when($filters->from, fn (Builder $query, string $from) => $query->where('due_at', '>=', CarbonImmutable::parse($from, $workspace->timezone)->startOfDay()->utc()))
+                ->when($filters->to, fn (Builder $query, string $to) => $query->where('due_at', '<=', CarbonImmutable::parse($to, $workspace->timezone)->endOfDay()->utc()));
 
             match ($filters->window) {
                 FollowUpWindow::Today => $query->whereNull('completed_at')->where('due_at', '<=', $endOfToday),

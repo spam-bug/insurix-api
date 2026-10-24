@@ -16,7 +16,7 @@ class LeadFollowUpController extends Controller
 {
     public function store(StoreFollowUpRequest $request, Lead $lead, CreateFollowUp $createFollowUp): JsonResponse
     {
-        return FollowUpResource::make($createFollowUp->handle($lead, FollowUpData::fromArray($request->validated()))->load('lead', 'client'))
+        return FollowUpResource::make($createFollowUp->handle($lead, FollowUpData::fromArray($request->validated()))->load(FollowUpResource::RELATIONS))
             ->response()
             ->setStatusCode(201);
     }

@@ -17,11 +17,11 @@ class FollowUpCompletionController extends Controller
 {
     public function store(FollowUp $followUp, #[CurrentUser] User $user, CompleteFollowUp $completeFollowUp): FollowUpResource
     {
-        return FollowUpResource::make($completeFollowUp->handle($followUp, $user)->load('lead'));
+        return FollowUpResource::make($completeFollowUp->handle($followUp, $user)->load(FollowUpResource::RELATIONS));
     }
 
     public function destroy(FollowUp $followUp, ReopenFollowUp $reopenFollowUp): FollowUpResource
     {
-        return FollowUpResource::make($reopenFollowUp->handle($followUp)->load('lead'));
+        return FollowUpResource::make($reopenFollowUp->handle($followUp)->load(FollowUpResource::RELATIONS));
     }
 }

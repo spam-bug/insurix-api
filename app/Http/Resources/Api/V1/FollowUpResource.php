@@ -13,9 +13,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class FollowUpResource extends JsonResource
 {
+    /** What the resource shows about the person and policy; load these wherever it's returned. */
+    public const RELATIONS = ['lead:id,name,phone,email', 'client:id,name,phone,email', 'policy:id,product_name'];
+
     /**
-     * Transform the resource into an array.
-     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -28,8 +29,9 @@ class FollowUpResource extends JsonResource
             'due_at' => $this->due_at->toIso8601String(),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'is_overdue' => $this->isOverdue(),
-            'lead' => $this->whenLoaded('lead', fn () => $this->lead ? ['id' => $this->lead->id, 'name' => $this->lead->name] : null),
-            'client' => $this->whenLoaded('client', fn () => $this->client ? ['id' => $this->client->id, 'name' => $this->client->name] : null),
+            'lead' => $this->whenLoaded('lead', fn () => $this->lead?->only('id', 'name', 'phone', 'email')),
+            'client' => $this->whenLoaded('client', fn () => $this->client?->only('id', 'name', 'phone', 'email')),
+            'policy' => $this->whenLoaded('policy', fn () => $this->policy?->only('id', 'product_name')),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

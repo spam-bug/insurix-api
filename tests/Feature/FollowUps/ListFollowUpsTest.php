@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Client;
 use App\Models\FollowUp;
 use App\Models\Lead;
+use App\Models\Policy;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -81,7 +82,50 @@ it('summarizes open follow-ups', function () {
     $this->actingAs($agent)
         ->getJson(ws($agent).'/follow-ups/summary')
         ->assertOk()
-        ->assertExactJson(['data' => ['overdue' => 1, 'due_today' => 1, 'upcoming' => 1]]);
+        ->assertJsonPath('data.overdue', 1)
+        ->assertJsonPath('data.due_today', 1)
+        ->assertJsonPath('data.upcoming', 1)
+        ->assertJsonPath('data.done_this_week', 1);
+
+    $byType = $this->getJson(ws($agent).'/follow-ups/summary')->json('data.open_by_type');
+    expect($byType)->toHaveKeys(['call', 'message', 'email', 'meeting', 'task'])
+        ->and(array_sum($byType))->toBe(4);
+});
+
+it('counts open follow-ups per day for the week strip, overdue apart', function () {
+    $agent = User::factory()->create();
+    followUpsFor($agent);
+
+    $response = $this->actingAs($agent)->getJson(ws($agent).'/follow-ups/calendar')->assertOk();
+
+    expect($response->json('data.overdue'))->toBe(1)
+        ->and($response->json('data.days'))->toHaveCount(7)
+        ->and($response->json('data.days.0'))->toBe(['date' => '2026-10-17', 'count' => 1])
+        ->and($response->json('data.days.1'))->toBe(['date' => '2026-10-18', 'count' => 1]);
+});
+
+it('filters follow-ups by type and by due day in the agent’s timezone', function () {
+    $agent = User::factory()->create();
+    $followUps = followUpsFor($agent);
+    $followUps['tomorrow']->update(['type' => 'meeting']);
+
+    $this->actingAs($agent);
+    $this->getJson(ws($agent).'/follow-ups?'.http_build_query(['from' => '2026-10-18', 'to' => '2026-10-18']))
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $followUps['tomorrow']->id);
+    expect($this->getJson(ws($agent).'/follow-ups?type=meeting')->json('data.*.id'))->toContain($followUps['tomorrow']->id)
+        ->and($this->getJson(ws($agent).'/follow-ups/calendar?type=meeting')->json('data.days.1.count'))->toBe(1);
+});
+
+it('shows the person’s contact details and the policy a reminder is for', function () {
+    $agent = User::factory()->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create(['phone' => '+639170000000']);
+    $policy = Policy::factory()->for($client)->create(['product_name' => 'PRULink']);
+    FollowUp::factory()->forClient($client)->create(['policy_id' => $policy->id]);
+
+    $this->actingAs($agent)->getJson(ws($agent).'/follow-ups')
+        ->assertJsonPath('data.0.client.phone', '+639170000000')
+        ->assertJsonPath('data.0.policy', ['id' => $policy->id, 'product_name' => 'PRULink']);
 });
 
 it('requires authentication', function () {
