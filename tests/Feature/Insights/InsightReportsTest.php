@@ -7,19 +7,21 @@ use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
+use App\Enums\RenewalOutcome;
 use App\Enums\RenewalTerm;
 use App\Models\Client;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\Policy;
+use App\Models\PolicyRenewal;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
 beforeEach(fn () => Carbon::setTestNow('2026-10-17 02:00:00'));
 
-function reports(User $agent): array
+function reports(User $agent, string $query = ''): array
 {
-    return test()->actingAs($agent)->getJson(ws($agent).'/insights/reports')->assertOk()->json('data');
+    return test()->actingAs($agent)->getJson(ws($agent).'/insights/reports'.$query)->assertOk()->json('data');
 }
 
 it('needs a signed-in agent', function () {
@@ -45,7 +47,7 @@ it('measures conversion by lead source, sources with enough leads first', functi
     ]);
 });
 
-it('measures how long leads promoted in the last year took to become clients', function () {
+it('measures how long leads promoted in the period took to become clients', function () {
     $agent = User::factory()->create();
     $promoted = fn (string $added, string $promotedAt) => LeadActivity::factory()
         ->for(Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create(['created_at' => $added]))
@@ -57,7 +59,8 @@ it('measures how long leads promoted in the last year took to become clients', f
     $promoted('2025-01-01', '2025-02-01');
     LeadActivity::factory()->create(['type' => LeadActivityType::Promoted]);
 
-    expect(reports($agent)['pipeline_speed'])->toBe(['average_days' => 14, 'median_days' => 10, 'converted' => 3]);
+    expect(reports($agent, '?period=year')['pipeline_speed'])->toBe(['average_days' => 14, 'median_days' => 10, 'converted' => 3])
+        ->and(reports($agent)['pipeline_speed'])->toBe(['average_days' => null, 'median_days' => null, 'converted' => 0]);
 });
 
 it('has no pipeline speed before any lead is promoted', function () {
@@ -137,7 +140,7 @@ it('ranks products by the commission their policies earn', function () {
     ]);
 });
 
-it('charts commission received over the last twelve months', function () {
+it('charts commission received over the twelve months up to the period', function () {
     $agent = User::factory()->create();
     $client = Client::factory()->for(workspaceOf($agent))->create();
     $monthly = ['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25];
@@ -151,4 +154,89 @@ it('charts commission received over the last twelve months', function () {
         ->and($months[0])->toEqual(['month' => '2025-11', 'received' => 0, 'policies' => 0])
         ->and($months[1])->toEqual(['month' => '2025-12', 'received' => 6000, 'policies' => 1])
         ->and($months[11])->toEqual(['month' => '2026-10', 'received' => 12000, 'policies' => 2]);
+
+    $lastYear = reports($agent, '?period=year&offset=1')['commission_by_month'];
+
+    expect($lastYear[0]['month'])->toBe('2025-01')
+        ->and($lastYear[9])->toEqual(['month' => '2025-10', 'received' => 6000, 'policies' => 1])
+        ->and($lastYear[11])->toEqual(['month' => '2025-12', 'received' => 6000, 'policies' => 1]);
+});
+
+it('describes the chosen period and steps back to earlier ones', function () {
+    $agent = User::factory()->create();
+
+    expect(reports($agent)['period'])->toBe([
+        'value' => 'month', 'offset' => 0, 'label' => 'October 2026', 'previous_label' => 'September 2026',
+        'starts_on' => '2026-10-01', 'ends_on' => '2026-10-31',
+    ])
+        ->and(reports($agent, '?period=quarter&offset=1')['period'])->toBe([
+            'value' => 'quarter', 'offset' => 1, 'label' => 'Q3 2026', 'previous_label' => 'Q2 2026',
+            'starts_on' => '2026-07-01', 'ends_on' => '2026-09-30',
+        ])
+        ->and(reports($agent, '?period=year&offset=2')['period']['label'])->toBe('2024');
+});
+
+it('rejects an unknown period or a negative offset', function () {
+    $agent = User::factory()->create();
+
+    $this->actingAs($agent)->getJson(ws($agent).'/insights/reports?period=week&offset=-1')
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['period', 'offset']);
+});
+
+it('measures the period figures next to the period before', function () {
+    $agent = User::factory()->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
+    $policy = Policy::factory()->for($client)->create(['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25, 'commission_received_at' => '2026-10-02']);
+    Policy::factory()->for($client)->create(['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25, 'commission_received_at' => '2026-09-30']);
+    $lead = fn (string $addedAt) => Lead::factory()->for(workspaceOf($agent))->create(['created_at' => $addedAt]);
+    $closed = fn (string $at, ?LeadStatus $lostTo = null) => LeadActivity::factory()->for($lead('2026-08-01'))->create($lostTo
+        ? ['type' => LeadActivityType::StatusChanged, 'properties' => ['from' => 'contacted', 'to' => $lostTo->value], 'created_at' => $at]
+        : ['type' => LeadActivityType::Promoted, 'created_at' => $at]);
+    $outcome = fn (string $dueOn, RenewalOutcome $outcome) => PolicyRenewal::forceCreate([
+        'policy_id' => $policy->id, 'workspace_id' => workspaceOf($agent)->id, 'due_on' => $dueOn, 'outcome' => $outcome,
+    ]);
+
+    $lead('2026-10-05');
+    $lead('2026-10-10');
+    $lead('2026-09-15');
+    $closed('2026-10-03');
+    $closed('2026-10-04');
+    $closed('2026-10-06', LeadStatus::Lost);
+    $closed('2026-10-07', LeadStatus::Qualified);
+    $closed('2026-09-20', LeadStatus::Lost);
+    $outcome('2026-10-01', RenewalOutcome::Renewed);
+    $outcome('2026-10-09', RenewalOutcome::Lapsed);
+    Lead::factory()->create(['created_at' => '2026-10-05']);
+
+    expect(reports($agent)['figures'])->toEqual([
+        'current' => ['new_leads' => 2, 'won' => 2, 'lost' => 1, 'win_rate_percent' => 67, 'commission_received' => 6000, 'renewals_recorded' => 2, 'renewal_rate_percent' => 50],
+        'previous' => ['new_leads' => 1, 'won' => 0, 'lost' => 1, 'win_rate_percent' => 0, 'commission_received' => 6000, 'renewals_recorded' => 0, 'renewal_rate_percent' => null],
+    ]);
+});
+
+it('builds a funnel of how far the leads added in the period got, lost leads included', function () {
+    $agent = User::factory()->create();
+    $lead = fn (LeadStatus $status, array $history = []) => tap(
+        Lead::factory()->for(workspaceOf($agent))->status($status)->create(['created_at' => '2026-10-05']),
+        fn (Lead $lead) => collect($history)->each(fn (array $change) => LeadActivity::factory()->for($lead)->create(['type' => LeadActivityType::StatusChanged, 'properties' => $change])),
+    );
+
+    $lead(LeadStatus::Prospect);
+    $lead(LeadStatus::Contacted);
+    $lead(LeadStatus::Qualified);
+    $lead(LeadStatus::Converted);
+    $lead(LeadStatus::Lost, [['from' => 'prospect', 'to' => 'meeting_scheduled'], ['from' => 'meeting_scheduled', 'to' => 'lost']]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create(['created_at' => '2026-09-05']);
+
+    expect(reports($agent)['funnel'])->toBe([
+        'stages' => [
+            ['status' => 'prospect', 'label' => 'Prospect', 'reached' => 5, 'conversion_percent' => null],
+            ['status' => 'contacted', 'label' => 'Contacted', 'reached' => 4, 'conversion_percent' => 80],
+            ['status' => 'meeting_scheduled', 'label' => 'Meeting scheduled', 'reached' => 3, 'conversion_percent' => 75],
+            ['status' => 'qualified', 'label' => 'Qualified', 'reached' => 2, 'conversion_percent' => 67],
+            ['status' => 'converted', 'label' => 'Client', 'reached' => 1, 'conversion_percent' => 50],
+        ],
+        'lost' => 1,
+    ]);
 });

@@ -10,18 +10,18 @@ use Carbon\CarbonImmutable;
 class ChartCommissionByMonth
 {
     /**
-     * Commission marked received in each of the last $months calendar months, oldest first,
-     * this month included. Empty months are listed with zero.
+     * Commission marked received in each of the $months calendar months up to and including
+     * $lastMonth, oldest first. Empty months are listed with zero.
      *
      * @return array<int, array{month: string, received: float, policies: int}>
      */
-    public function handle(Workspace $workspace, int $months = 12): array
+    public function handle(Workspace $workspace, CarbonImmutable $lastMonth, int $months = 12): array
     {
-        $firstMonth = CarbonImmutable::now($workspace->timezone)->startOfMonth()->subMonths($months - 1);
+        $firstMonth = $lastMonth->startOfMonth()->subMonthsNoOverflow($months - 1);
 
         $byMonth = $workspace->policies()
             ->toBase()
-            ->where('commission_received_at', '>=', $firstMonth->toDateString())
+            ->whereBetween('commission_received_at', [$firstMonth->toDateString(), $lastMonth->endOfMonth()->toDateTimeString()])
             ->selectRaw('commission_received_at, sum(commission) as received, count(*) as policies')
             ->groupBy('commission_received_at')
             ->get()

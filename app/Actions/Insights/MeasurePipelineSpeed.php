@@ -13,17 +13,17 @@ class MeasurePipelineSpeed
 {
     /**
      * "How long does a lead take to become a client?": days from a lead being added to its
-     * promotion, over leads promoted in the last 12 months. Null days when none were.
+     * promotion, over leads promoted between $start and $end. Null days when none were.
      *
      * @return array{average_days: int|null, median_days: int|null, converted: int}
      */
-    public function handle(Workspace $workspace): array
+    public function handle(Workspace $workspace, CarbonImmutable $start, CarbonImmutable $end): array
     {
         $days = LeadActivity::query()
             ->join('leads', 'leads.id', '=', 'lead_activities.lead_id')
             ->where('leads.workspace_id', $workspace->id)
             ->where('lead_activities.type', LeadActivityType::Promoted)
-            ->where('lead_activities.created_at', '>=', CarbonImmutable::now()->subYear())
+            ->whereBetween('lead_activities.created_at', [$start->utc(), $end->utc()])
             ->toBase()
             ->get(['leads.created_at as added_at', 'lead_activities.created_at as promoted_at'])
             ->map(fn (object $row) => (int) CarbonImmutable::parse($row->added_at)->diffInDays(CarbonImmutable::parse($row->promoted_at)))
