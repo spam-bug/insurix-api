@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Enums\FollowUpType;
+use App\Models\Client;
 use App\Models\FollowUp;
 use App\Models\Lead;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -40,5 +41,11 @@ class FollowUpFactory extends Factory
     public function completed(): static
     {
         return $this->state(fn (array $attributes) => ['completed_at' => now()]);
+    }
+
+    /** A follow-up on a client who has no lead, such as one added directly. */
+    public function forClient(Client $client): static
+    {
+        return $this->state(fn (array $attributes) => ['lead_id' => null, 'client_id' => $client->id, 'workspace_id' => $client->workspace_id]);
     }
 }
