@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
 use App\Models\Client;
+use App\Models\FollowUp;
 use App\Models\Lead;
 use App\Models\User;
 
@@ -124,4 +125,14 @@ it('counts converted leads', function () {
         ->getJson(ws($agent).'/leads/status-counts')
         ->assertJsonPath('data.converted', 1)
         ->assertJsonPath('data.total', 1);
+});
+
+it('moves the lead’s follow-ups to the new client', function () {
+    $agent = User::factory()->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create();
+    $followUp = FollowUp::factory()->for($lead)->create();
+
+    $clientId = $this->actingAs($agent)->postJson(ws($agent)."/leads/{$lead->id}/promote")->assertCreated()->json('data.id');
+
+    expect($followUp->fresh())->client_id->toBe($clientId)->lead_id->toBe($lead->id);
 });

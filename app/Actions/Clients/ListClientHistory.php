@@ -6,6 +6,7 @@ namespace App\Actions\Clients;
 
 use App\Models\Client;
 use App\Models\Document;
+use App\Models\FollowUp;
 use App\Models\LeadActivity;
 use App\Models\PolicyEvent;
 use Illuminate\Support\Collection;
@@ -17,6 +18,8 @@ class ListClientHistory
      * Everything that happened with the client, newest first, as one list: the activity of
      * the lead they were promoted from, the timeline of each of their policies, and the
      * documents uploaded for them. Documents count from their upload; a deleted one drops out.
+     * Follow-ups completed without a lead (a client added directly) have no lead activity, so
+     * they're listed from the follow-ups themselves.
      *
      * @return Collection<int, array<string, mixed>>
      */
@@ -55,7 +58,18 @@ class ListClientHistory
                     'policy' => $document->policy ? ['id' => $document->policy->id, 'product_name' => $document->policy->product_name] : null,
                 ]));
 
+            $completedFollowUps = $client->followUps()
+                ->whereNull('lead_id')
+                ->whereNotNull('completed_at')
+                ->latest('completed_at')
+                ->limit($limit)
+                ->get()
+                ->map(fn (FollowUp $followUp) => $this->entry('follow_up', $followUp->id, 'completed', $followUp->completed_at, null, [
+                    'follow_up' => ['type' => $followUp->type->value, 'title' => $followUp->title],
+                ]));
+
             return $leadActivity
+                ->concat($completedFollowUps)
                 ->concat($policyEvents)
                 ->concat($documents)
                 ->sortByDesc(fn (array $entry) => [$entry['created_at'], $entry['id']])

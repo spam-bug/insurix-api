@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\FollowUpType;
 use App\Enums\LeadActivityType;
 use App\Enums\LeadStatus;
+use App\Models\Client;
 use App\Models\FollowUp;
 use App\Models\Lead;
 use App\Models\User;
@@ -140,4 +141,42 @@ it('adds a follow-up due now for a shareable form submission', function () {
     expect($followUp->type)->toBe(FollowUpType::Call)
         ->and($followUp->title)->toBe('Reach out to Gregoria de Jesus: sent your form')
         ->and($followUp->due_at->toDateTimeString())->toBe('2026-10-17 02:00:00');
+});
+
+it('adds a follow-up to a client without a lead, and shows it in their history once done', function () {
+    $agent = User::factory()->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
+
+    $id = $this->actingAs($agent)
+        ->postJson(ws($agent)."/clients/{$client->id}/follow-ups", ['type' => 'call', 'title' => 'Welcome call', 'due_at' => '2026-10-20T09:30:00+08:00'])
+        ->assertCreated()
+        ->assertJsonPath('data.client.id', $client->id)
+        ->assertJsonPath('data.lead', null)
+        ->json('data.id');
+
+    $this->postJson(ws($agent)."/follow-ups/{$id}/complete")->assertOk();
+
+    $this->getJson(ws($agent)."/clients/{$client->id}/history")
+        ->assertJsonPath('data.0.source', 'follow_up')
+        ->assertJsonPath('data.0.follow_up.title', 'Welcome call');
+});
+
+it('links a promoted client’s new follow-ups to their lead as well', function () {
+    $agent = User::factory()->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create(['lead_id' => $lead->id]);
+
+    $this->actingAs($agent)
+        ->postJson(ws($agent)."/clients/{$client->id}/follow-ups", ['type' => 'call', 'title' => 'Check in', 'due_at' => '2026-10-20T09:30:00+08:00'])
+        ->assertCreated()
+        ->assertJsonPath('data.lead.id', $lead->id);
+});
+
+it('forbids adding a follow-up to another workspace’s client', function () {
+    $agent = User::factory()->create();
+    $client = Client::factory()->for(workspaceOf(User::factory()->create()))->create();
+
+    $this->actingAs($agent)
+        ->postJson(ws($agent)."/clients/{$client->id}/follow-ups", ['type' => 'call', 'title' => 'Nope', 'due_at' => '2026-10-20T09:30:00+08:00'])
+        ->assertNotFound();
 });

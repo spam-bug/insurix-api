@@ -6,6 +6,7 @@ namespace App\Actions\FollowUps;
 
 use App\Actions\Leads\ScoreLead;
 use App\DataTransferObject\FollowUps\FollowUpData;
+use App\Models\Client;
 use App\Models\FollowUp;
 use App\Models\Lead;
 use App\Models\Policy;
@@ -17,26 +18,33 @@ class CreateFollowUp
     public function __construct(private ScoreLead $scoreLead) {}
 
     /**
-     * Adds a follow-up for the lead, owned by the lead's agent. A follow-up already past due
-     * lowers the lead's score, so the score is brought up to date.
-     * Reminders created from a policy carry the policy and a key, so each is only made once.
+     * Adds a follow-up for a lead or a client. It's linked to both when the person is both (a
+     * promoted lead), so it shows on the lead and the client. A follow-up already past due lowers
+     * the lead's score, so the score is brought up to date. Reminders created from a policy carry
+     * the policy and a key, so each is only made once.
      */
-    public function handle(Lead $lead, FollowUpData $data, ?Policy $policy = null, ?string $reminderKey = null): FollowUp
+    public function handle(Lead|Client $person, FollowUpData $data, ?Policy $policy = null, ?string $reminderKey = null): FollowUp
     {
-        $followUp = DB::transaction(function () use ($lead, $data, $policy, $reminderKey) {
-            $followUp = $lead->followUps()->create([
+        $lead = $person instanceof Lead ? $person : $person->lead;
+
+        $followUp = DB::transaction(function () use ($person, $lead, $data, $policy, $reminderKey) {
+            $followUp = FollowUp::create([
                 ...$data->toArray(),
+                'workspace_id' => $person->workspace_id,
+                'lead_id' => $lead?->id,
+                'client_id' => $person instanceof Client ? $person->id : $person->client?->id,
                 'policy_id' => $policy?->id,
                 'reminder_key' => $reminderKey,
-                'workspace_id' => $lead->workspace_id,
             ]);
 
-            $this->scoreLead->handle($lead);
+            if ($lead) {
+                $this->scoreLead->handle($lead);
+            }
 
             return $followUp;
         });
 
-        Cache::tags("workspace:{$lead->workspace_id}")->flush();
+        Cache::tags("workspace:{$person->workspace_id}")->flush();
 
         return $followUp;
     }

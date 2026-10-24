@@ -57,11 +57,20 @@ it('reminds the agent about a premium due this week, right away when its hour ha
         ->and($followUp->due_at->toDateTimeString())->toBe('2026-10-17 02:00:00');
 });
 
-it('skips policies that are not in force or whose client has no lead', function () {
+it('skips policies that are not in force', function () {
     $agent = User::factory()->create();
     $dueSoon = ['payment_frequency' => PaymentFrequency::Annual, 'effective_date' => '2026-03-01', 'renewal_date' => '2026-11-01'];
     Policy::factory()->for(clientWithLead($agent))->status(PolicyStatus::Lapsed)->create($dueSoon);
-    Policy::factory()->for(Client::factory()->for(workspaceOf($agent)))->create($dueSoon);
 
     $this->artisan('policies:queue-follow-ups')->expectsOutputToContain('Created 0 policy follow-ups.');
+});
+
+it('reminds the agent about a client added without a lead, on the client', function () {
+    $agent = User::factory()->create();
+    $client = Client::factory()->for(workspaceOf($agent))->create();
+    Policy::factory()->for($client)->create(['payment_frequency' => PaymentFrequency::Annual, 'effective_date' => '2026-03-01', 'renewal_date' => '2026-11-01']);
+
+    $this->artisan('policies:queue-follow-ups')->assertSuccessful();
+
+    expect($client->followUps()->sole())->lead_id->toBeNull()->policy_id->not->toBeNull();
 });

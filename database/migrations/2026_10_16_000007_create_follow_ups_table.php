@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Things the agent means to do for a lead (or the client it became) by a due time.
+     * Things the agent means to do for a lead or a client by a due time. A lead's follow-ups
+     * also get the client once it's promoted; a client added directly has no lead.
      * Follow-ups created for a policy (a renewal or a premium due) point to it; the reminder
      * key, such as "renewal:2027-08-01", keeps the same reminder from being created twice.
      */
@@ -18,7 +19,8 @@ return new class extends Migration
         Schema::create('follow_ups', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('lead_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('lead_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignUuid('client_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignUuid('policy_id')->nullable()->constrained()->nullOnDelete();
             $table->string('reminder_key', 60)->nullable();
             $table->string('type', 30);
@@ -30,6 +32,7 @@ return new class extends Migration
 
             $table->index(['workspace_id', 'completed_at', 'due_at']);
             $table->index(['lead_id', 'completed_at']);
+            $table->index(['client_id', 'completed_at']);
             $table->unique(['policy_id', 'reminder_key']);
         });
     }

@@ -26,8 +26,9 @@ class ListFollowUps
             $endOfToday = CarbonImmutable::now($workspace->timezone)->endOfDay()->utc();
 
             $query = $workspace->followUps()
-                ->with(['lead:id,name,status', 'lead.client:id,lead_id'])
-                ->when($filters->leadId, fn (Builder $query, string $leadId) => $query->where('lead_id', $leadId));
+                ->with(['lead:id,name,status', 'client:id,name'])
+                ->when($filters->leadId, fn (Builder $query, string $leadId) => $query->where('lead_id', $leadId))
+                ->when($filters->clientId, fn (Builder $query, string $clientId) => $query->where('client_id', $clientId));
 
             match ($filters->window) {
                 FollowUpWindow::Today => $query->whereNull('completed_at')->where('due_at', '<=', $endOfToday),

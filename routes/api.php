@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\BulkPolicyFollowUpController;
 use App\Http\Controllers\Api\V1\BulkPolicyStatusController;
 use App\Http\Controllers\Api\V1\ClientController;
 use App\Http\Controllers\Api\V1\ClientDocumentController;
+use App\Http\Controllers\Api\V1\ClientFollowUpController;
 use App\Http\Controllers\Api\V1\ClientHistoryController;
 use App\Http\Controllers\Api\V1\ClientPolicyController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
@@ -175,6 +176,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/follow-ups', [FollowUpController::class, 'index']);
             Route::get('/follow-ups/summary', [FollowUpSummaryController::class, 'index']);
             Route::post('/leads/{lead}/follow-ups', [LeadFollowUpController::class, 'store']);
+            Route::post('/clients/{client}/follow-ups', [ClientFollowUpController::class, 'store']);
             Route::put('/follow-ups/{followUp}', [FollowUpController::class, 'update']);
             Route::delete('/follow-ups/{followUp}', [FollowUpController::class, 'destroy'])->can('delete', 'followUp');
             Route::post('/follow-ups/{followUp}/complete', [FollowUpCompletionController::class, 'store'])->can('update', 'followUp');
