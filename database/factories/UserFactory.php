@@ -25,7 +25,7 @@ class UserFactory extends Factory
      *
      * @return array<string, mixed>
      */
-    /** Everyone starts with a workspace of their own, as registering gives them. */
+    /** Every test user owns a workspace, as if they had finished onboarding. */
     public function configure(): static
     {
         return $this->afterCreating(fn (User $user) => Workspace::factory()->ownedBy($user)->create());

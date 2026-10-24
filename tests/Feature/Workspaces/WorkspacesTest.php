@@ -8,16 +8,16 @@ use App\Models\Workspace;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-it('gives a new account its own insurance workspace', function () {
+it('creates a new account without a workspace, leaving that to onboarding', function () {
     $this->postJson('/api/v1/auth/register', [
         'name' => 'Ana Reyes',
         'email' => 'ana@example.com',
         'password' => 'correct-horse-battery',
         'password_confirmation' => 'correct-horse-battery',
     ])->assertCreated()
-        ->assertJsonPath('data.workspaces.0.name', 'Ana Reyes’s workspace')
-        ->assertJsonPath('data.workspaces.0.type.value', 'insurance')
-        ->assertJsonPath('data.workspaces.0.role.value', 'owner');
+        ->assertJsonCount(0, 'data.workspaces');
+
+    expect(Workspace::count())->toBe(0);
 });
 
 it('lists only the user’s workspaces, with their role in each', function () {
