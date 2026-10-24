@@ -23,11 +23,12 @@ class BuildInsightReport
         private RankProducts $rankProducts,
         private ChartCommissionByMonth $chartCommissionByMonth,
         private MeasurePeriodFigures $measurePeriodFigures,
+        private MeasurePipelineFunnel $measurePipelineFunnel,
     ) {}
 
     /**
-     * Every report on the Insights page, in one response. Figures, pipeline speed and the
-     * commission chart follow the chosen period; figures come with the period before, for
+     * Every report on the Insights page, in one response. Figures, the funnel, pipeline speed and
+     * the commission chart follow the chosen period; figures come with the period before, for
      * trends. The rest describes the workspace as it is now.
      *
      * @return array<string, mixed>
@@ -55,6 +56,7 @@ class BuildInsightReport
                     'current' => $this->measurePeriodFigures->handle($workspace, $start, $end),
                     'previous' => $this->measurePeriodFigures->handle($workspace, $previousStart, $previousEnd),
                 ],
+                'funnel' => $this->measurePipelineFunnel->handle($workspace, $start, $end),
                 'lead_sources' => $this->measureLeadSources->handle($workspace),
                 'pipeline_speed' => $this->measurePipelineSpeed->handle($workspace, $start, $end),
                 'stalled_leads' => [

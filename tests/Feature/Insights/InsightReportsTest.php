@@ -214,3 +214,29 @@ it('measures the period figures next to the period before', function () {
         'previous' => ['new_leads' => 1, 'won' => 0, 'lost' => 1, 'win_rate_percent' => 0, 'commission_received' => 6000, 'renewals_recorded' => 0, 'renewal_rate_percent' => null],
     ]);
 });
+
+it('builds a funnel of how far the leads added in the period got, lost leads included', function () {
+    $agent = User::factory()->create();
+    $lead = fn (LeadStatus $status, array $history = []) => tap(
+        Lead::factory()->for(workspaceOf($agent))->status($status)->create(['created_at' => '2026-10-05']),
+        fn (Lead $lead) => collect($history)->each(fn (array $change) => LeadActivity::factory()->for($lead)->create(['type' => LeadActivityType::StatusChanged, 'properties' => $change])),
+    );
+
+    $lead(LeadStatus::Prospect);
+    $lead(LeadStatus::Contacted);
+    $lead(LeadStatus::Qualified);
+    $lead(LeadStatus::Converted);
+    $lead(LeadStatus::Lost, [['from' => 'prospect', 'to' => 'meeting_scheduled'], ['from' => 'meeting_scheduled', 'to' => 'lost']]);
+    Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Converted)->create(['created_at' => '2026-09-05']);
+
+    expect(reports($agent)['funnel'])->toBe([
+        'stages' => [
+            ['status' => 'prospect', 'label' => 'Prospect', 'reached' => 5, 'conversion_percent' => null],
+            ['status' => 'contacted', 'label' => 'Contacted', 'reached' => 4, 'conversion_percent' => 80],
+            ['status' => 'meeting_scheduled', 'label' => 'Meeting scheduled', 'reached' => 3, 'conversion_percent' => 75],
+            ['status' => 'qualified', 'label' => 'Qualified', 'reached' => 2, 'conversion_percent' => 67],
+            ['status' => 'converted', 'label' => 'Client', 'reached' => 1, 'conversion_percent' => 50],
+        ],
+        'lost' => 1,
+    ]);
+});
