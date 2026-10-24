@@ -8,16 +8,16 @@ use App\Models\Workspace;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-it('gives a new account its own insurance workspace', function () {
+it('creates a new account without a workspace, leaving that to onboarding', function () {
     $this->postJson('/api/v1/auth/register', [
         'name' => 'Ana Reyes',
         'email' => 'ana@example.com',
         'password' => 'correct-horse-battery',
         'password_confirmation' => 'correct-horse-battery',
     ])->assertCreated()
-        ->assertJsonPath('data.workspaces.0.name', 'Ana Reyes’s workspace')
-        ->assertJsonPath('data.workspaces.0.type.value', 'insurance')
-        ->assertJsonPath('data.workspaces.0.role.value', 'owner');
+        ->assertJsonCount(0, 'data.workspaces');
+
+    expect(Workspace::count())->toBe(0);
 });
 
 it('lists only the user’s workspaces, with their role in each', function () {
@@ -34,13 +34,16 @@ it('lists only the user’s workspaces, with their role in each', function () {
 it('creates another workspace owned by the user', function () {
     $agent = User::factory()->create();
 
-    $id = $this->actingAs($agent)->postJson('/api/v1/workspaces', ['name' => 'Second desk', 'type' => 'insurance'])
+    $id = $this->actingAs($agent)->postJson('/api/v1/workspaces', ['name' => 'Second desk', 'type' => 'insurance', 'timezone' => 'Asia/Singapore'])
         ->assertCreated()
         ->assertJsonPath('data.role.value', 'owner')
         ->json('data.id');
 
-    $this->getJson("/api/v1/workspaces/{$id}")->assertOk()->assertJsonPath('data.name', 'Second desk');
-    $this->postJson('/api/v1/workspaces', ['name' => 'Bad', 'type' => 'spaceship'])->assertJsonValidationErrors('type');
+    $this->getJson("/api/v1/workspaces/{$id}")->assertOk()
+        ->assertJsonPath('data.name', 'Second desk')
+        ->assertJsonPath('data.timezone', 'Asia/Singapore');
+    $this->postJson('/api/v1/workspaces', ['name' => 'Bad', 'type' => 'spaceship', 'timezone' => 'Mars/Olympus'])
+        ->assertJsonValidationErrors(['type', 'timezone']);
 });
 
 it('lets the owner change the workspace settings, but not a member', function () {
