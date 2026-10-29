@@ -45,6 +45,9 @@ class ImportValue
         if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             throw new InvalidArgumentException("“{$email}” isn't an email address.");
         }
+        if (isset(self::EMAIL_DOMAIN_TYPOS[mb_strtolower(substr(strrchr($email, '@'), 1))])) {
+            throw new InvalidArgumentException("“{$email}” looks like a typo in the domain.");
+        }
 
         return mb_strtolower($email);
     }
@@ -60,6 +63,9 @@ class ImportValue
 
         $digits = self::phoneKey($phone);
 
+        if (preg_match('/\p{L}/u', $phone)) {
+            throw new InvalidArgumentException("“{$phone}” has words in it besides the number.");
+        }
         if (strlen($digits) < 7) {
             throw new InvalidArgumentException("“{$phone}” is too short for a phone number.");
         }
@@ -170,5 +176,76 @@ class ImportValue
         }
 
         return $words[$key] ?? throw new InvalidArgumentException("“{$text}” isn't one of the options.");
+    }
+
+    /** Common slips in email domains. */
+    private const EMAIL_DOMAIN_TYPOS = [
+        'gmial.com' => 'gmail.com', 'gamil.com' => 'gmail.com', 'gmai.com' => 'gmail.com', 'gmail.co' => 'gmail.com', 'gmail.con' => 'gmail.com',
+        'yaho.com' => 'yahoo.com', 'yahoo.con' => 'yahoo.com', 'hotmial.com' => 'hotmail.com', 'hotmail.con' => 'hotmail.com', 'outlok.com' => 'outlook.com',
+    ];
+
+    /**
+     * A day-first date (31/12/1990), but only when it can't be month-first, so nothing is guessed
+     * for something like 05/06/1990.
+     */
+    public static function suggestDate(string $value): ?string
+    {
+        if (! preg_match('/^\s*(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2}|\d{4})\s*$/', $value, $parts)) {
+            return null;
+        }
+
+        [, $day, $month, $year] = array_map('intval', $parts);
+        $year = $year < 100 ? ($year > (int) date('y') ? 1900 : 2000) + $year : $year;
+
+        if ($day <= 12 || ! checkdate($month, $day, $year)) {
+            return null;
+        }
+
+        return sprintf('%04d-%02d-%02d', $year, $month, $day);
+    }
+
+    /** Spaces, a doubled @, trailing punctuation and common domain typos. */
+    public static function suggestEmail(string $value): ?string
+    {
+        $email = rtrim(mb_strtolower(preg_replace(['/\s+/', '/@+/'], ['', '@'], $value) ?? ''), '.,;:');
+        [$local, $domain] = array_pad(explode('@', $email, 2), 2, '');
+        $email = $local.'@'.(self::EMAIL_DOMAIN_TYPOS[$domain] ?? $domain);
+
+        return $email !== mb_strtolower(trim($value)) && filter_var($email, FILTER_VALIDATE_EMAIL) !== false ? $email : null;
+    }
+
+    /** The mobile number inside extra text, such as "0917 123 4567 (home)". */
+    public static function suggestPhone(string $value): ?string
+    {
+        return preg_match('/(\+?63[\s-]?|0)?9\d{2}[\s-]?\d{3}[\s-]?\d{4}/', $value, $match) ? $match[0] : null;
+    }
+
+    /** The amount inside extra text, such as "₱1,500 per month". */
+    public static function suggestMoney(string $value): ?string
+    {
+        return preg_match('/\d[\d,]*(\.\d+)?/', $value, $match) ? str_replace(',', '', $match[0]) : null;
+    }
+
+    /**
+     * The option a misspelling most likely meant ("Monthy" → "monthly"): one or two letters off,
+     * and clearly closer than any other option.
+     *
+     * @param  array<int, string>  $options
+     */
+    public static function closest(string $value, array $options): ?string
+    {
+        $value = mb_strtolower(trim($value));
+        $distances = [];
+
+        foreach (array_unique($options) as $option) {
+            $distances[$option] = levenshtein($value, $option);
+        }
+        asort($distances);
+
+        $best = array_key_first($distances);
+        $distance = $distances[$best] ?? PHP_INT_MAX;
+        $runnerUp = array_values($distances)[1] ?? PHP_INT_MAX;
+
+        return $best !== null && $distance <= 2 && $distance < mb_strlen($best) / 3 && $runnerUp > $distance ? $best : null;
     }
 }

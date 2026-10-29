@@ -46,7 +46,7 @@ class ClassifyImportRows
                     continue;
                 }
 
-                $cleaned = $this->cleanImportRow->handle($import->kind, $import->mapping, $row);
+                $cleaned = $this->cleanImportRow->handle($import->kind, $import->mapping, $row, $import->fixes[$rowNumber] ?? []);
                 $keys = $this->keys($cleaned['data']);
                 $match = $this->firstMatch($keys, $existing);
                 $earlierRow = $this->firstMatch($keys, $seen);
@@ -75,6 +75,7 @@ class ClassifyImportRows
                     'values' => json_encode($cleaned['values']),
                     'data' => json_encode($cleaned['data']),
                     'errors' => $cleaned['errors'] === [] ? null : json_encode($cleaned['errors']),
+                    'suggestions' => $cleaned['suggestions'] === [] ? null : json_encode($cleaned['suggestions']),
                     'duplicate_id' => $match['id'] ?? null,
                     'duplicate_name' => $match['name'] ?? null,
                     'same_person_as' => $match === null ? $earlierRow : null,
