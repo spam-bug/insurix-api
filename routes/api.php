@@ -52,6 +52,7 @@ use App\Http\Controllers\Api\V1\LeadNoteController;
 use App\Http\Controllers\Api\V1\LeadPromotionController;
 use App\Http\Controllers\Api\V1\LeadStatusController;
 use App\Http\Controllers\Api\V1\LeadStatusCountController;
+use App\Http\Controllers\Api\V1\MentionSuggestionController;
 use App\Http\Controllers\Api\V1\NextActionController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PolicyAttentionController;
@@ -145,6 +146,7 @@ Route::prefix('v1')->group(function () {
             Route::patch('/leads/{lead}/status', [LeadStatusController::class, 'update']);
             Route::get('/leads/{lead}/activities', [LeadActivityController::class, 'index'])->can('view', 'lead');
             Route::post('/leads/{lead}/notes', [LeadNoteController::class, 'store']);
+            Route::get('/leads/{lead}/mention-suggestions', [MentionSuggestionController::class, 'index'])->can('view', 'lead');
             Route::post('/leads/{lead}/meeting', [LeadMeetingController::class, 'store']);
             Route::post('/leads/{lead}/promote', [LeadPromotionController::class, 'store']);
 
