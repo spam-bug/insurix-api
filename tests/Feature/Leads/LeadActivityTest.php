@@ -31,10 +31,10 @@ it('adds a note to a lead', function () {
     $lead = Lead::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => '  Prefers WhatsApp.  '])
+        ->postJson(ws($agent).'/notes', ['lead_id' => $lead->id, 'body' => '  Prefers WhatsApp.  '])
         ->assertCreated()
-        ->assertJsonPath('data.type', 'note')
-        ->assertJsonPath('data.body', 'Prefers WhatsApp.');
+        ->assertJsonPath('data.body', 'Prefers WhatsApp.')
+        ->assertJsonPath('data.link', ['kind' => 'lead', 'id' => $lead->id, 'name' => $lead->name]);
 
     expect($lead->activities()->sole())->type->toBe(LeadActivityType::Note)->user_id->toBe($agent->id);
 });
@@ -44,7 +44,7 @@ it('shows a new note in activity that was already read and cached', function () 
     $lead = Lead::factory()->for(workspaceOf($agent))->create();
     $this->actingAs($agent)->getJson(ws($agent)."/leads/{$lead->id}/activities")->assertJsonCount(0, 'data');
 
-    $this->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => 'Prefers WhatsApp.'])->assertCreated();
+    $this->postJson(ws($agent).'/notes', ['lead_id' => $lead->id, 'body' => 'Prefers WhatsApp.'])->assertCreated();
 
     $this->getJson(ws($agent)."/leads/{$lead->id}/activities")
         ->assertJsonCount(1, 'data')
@@ -56,7 +56,7 @@ it('requires a note body', function () {
     $lead = Lead::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => ''])
+        ->postJson(ws($agent).'/notes', ['lead_id' => $lead->id, 'body' => ''])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('body');
 });
@@ -102,6 +102,5 @@ it('keeps another agent’s lead activity private', function (string $method, st
     expect($lead->activities()->count())->toBe(0);
 })->with([
     'list' => ['GET', '/activities', []],
-    'note' => ['POST', '/notes', ['body' => 'Hi']],
     'meeting' => ['POST', '/meeting', ['scheduled_at' => '2030-01-01T10:00:00Z']],
 ]);

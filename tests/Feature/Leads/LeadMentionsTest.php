@@ -24,7 +24,7 @@ it('tells a mentioned teammate, with the note as plain text', function () {
     $lead = Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Juan Cruz']);
 
     $this->actingAs($agent)
-        ->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => "@[Ana Reyes](user:{$ana->id}) can you call him back?"])
+        ->postJson(ws($agent).'/notes', ['lead_id' => $lead->id, 'body' => "@[Ana Reyes](user:{$ana->id}) can you call him back?"])
         ->assertCreated()
         ->assertJsonPath('data.body', "@[Ana Reyes](user:{$ana->id}) can you call him back?");
 
@@ -45,7 +45,7 @@ it('mentions each member once, and skips the author and people outside the works
     $lead = Lead::factory()->for(workspaceOf($agent))->create();
     $body = "@[Ana](user:{$ana->id}) @[Ana](user:{$ana->id}) @[Ben](user:{$ben->id}) @[Me](user:{$agent->id}) @[Who](user:{$outsider->id})";
 
-    $this->actingAs($agent)->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => $body])->assertCreated();
+    $this->actingAs($agent)->postJson(ws($agent).'/notes', ['lead_id' => $lead->id, 'body' => $body])->assertCreated();
 
     expect(Mention::pluck('user_id')->sort()->values()->all())->toBe(collect([$ana->id, $ben->id])->sort()->values()->all());
     Notification::assertSentTo([$ana, $ben], MentionedNotification::class);
@@ -59,7 +59,7 @@ it('sends nothing for a note without mentions', function () {
     memberNamed($agent, 'Ana Reyes');
     $lead = Lead::factory()->for(workspaceOf($agent))->create();
 
-    $this->actingAs($agent)->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => 'Email ana@example.com @Ana'])->assertCreated();
+    $this->actingAs($agent)->postJson(ws($agent).'/notes', ['lead_id' => $lead->id, 'body' => 'Email ana@example.com @Ana'])->assertCreated();
 
     expect(Mention::count())->toBe(0);
     Notification::assertNothingSent();
@@ -71,7 +71,7 @@ it('points a mention on a promoted lead to the client', function () {
     $lead = Lead::factory()->for(workspaceOf($agent))->create();
     $client = Client::factory()->for(workspaceOf($agent))->create(['lead_id' => $lead->id, 'name' => 'Juan Cruz']);
 
-    $this->actingAs($agent)->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => "@[Ana](user:{$ana->id}) renewal talk went well"])->assertCreated();
+    $this->actingAs($agent)->postJson(ws($agent).'/notes', ['lead_id' => $lead->id, 'body' => "@[Ana](user:{$ana->id}) renewal talk went well"])->assertCreated();
 
     expect($ana->notifications()->sole()->data['subject'])->toBe(['kind' => 'client', 'id' => $client->id, 'name' => 'Juan Cruz']);
 });
@@ -87,7 +87,7 @@ it('suggests who worked on the lead first, then who the agent mentioned lately',
     LeadActivity::factory()->for($lead)->create(['user_id' => $ana->id, 'created_at' => now()->subHour()]);
     LeadActivity::factory()->for($lead)->create(['user_id' => $agent->id]);
 
-    $this->actingAs($agent)->postJson(ws($agent)."/leads/{$otherLead->id}/notes", ['body' => "@[Cora](user:{$cora->id}) and @[Ana](user:{$ana->id})"])->assertCreated();
+    $this->actingAs($agent)->postJson(ws($agent).'/notes', ['lead_id' => $otherLead->id, 'body' => "@[Cora](user:{$cora->id}) and @[Ana](user:{$ana->id})"])->assertCreated();
 
     $this->getJson(ws($agent)."/leads/{$lead->id}/mention-suggestions")
         ->assertOk()
