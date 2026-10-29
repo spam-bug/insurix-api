@@ -40,6 +40,7 @@ class ImportResource extends JsonResource
                 'invalid' => $this->invalid_rows,
                 'duplicate' => $this->duplicate_rows,
                 'imported' => $this->imported_rows,
+                'fixable' => $this->rows()->whereNotNull('suggestions')->count(),
             ],
             'failure' => $this->failure,
             'created_at' => $this->created_at?->toIso8601String(),

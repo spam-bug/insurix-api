@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\V1\FollowUpCompletionController;
 use App\Http\Controllers\Api\V1\FollowUpController;
 use App\Http\Controllers\Api\V1\FollowUpSummaryController;
 use App\Http\Controllers\Api\V1\ImportController;
+use App\Http\Controllers\Api\V1\ImportFixController;
 use App\Http\Controllers\Api\V1\ImportRowController;
 use App\Http\Controllers\Api\V1\ImportRunController;
 use App\Http\Controllers\Api\V1\InsightReportController;
@@ -210,6 +211,7 @@ Route::prefix('v1')->group(function () {
             Route::put('/imports/{import}', [ImportController::class, 'update']);
             Route::delete('/imports/{import}', [ImportController::class, 'destroy'])->can('update', 'import');
             Route::get('/imports/{import}/rows', [ImportRowController::class, 'index']);
+            Route::post('/imports/{import}/fixes', [ImportFixController::class, 'store'])->can('update', 'import');
             Route::post('/imports/{import}/run', [ImportRunController::class, 'store']);
 
             Route::get('/notes', [NoteController::class, 'index']);

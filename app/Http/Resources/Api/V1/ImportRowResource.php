@@ -24,6 +24,8 @@ class ImportRowResource extends JsonResource
             'status' => $this->status->value,
             'values' => (object) $this->values,
             'errors' => (object) ($this->errors ?? []),
+            /** Suggested values for fields with problems, field => value. */
+            'suggestions' => (object) ($this->suggestions ?? []),
             'duplicate' => $this->duplicate_id ? ['id' => $this->duplicate_id, 'name' => $this->duplicate_name] : null,
             'same_person_as' => $this->same_person_as,
         ];
