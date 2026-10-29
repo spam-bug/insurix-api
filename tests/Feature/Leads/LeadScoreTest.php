@@ -37,7 +37,7 @@ it('scores a qualified lead with a meeting coming up as hot', function () {
         'meeting_at' => now()->addDays(2),
         'created_at' => now()->subMonth(),
     ]);
-    $this->actingAs($agent)->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => 'Wants a quote for the family.'])->assertCreated();
+    $this->actingAs($agent)->postJson(ws($agent).'/notes', ['lead_id' => $lead->id, 'body' => 'Wants a quote for the family.'])->assertCreated();
 
     $lead->refresh();
 

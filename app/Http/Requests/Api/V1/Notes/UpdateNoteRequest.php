@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\Api\V1\Leads;
+namespace App\Http\Requests\Api\V1\Notes;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreLeadNoteRequest extends FormRequest
+class UpdateNoteRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('update', $this->route('lead'));
+        return $this->user()->can('update', $this->route('note'));
     }
 
     /**

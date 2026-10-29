@@ -89,6 +89,14 @@ class Policy extends Model
     }
 
     /**
+     * @return HasMany<Note, $this>
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class);
+    }
+
+    /**
      * Files kept for this policy, such as its contract.
      *
      * @return HasMany<Document, $this>

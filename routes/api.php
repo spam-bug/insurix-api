@@ -48,12 +48,13 @@ use App\Http\Controllers\Api\V1\LeadFollowUpController;
 use App\Http\Controllers\Api\V1\LeadFormController;
 use App\Http\Controllers\Api\V1\LeadFormTokenController;
 use App\Http\Controllers\Api\V1\LeadMeetingController;
-use App\Http\Controllers\Api\V1\LeadNoteController;
 use App\Http\Controllers\Api\V1\LeadPromotionController;
 use App\Http\Controllers\Api\V1\LeadStatusController;
 use App\Http\Controllers\Api\V1\LeadStatusCountController;
 use App\Http\Controllers\Api\V1\MentionSuggestionController;
 use App\Http\Controllers\Api\V1\NextActionController;
+use App\Http\Controllers\Api\V1\NoteController;
+use App\Http\Controllers\Api\V1\NotePinController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PolicyAttentionController;
 use App\Http\Controllers\Api\V1\PolicyController;
@@ -145,7 +146,6 @@ Route::prefix('v1')->group(function () {
             Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])->can('delete', 'lead');
             Route::patch('/leads/{lead}/status', [LeadStatusController::class, 'update']);
             Route::get('/leads/{lead}/activities', [LeadActivityController::class, 'index'])->can('view', 'lead');
-            Route::post('/leads/{lead}/notes', [LeadNoteController::class, 'store']);
             Route::get('/leads/{lead}/mention-suggestions', [MentionSuggestionController::class, 'index'])->can('view', 'lead');
             Route::post('/leads/{lead}/meeting', [LeadMeetingController::class, 'store']);
             Route::post('/leads/{lead}/promote', [LeadPromotionController::class, 'store']);
@@ -198,6 +198,14 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/insights/reports', [InsightReportController::class, 'index']);
             Route::get('/insights/next-actions', [NextActionController::class, 'index']);
+
+            Route::get('/notes', [NoteController::class, 'index']);
+            Route::post('/notes', [NoteController::class, 'store']);
+            Route::get('/notes/{note}', [NoteController::class, 'show']);
+            Route::put('/notes/{note}', [NoteController::class, 'update']);
+            Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->can('delete', 'note');
+            Route::post('/notes/{note}/pin', [NotePinController::class, 'store'])->can('pin', 'note');
+            Route::delete('/notes/{note}/pin', [NotePinController::class, 'destroy'])->can('pin', 'note');
 
             Route::get('/follow-ups', [FollowUpController::class, 'index']);
             Route::get('/follow-ups/summary', [FollowUpSummaryController::class, 'index']);

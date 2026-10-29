@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable(['user_id', 'type', 'body', 'properties'])]
 class LeadActivity extends Model
@@ -36,11 +36,13 @@ class LeadActivity extends Model
     }
 
     /**
-     * @return MorphMany<Mention, $this>
+     * The note this entry stands for, when it's a note.
+     *
+     * @return HasOne<Note, $this>
      */
-    public function mentions(): MorphMany
+    public function note(): HasOne
     {
-        return $this->morphMany(Mention::class, 'mentionable');
+        return $this->hasOne(Note::class);
     }
 
     /**

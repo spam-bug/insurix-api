@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\Document;
 use App\Models\FollowUp;
 use App\Models\LeadActivity;
+use App\Models\Note;
 use App\Models\PolicyEvent;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -19,7 +20,7 @@ class ListClientHistory
      * the lead they were promoted from, the timeline of each of their policies, and the
      * documents uploaded for them. Documents count from their upload; a deleted one drops out.
      * Follow-ups completed without a lead (a client added directly) have no lead activity, so
-     * they're listed from the follow-ups themselves.
+     * they're listed from the follow-ups themselves, and their notes from the notes.
      *
      * @return Collection<int, array<string, mixed>>
      */
@@ -27,9 +28,10 @@ class ListClientHistory
     {
         return Cache::tags("workspace:{$client->workspace_id}")->rememberForever("clients:{$client->workspace_id}:{$client->id}:history-{$limit}", function () use ($client, $limit) {
             $leadActivity = $client->lead
-                ? $client->lead->activities()->with('user:id,name')->latest()->latest('id')->limit($limit)->get()
+                ? $client->lead->activities()->with(['user:id,name', 'note:id,lead_activity_id,body'])->latest()->latest('id')->limit($limit)->get()
                     ->map(fn (LeadActivity $activity) => $this->entry('lead', $activity->id, $activity->type->value, $activity->created_at, $activity->user, [
-                        'body' => $activity->body,
+                        'body' => $activity->note?->body ?? $activity->body,
+                        'note_id' => $activity->note?->id,
                         'properties' => $activity->properties ?? (object) [],
                     ]))
                 : collect();
@@ -68,7 +70,20 @@ class ListClientHistory
                     'follow_up' => ['type' => $followUp->type->value, 'title' => $followUp->title],
                 ]));
 
+            $directNotes = $client->notes()
+                ->whereNull('lead_id')
+                ->with('user:id,name')
+                ->latest()
+                ->latest('id')
+                ->limit($limit)
+                ->get()
+                ->map(fn (Note $note) => $this->entry('note', $note->id, 'note', $note->created_at, $note->user, [
+                    'body' => $note->body,
+                    'note_id' => $note->id,
+                ]));
+
             return $leadActivity
+                ->concat($directNotes)
                 ->concat($completedFollowUps)
                 ->concat($policyEvents)
                 ->concat($documents)
