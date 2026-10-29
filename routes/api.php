@@ -67,6 +67,7 @@ use App\Http\Controllers\Api\V1\ProductSummaryController;
 use App\Http\Controllers\Api\V1\PublicLeadFormController;
 use App\Http\Controllers\Api\V1\ReadAllNotificationsController;
 use App\Http\Controllers\Api\V1\RequirementController;
+use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\UnreadNotificationCountController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
 use App\Http\Controllers\Api\V1\WorkspaceInvitationController;
@@ -198,6 +199,8 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/insights/reports', [InsightReportController::class, 'index']);
             Route::get('/insights/next-actions', [NextActionController::class, 'index']);
+
+            Route::get('/search', [SearchController::class, 'index']);
 
             Route::get('/notes', [NoteController::class, 'index']);
             Route::post('/notes', [NoteController::class, 'store']);
