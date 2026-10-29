@@ -37,6 +37,11 @@ class NoteController extends Controller
             ->setStatusCode(201);
     }
 
+    public function show(Note $note): NoteResource
+    {
+        return NoteResource::make($note->load(NoteResource::RELATIONS));
+    }
+
     public function update(UpdateNoteRequest $request, Note $note, UpdateNote $updateNote): NoteResource
     {
         return NoteResource::make($updateNote->handle($note, $request->validated('body'))->load(NoteResource::RELATIONS));

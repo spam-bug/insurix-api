@@ -201,6 +201,7 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/notes', [NoteController::class, 'index']);
             Route::post('/notes', [NoteController::class, 'store']);
+            Route::get('/notes/{note}', [NoteController::class, 'show']);
             Route::put('/notes/{note}', [NoteController::class, 'update']);
             Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->can('delete', 'note');
             Route::post('/notes/{note}/pin', [NotePinController::class, 'store'])->can('pin', 'note');

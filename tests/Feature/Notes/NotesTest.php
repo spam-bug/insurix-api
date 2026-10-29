@@ -143,10 +143,18 @@ it('pins and unpins a note for the whole workspace', function () {
     $this->deleteJson(ws($agent)."/notes/{$note->id}/pin")->assertOk()->assertJsonPath('data.pinned_at', null);
 });
 
+it('opens one note', function () {
+    $agent = User::factory()->create();
+    $note = Note::factory()->for(workspaceOf($agent))->for($agent)->create(['body' => 'Office closed Monday']);
+
+    $this->actingAs($agent)->getJson(ws($agent)."/notes/{$note->id}")->assertOk()->assertJsonPath('data.body', 'Office closed Monday');
+});
+
 it('hides notes of other workspaces', function () {
     $agent = User::factory()->create();
     $note = Note::factory()->create();
 
-    $this->actingAs($agent)->putJson(ws($agent)."/notes/{$note->id}", ['body' => 'Hi'])->assertNotFound();
+    $this->actingAs($agent)->getJson(ws($agent)."/notes/{$note->id}")->assertNotFound();
+    $this->putJson(ws($agent)."/notes/{$note->id}", ['body' => 'Hi'])->assertNotFound();
     $this->deleteJson(ws($agent)."/notes/{$note->id}")->assertNotFound();
 });
