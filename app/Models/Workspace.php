@@ -107,6 +107,14 @@ class Workspace extends Model
     }
 
     /**
+     * @return HasMany<Note, $this>
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class);
+    }
+
+    /**
      * Bell notifications about this workspace, for any of its members.
      *
      * @return HasMany<DatabaseNotification, $this>

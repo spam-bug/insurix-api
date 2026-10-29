@@ -56,6 +56,14 @@ class Lead extends Model
     }
 
     /**
+     * @return HasMany<Note, $this>
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class);
+    }
+
+    /**
      * The client this lead was promoted to.
      *
      * @return HasOne<Client, $this>

@@ -56,6 +56,14 @@ class Client extends Model
     }
 
     /**
+     * @return HasMany<Note, $this>
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(Note::class);
+    }
+
+    /**
      * @return HasMany<Document, $this>
      */
     public function documents(): HasMany
