@@ -7,6 +7,7 @@ use App\Enums\PaymentFrequency;
 use App\Models\Client;
 use App\Models\Import;
 use App\Models\User;
+use App\Support\ImportValue;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -54,7 +55,7 @@ it('sorts every row into valid, invalid and duplicates, with the problem on each
 
     $this->getJson(ws($agent)."/imports/{$id}")
         ->assertJsonPath('data.status', 'ready')
-        ->assertJsonPath('data.counts', ['total' => 15, 'valid' => 6, 'invalid' => 7, 'duplicate' => 2, 'imported' => 0]);
+        ->assertJsonPath('data.counts', ['total' => 20, 'valid' => 6, 'invalid' => 12, 'duplicate' => 2, 'imported' => 0, 'fixable' => 5]);
 
     $rows = collect($this->getJson(ws($agent)."/imports/{$id}/rows")->json('data'))->keyBy('row_number');
 
@@ -70,6 +71,38 @@ it('sorts every row into valid, invalid and duplicates, with the problem on each
         ->and($rows[14]['errors'])->toHaveKey('phone')
         ->and($rows[15]['status'])->toBe('valid');
 })->with(['clients.csv', 'clients.xlsx']);
+
+it('suggests safe fixes for near misses, and checks every row again once they are applied', function () {
+    $agent = User::factory()->create();
+    Client::factory()->for(workspaceOf($agent))->create(['email' => 'ana.reyes@example.com']);
+    $id = checkedImport($agent, 'clients', 'clients.csv');
+
+    $suggestions = collect($this->getJson(ws($agent)."/imports/{$id}/rows?status=invalid")->json('data'))
+        ->filter(fn (array $row) => $row['suggestions'] !== [])
+        ->mapWithKeys(fn (array $row) => [$row['row_number'] => $row['suggestions']]);
+
+    expect($suggestions->all())->toBe([
+        17 => ['birthdate' => '1988-12-25'],
+        18 => ['email' => 'ben.torres@gmail.com'],
+        19 => ['payment_frequency' => 'monthly'],
+        20 => ['phone' => '0917 765 4321'],
+        21 => ['premium' => '1500'],
+    ]);
+
+    $this->postJson(ws($agent)."/imports/{$id}/fixes")->assertOk();
+
+    $this->getJson(ws($agent)."/imports/{$id}")
+        ->assertJsonPath('data.status', 'ready')
+        ->assertJsonPath('data.counts', ['total' => 20, 'valid' => 11, 'invalid' => 7, 'duplicate' => 2, 'imported' => 0, 'fixable' => 0]);
+
+    $this->postJson(ws($agent)."/imports/{$id}/fixes")->assertJsonValidationErrors('import');
+});
+
+it('never guesses a date that could be read either way', function () {
+    expect(ImportValue::suggestDate('05/06/1990'))->toBeNull()
+        ->and(ImportValue::suggestDate('25/12/1988'))->toBe('1988-12-25')
+        ->and(ImportValue::closest('every so often', ['monthly', 'annual']))->toBeNull();
+});
 
 it('brings in clients with their policies, skipping duplicates', function () {
     $agent = User::factory()->create();
@@ -110,7 +143,7 @@ it('brings in leads as prospects from an import, leaving people who are already 
     $ana = Client::factory()->for(workspaceOf($agent))->create(['email' => 'ana.reyes@example.com']);
     $id = checkedImport($agent, 'leads', 'leads.csv');
 
-    $this->getJson(ws($agent)."/imports/{$id}")->assertJsonPath('data.counts', ['total' => 8, 'valid' => 3, 'invalid' => 3, 'duplicate' => 2, 'imported' => 0]);
+    $this->getJson(ws($agent)."/imports/{$id}")->assertJsonPath('data.counts', ['total' => 8, 'valid' => 3, 'invalid' => 3, 'duplicate' => 2, 'imported' => 0, 'fixable' => 0]);
 
     $this->postJson(ws($agent)."/imports/{$id}/run", ['update_duplicates' => true])->assertOk();
 

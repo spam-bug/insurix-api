@@ -14,3 +14,8 @@ Victor Tan,0918 777 2222,victor.tan@example.com,1975-05-05,Married,Alabang,Car P
 Grace Uy,123,grace.uy@example.com,1995-10-10,Single,Iloilo,,,,,,,Phone too short
 Paolo Ramos,N/A,paolo.ramos@example.com,N/A,Single,N/A,,,,,,,Blanks written as N/A
 Liza Mercado,0919 123 9876,liza.mercado@example.com,"July 4, 1991",Married,Bacolod,Health Shield,HS-20009,"2,750.50",Monthly,2025-09-15,Pending,Month written out
+Nina Cruz,0917 222 8888,nina.cruz@example.com,25/12/1988,Single,Marikina,,,,,,,Day-first birthday
+Ben Torres,0918 333 4444,ben.torres@gmial.com,1983-03-03,Married,Antipolo,,,,,,,Email domain typo
+Carmen Ong,0919 444 5555,carmen.ong@example.com,1979-07-07,Married,San Juan,Health Shield,HS-20010,"1,800",Monthy,2025-03-01,Active,Payment mode typo
+Dan Ramos,0917 765 4321 (home),dan.ramos@example.com,1986-08-08,Single,Mandaluyong,,,,,,,Phone with a note
+Elsa Go,0920 987 6543,elsa.go@example.com,1991-11-11,Single,Paranaque,Life Plus,LP-10010,"₱1,500 per month",Monthly,2025-04-01,Active,Amount with words
