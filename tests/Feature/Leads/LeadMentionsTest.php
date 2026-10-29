@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Client;
 use App\Models\Lead;
+use App\Models\LeadActivity;
 use App\Models\Mention;
 use App\Models\User;
 use App\Notifications\MentionedNotification;
@@ -73,4 +74,29 @@ it('points a mention on a promoted lead to the client', function () {
     $this->actingAs($agent)->postJson(ws($agent)."/leads/{$lead->id}/notes", ['body' => "@[Ana](user:{$ana->id}) renewal talk went well"])->assertCreated();
 
     expect($ana->notifications()->sole()->data['subject'])->toBe(['kind' => 'client', 'id' => $client->id, 'name' => 'Juan Cruz']);
+});
+
+it('suggests who worked on the lead first, then who the agent mentioned lately', function () {
+    $agent = User::factory()->create();
+    $ana = memberNamed($agent, 'Ana Reyes');
+    $ben = memberNamed($agent, 'Ben Santos');
+    $cora = memberNamed($agent, 'Cora Diaz');
+    $lead = Lead::factory()->for(workspaceOf($agent))->create();
+    $otherLead = Lead::factory()->for(workspaceOf($agent))->create();
+    LeadActivity::factory()->for($lead)->create(['user_id' => $ben->id, 'created_at' => now()->subDay()]);
+    LeadActivity::factory()->for($lead)->create(['user_id' => $ana->id, 'created_at' => now()->subHour()]);
+    LeadActivity::factory()->for($lead)->create(['user_id' => $agent->id]);
+
+    $this->actingAs($agent)->postJson(ws($agent)."/leads/{$otherLead->id}/notes", ['body' => "@[Cora](user:{$cora->id}) and @[Ana](user:{$ana->id})"])->assertCreated();
+
+    $this->getJson(ws($agent)."/leads/{$lead->id}/mention-suggestions")
+        ->assertOk()
+        ->assertExactJson(['data' => [$ana->id, $ben->id, $cora->id]]);
+});
+
+it('hides suggestions for a lead in another workspace', function () {
+    $agent = User::factory()->create();
+    $lead = Lead::factory()->create();
+
+    $this->actingAs($agent)->getJson(ws($agent)."/leads/{$lead->id}/mention-suggestions")->assertNotFound();
 });
