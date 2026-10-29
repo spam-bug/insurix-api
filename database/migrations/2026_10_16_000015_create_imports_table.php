@@ -11,6 +11,7 @@ return new class extends Migration
     /**
      * A spreadsheet an agent is bringing in, from upload through column matching, the checked
      * preview and the import itself. The file stays on private storage until the import is done.
+     * Fixes are the suggested corrections the agent accepted, by row and field.
      */
     public function up(): void
     {
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->json('headers');
             $table->json('sample');
             $table->json('mapping')->nullable();
+            $table->json('fixes')->nullable();
             $table->boolean('update_duplicates')->default(false);
             $table->unsignedInteger('total_rows')->default(0);
             $table->unsignedInteger('valid_rows')->default(0);

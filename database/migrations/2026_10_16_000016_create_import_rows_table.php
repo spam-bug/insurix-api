@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * One spreadsheet row of an import: what the file said, the cleaned values, any problems,
-     * and the existing record it matches when it's a duplicate.
+     * One spreadsheet row of an import: what the file said, the cleaned values, any problems (with
+     * a suggested fix when one is safe to offer), and the existing record it matches when it's a duplicate.
      */
     public function up(): void
     {
@@ -22,6 +22,7 @@ return new class extends Migration
             $table->json('values');
             $table->json('data');
             $table->json('errors')->nullable();
+            $table->json('suggestions')->nullable();
             $table->uuid('duplicate_id')->nullable();
             $table->string('duplicate_name')->nullable();
             $table->unsignedInteger('same_person_as')->nullable();
