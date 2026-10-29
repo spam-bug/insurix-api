@@ -12,6 +12,7 @@ enum NotificationType: string
     case FollowUpsDue = 'follow_ups_due';
     case MemberJoined = 'member_joined';
     case StorageAlmostFull = 'storage_almost_full';
+    case Mention = 'mention';
 
     /** The short tag shown on the notification. */
     public function label(): string
@@ -22,6 +23,7 @@ enum NotificationType: string
             self::FollowUpsDue => 'Follow-ups',
             self::MemberJoined => 'Team',
             self::StorageAlmostFull => 'Storage',
+            self::Mention => 'Mention',
         };
     }
 }
