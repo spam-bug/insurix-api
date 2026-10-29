@@ -17,6 +17,12 @@ class Import extends Model
 {
     use HasUuids;
 
+    /** Uploaded spreadsheets are private, like documents. */
+    public const DISK = 'local';
+
+    /** How many rows of the file the matching step shows. */
+    public const SAMPLE_ROWS = 3;
+
     /**
      * @return BelongsTo<Workspace, $this>
      */
