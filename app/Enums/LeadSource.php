@@ -10,6 +10,7 @@ enum LeadSource: string
     case Referral = 'referral';
     case ShareableForm = 'shareable_form';
     case SocialMedia = 'social_media';
+    case Import = 'import';
     case Other = 'other';
 
     public function label(): string
@@ -19,6 +20,7 @@ enum LeadSource: string
             self::Referral => 'Referral',
             self::ShareableForm => 'Shareable form',
             self::SocialMedia => 'Social media',
+            self::Import => 'Spreadsheet import',
             self::Other => 'Other',
         };
     }
