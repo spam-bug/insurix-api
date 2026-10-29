@@ -115,6 +115,14 @@ class Workspace extends Model
     }
 
     /**
+     * @return HasMany<Import, $this>
+     */
+    public function imports(): HasMany
+    {
+        return $this->hasMany(Import::class);
+    }
+
+    /**
      * Bell notifications about this workspace, for any of its members.
      *
      * @return HasMany<DatabaseNotification, $this>

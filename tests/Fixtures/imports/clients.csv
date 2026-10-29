@@ -1,0 +1,21 @@
+Client Name,Mobile No.,Email Address,Birthday,Civil Status,Address,Product,Policy No.,Premium,Mode,Effective Date,Status,Remarks
+Maria Santos,0917 123 4567,maria.santos@example.com,03/15/1985,Married,"Quezon City, Metro Manila",Life Plus,LP-10001,"₱24,000.00",Annual,01/10/2024,Active,Prefers calls after 6pm
+Jose Dela Cruz,+63 918 555 1234,jose.delacruz@example.com,1990-06-19,Single,Manila,Health Shield,HS-20002,"3,500",Monthly,2025-02-01,In force,
+Maria Santos,0917 123 4567,maria.santos@example.com,03/15/1985,Married,"Quezon City, Metro Manila",Car Protect,AU-30003,18500,annual,2025-05-20,active,Second policy for the same client
+Maria S.,09171234567,,,,,,,,,,,Same person again with no policy
+Pedro Penduko,0920 111 2222,pedro@@example,1979-11-02,Married,Cebu City,Life Plus,LP-10004,"12,000",Annual,2023-08-15,Active,Bad email
+Ana Lim,0915 222 3333,ana.lim@example.com,31/31/1990,Single,Davao City,,,,,,,Impossible birthday
+,0921 444 5555,no.name@example.com,1988-02-14,Single,Makati,,,,,,,Missing name
+Carla Dizon,0922 666 7777,carla.dizon@example.com,1992-09-09,Married,Pasig,Health Shield,HS-20005,free,Monthly,2025-01-01,Active,Premium is not a number
+Ramon Bautista,0923 888 9999,ramon.bautista@example.com,1984-04-04,Married,Taguig,,HS-20006,"5,000",Quarterly,2024-07-01,Active,Policy without a product
+Elena Garcia,0917 000 1111,elena.garcia@example.com,32874,Widow,Baguio,Life Plus,LP-10007,"₱30,000",Semi Annual,2022-03-01,Active,Birthday stored as an Excel date
+Ana Reyes,0917 555 0000,ana.reyes@example.com,1987-12-12,Married,Pasig,,,,,,,Already a client in the seeded workspace
+Victor Tan,0918 777 2222,victor.tan@example.com,1975-05-05,Married,Alabang,Car Protect,AU-30008,"9,800",Every so often,2025-06-01,Active,Unknown payment mode
+Grace Uy,123,grace.uy@example.com,1995-10-10,Single,Iloilo,,,,,,,Phone too short
+Paolo Ramos,N/A,paolo.ramos@example.com,N/A,Single,N/A,,,,,,,Blanks written as N/A
+Liza Mercado,0919 123 9876,liza.mercado@example.com,"July 4, 1991",Married,Bacolod,Health Shield,HS-20009,"2,750.50",Monthly,2025-09-15,Pending,Month written out
+Nina Cruz,0917 222 8888,nina.cruz@example.com,25/12/1988,Single,Marikina,,,,,,,Day-first birthday
+Ben Torres,0918 333 4444,ben.torres@gmial.com,1983-03-03,Married,Antipolo,,,,,,,Email domain typo
+Carmen Ong,0919 444 5555,carmen.ong@example.com,1979-07-07,Married,San Juan,Health Shield,HS-20010,"1,800",Monthy,2025-03-01,Active,Payment mode typo
+Dan Ramos,0917 765 4321 (home),dan.ramos@example.com,1986-08-08,Single,Mandaluyong,,,,,,,Phone with a note
+Elsa Go,0920 987 6543,elsa.go@example.com,1991-11-11,Single,Paranaque,Life Plus,LP-10010,"₱1,500 per month",Monthly,2025-04-01,Active,Amount with words
