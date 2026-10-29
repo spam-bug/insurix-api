@@ -16,10 +16,10 @@ class PinNote
 {
     public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange) {}
 
-    /** Pinned notes stay on top of the notes list for everyone in the workspace. */
+    /** Pinned notes stay on top of the notes list for everyone. Pinning isn't an edit, so the note's updated time stays. */
     public function handle(Note $note, bool $pinned): Note
     {
-        DB::transaction(fn () => $note->update(['pinned_at' => $pinned ? now() : null]));
+        DB::transaction(fn () => Note::withoutTimestamps(fn () => $note->update(['pinned_at' => $pinned ? now() : null])));
 
         $this->announceWorkspaceChange->handle($note->workspace_id, new WorkspaceChangeData(ChangeTopic::Notes, ChangeAction::Updated, $note->id, Str::limit($note->body, 40)));
 

@@ -137,9 +137,10 @@ it('lets the author or the owner delete a note, taking it out of the lead timeli
 it('pins and unpins a note for the whole workspace', function () {
     $agent = User::factory()->create();
     $ana = noteTeammate($agent);
-    $note = Note::factory()->for(workspaceOf($agent))->for($agent)->create();
+    $note = Note::factory()->for(workspaceOf($agent))->for($agent)->create(['updated_at' => now()->subDay()]);
 
     $this->actingAs($ana)->postJson(ws($agent)."/notes/{$note->id}/pin")->assertOk()->assertJsonPath('data.pinned_at', fn ($value) => $value !== null);
+    expect($note->fresh()->updated_at->isSameDay(now()->subDay()))->toBeTrue();
     $this->deleteJson(ws($agent)."/notes/{$note->id}/pin")->assertOk()->assertJsonPath('data.pinned_at', null);
 });
 
