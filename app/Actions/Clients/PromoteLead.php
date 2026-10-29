@@ -25,7 +25,7 @@ class PromoteLead
     /**
      * Turns the lead into a client owned by the same agent. The lead's details carry over and
      * the lead stays in the pipeline as Converted, so its activity remains the client's history.
-     * The lead's follow-ups move to the client too, so they show and come due on the client.
+     * The lead's follow-ups and notes move to the client too, so they show (and come due) on the client.
      */
     public function handle(Lead $lead, ClientProfileData $profile, User $actor): Client
     {
@@ -48,6 +48,7 @@ class PromoteLead
 
             $lead->update(['status' => LeadStatus::Converted]);
             $lead->followUps()->update(['client_id' => $client->id]);
+            $lead->notes()->update(['client_id' => $client->id]);
 
             $this->recordLeadActivity->handle($lead, LeadActivityType::Promoted, $actor, properties: [
                 'client_id' => $client->id,
