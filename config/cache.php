@@ -6,6 +6,8 @@ use App\Models\ApplicationRequirement;
 use App\Models\Client;
 use App\Models\Document;
 use App\Models\FollowUp;
+use App\Models\Form;
+use App\Models\FormResponse;
 use App\Models\Lead;
 use App\Models\LeadActivity;
 use App\Models\Policy;
@@ -163,6 +165,8 @@ return [
         Client::class,
         Document::class,
         FollowUp::class,
+        Form::class,
+        FormResponse::class,
         Lead::class,
         LeadActivity::class,
         Policy::class,
