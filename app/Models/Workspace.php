@@ -37,6 +37,12 @@ class Workspace extends Model
         'plan' => Plan::Free->value,
     ];
 
+    /** The plan in effect now: Premium falls back to Free once its end date has passed. */
+    public function currentPlan(): Plan
+    {
+        return $this->plan === Plan::Premium && ! $this->plan_ends_at?->isPast() ? Plan::Premium : Plan::Free;
+    }
+
     public function logoUrl(): ?string
     {
         return $this->logo_path ? Storage::disk(User::UPLOADS_DISK)->url($this->logo_path) : null;
@@ -137,6 +143,14 @@ class Workspace extends Model
     }
 
     /**
+     * @return HasMany<PremiumGrant, $this>
+     */
+    public function premiumGrants(): HasMany
+    {
+        return $this->hasMany(PremiumGrant::class);
+    }
+
+    /**
      * @return HasMany<Document, $this>
      */
     public function documents(): HasMany
@@ -152,6 +166,7 @@ class Workspace extends Model
         return [
             'type' => WorkspaceType::class,
             'plan' => Plan::class,
+            'plan_ends_at' => 'datetime',
         ];
     }
 }

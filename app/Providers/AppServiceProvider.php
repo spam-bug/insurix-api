@@ -63,7 +63,7 @@ class AppServiceProvider extends ServiceProvider
     private function defineFeatures(): void
     {
         foreach (Feature::cases() as $feature) {
-            Pennant::define($feature, fn (mixed $scope) => $feature->access()->allows($scope instanceof Workspace ? $scope->plan : Plan::Free));
+            Pennant::define($feature, fn (mixed $scope) => $feature->access()->allows($scope instanceof Workspace ? $scope->currentPlan() : Plan::Free));
         }
     }
 
