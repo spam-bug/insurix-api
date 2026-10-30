@@ -60,6 +60,7 @@ it('tells only the owner when someone accepts an invite', function () {
     Notification::fake();
     $owner = User::factory()->create();
     $member = teammateOf($owner);
+    workspaceOf($owner)->forceFill(['plan' => 'premium', 'plan_ends_at' => now()->addMonth()])->save();
     $ben = User::factory()->create(['email' => 'ben@example.com', 'name' => 'Ben']);
     WorkspaceInvitation::factory()->for(workspaceOf($owner))->create(['email' => 'ben@example.com', 'token' => 'join']);
 

@@ -21,8 +21,9 @@ class InviteMember
 
     /**
      * Invites an email address to the workspace and emails them the link (queued). Inviting the
-     * same address again replaces their pending invite with a fresh link. The plain token is
-     * returned so the owner can also copy the link.
+     * same address again replaces their pending invite with a fresh link. Members and pending
+     * invites together can't go past the plan's seats. The plain token is returned so the owner
+     * can also copy the link.
      *
      * @return array{invitation: WorkspaceInvitation, token: string}
      */
@@ -35,8 +36,19 @@ class InviteMember
         }
 
         $token = Str::random(64);
+        $seatLimit = $workspace->currentPlan()->seatLimit();
 
-        $invitation = DB::transaction(function () use ($workspace, $data, $inviter, $email, $token) {
+        $invitation = DB::transaction(function () use ($workspace, $data, $inviter, $email, $token, $seatLimit) {
+            $seatsTaken = $workspace->members()->lockForUpdate()->count() + $workspace->invitations()
+                ->whereNull('accepted_at')
+                ->where('expires_at', '>', now())
+                ->where('email', '!=', $email)
+                ->count();
+
+            if ($seatsTaken >= $seatLimit) {
+                throw ValidationException::withMessages(['email' => "Your plan has room for {$seatLimit} people, including pending invites."]);
+            }
+
             $workspace->invitations()->where('email', $email)->whereNull('accepted_at')->delete();
 
             return $workspace->invitations()->create([
