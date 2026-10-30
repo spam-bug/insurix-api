@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\V1\ClientPolicyController;
 use App\Http\Controllers\Api\V1\ClientSummaryController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\DefaultFormController;
+use App\Http\Controllers\Api\V1\DeletedWorkspaceController;
 use App\Http\Controllers\Api\V1\DocumentAssignmentController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DocumentDownloadController;
@@ -89,6 +90,7 @@ use App\Http\Controllers\Api\V1\WorkspaceLogoController;
 use App\Http\Controllers\Api\V1\WorkspaceMemberController;
 use App\Http\Controllers\Api\V1\WorkspaceMembershipController;
 use App\Http\Controllers\Api\V1\WorkspaceOwnershipController;
+use App\Http\Controllers\Api\V1\WorkspaceRestorationController;
 use App\Http\Middleware\EnsureWorkspaceMember;
 use Illuminate\Support\Facades\Route;
 
@@ -139,11 +141,17 @@ Route::prefix('v1')->group(function () {
         Route::post('/premium-links/{premiumLink:token}/claims', [PremiumLinkClaimController::class, 'store'])
             ->middleware('throttle:6,1');
 
+        // Deleted workspaces the owner can still restore. Outside the members-only group below,
+        // which can't see deleted workspaces.
+        Route::get('/deleted-workspaces', [DeletedWorkspaceController::class, 'index']);
+        Route::post('/deleted-workspaces/{workspace}/restoration', [WorkspaceRestorationController::class, 'store'])->withTrashed();
+
         // Everything a workspace owns. Members only (others get a 404), and child records must
         // belong to the workspace in the URL.
         Route::prefix('workspaces/{workspace}')->middleware(EnsureWorkspaceMember::class)->scopeBindings()->group(function () {
             Route::get('/', [WorkspaceController::class, 'show']);
             Route::put('/', [WorkspaceController::class, 'update']);
+            Route::delete('/', [WorkspaceController::class, 'destroy']);
             Route::post('/logo', [WorkspaceLogoController::class, 'store']);
             Route::delete('/logo', [WorkspaceLogoController::class, 'destroy']);
             Route::get('/members', [WorkspaceMemberController::class, 'index']);
