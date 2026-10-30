@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['workspace_id', 'user_id', 'kind', 'status', 'original_name', 'path', 'headers', 'sample', 'mapping', 'fixes', 'update_duplicates', 'total_rows', 'valid_rows', 'invalid_rows', 'duplicate_rows', 'imported_rows', 'failure'])]
+#[Fillable(['workspace_id', 'user_id', 'kind', 'status', 'original_name', 'path', 'headers', 'sample', 'mapping', 'fixes', 'responses', 'update_duplicates', 'total_rows', 'valid_rows', 'invalid_rows', 'duplicate_rows', 'imported_rows', 'failure'])]
 class Import extends Model
 {
     use HasUuids;
@@ -61,6 +61,7 @@ class Import extends Model
             'sample' => 'array',
             'mapping' => 'array',
             'fixes' => 'array',
+            'responses' => 'array',
             'update_duplicates' => 'boolean',
         ];
     }

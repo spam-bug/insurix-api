@@ -44,6 +44,9 @@ use App\Http\Controllers\Api\V1\FollowUpSummaryController;
 use App\Http\Controllers\Api\V1\FormCatalogController;
 use App\Http\Controllers\Api\V1\FormController;
 use App\Http\Controllers\Api\V1\FormPublicationController;
+use App\Http\Controllers\Api\V1\FormResponseController;
+use App\Http\Controllers\Api\V1\FormResponseImportController;
+use App\Http\Controllers\Api\V1\FormResponseStatusController;
 use App\Http\Controllers\Api\V1\FormTokenController;
 use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\ImportFixController;
@@ -157,6 +160,10 @@ Route::prefix('v1')->group(function () {
             Route::delete('/forms/{form}/publication', [FormPublicationController::class, 'destroy']);
             Route::post('/forms/{form}/default', [DefaultFormController::class, 'store']);
             Route::post('/forms/{form}/token', [FormTokenController::class, 'store']);
+            Route::post('/forms/{form}/response-imports', [FormResponseImportController::class, 'store']);
+            Route::get('/form-responses', [FormResponseController::class, 'index']);
+            Route::post('/form-responses/status', [FormResponseStatusController::class, 'store']);
+            Route::delete('/form-responses/{formResponse}', [FormResponseController::class, 'destroy']);
 
             Route::get('/leads/status-counts', [LeadStatusCountController::class, 'index']);
             Route::post('/leads/bulk/status', [BulkLeadStatusController::class, 'update']);
