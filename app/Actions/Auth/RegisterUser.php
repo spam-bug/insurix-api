@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions\Auth;
 
-use App\Actions\Workspaces\CreateWorkspace;
+use App\Actions\Workspaces\CreateOwnWorkspace;
 use App\DataTransferObject\Auth\RegisterUserData;
-use App\DataTransferObject\Workspaces\WorkspaceData;
 use App\Enums\Feature;
-use App\Enums\WorkspaceType;
 use App\Models\User;
-use App\Models\Workspace;
 use App\Models\WorkspaceInvitation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +15,7 @@ use Laravel\Pennant\Feature as Pennant;
 
 class RegisterUser
 {
-    public function __construct(private CreateWorkspace $createWorkspace) {}
+    public function __construct(private CreateOwnWorkspace $createOwnWorkspace) {}
 
     /**
      * Creates the person's account. While onboarding is switched off, they also get an insurance
@@ -30,11 +27,7 @@ class RegisterUser
             $user = User::create($data->toArray());
 
             if (Pennant::for($user)->inactive(Feature::WorkspaceOnboarding) && ! $this->hasPendingInvitation($user)) {
-                $this->createWorkspace->handle($user, new WorkspaceData(
-                    name: "{$user->name}'s workspace",
-                    type: WorkspaceType::Insurance,
-                    timezone: Workspace::DEFAULT_TIMEZONE,
-                ));
+                $this->createOwnWorkspace->handle($user);
             }
 
             return $user;
