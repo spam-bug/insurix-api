@@ -122,6 +122,48 @@ enum ImportField: string
         };
     }
 
+    /**
+     * The lead and client details a form field can be linked to, filled in from its answer.
+     *
+     * @return array<int, self>
+     */
+    public static function formLinks(): array
+    {
+        return [
+            self::Name, self::FirstName, self::LastName, self::Email, self::Phone, self::Address,
+            self::Birthdate, self::CivilStatus, self::Occupation, self::Interest, self::Notes,
+        ];
+    }
+
+    /** A linked form field always asks in this way, whatever its label says. */
+    public function formFieldType(): FormFieldType
+    {
+        return match ($this) {
+            self::Email => FormFieldType::Email,
+            self::Phone => FormFieldType::Phone,
+            self::Birthdate => FormFieldType::Date,
+            self::CivilStatus, self::Interest => FormFieldType::Dropdown,
+            self::Notes => FormFieldType::LongText,
+            default => FormFieldType::ShortText,
+        };
+    }
+
+    /**
+     * The fixed choices of a linked dropdown, using the stored values as option ids.
+     *
+     * @return list<array{id: string, label: string}>
+     */
+    public function formOptions(): array
+    {
+        $cases = match ($this) {
+            self::CivilStatus => CivilStatus::cases(),
+            self::Interest => LeadInterest::cases(),
+            default => [],
+        };
+
+        return array_map(fn (CivilStatus|LeadInterest $case) => ['id' => $case->value, 'label' => $case->label()], $cases);
+    }
+
     /** "Mobile No." and "mobile_no" both become "mobileno". */
     public static function normalizeHeader(string $header): string
     {

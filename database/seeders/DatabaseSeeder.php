@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Actions\Forms\CreateForm;
+use App\Actions\Forms\PublishForm;
+use App\DataTransferObject\Forms\FormData;
+use App\Enums\FormTemplate;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -19,9 +23,12 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
+        $user = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        $form = app(CreateForm::class)->handle($user->workspaces()->sole(), new FormData(FormTemplate::Contact->label(), FormTemplate::Contact));
+        app(PublishForm::class)->handle($form);
     }
 }

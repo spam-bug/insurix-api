@@ -68,17 +68,17 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Visitors post the public lead form straight from their browser, so each one is limited by
+     * Visitors post a public form straight from their browser, so each one is limited by
      * their own IP, with an hourly cap per form as the backstop.
      */
     private function configureRateLimiting(): void
     {
-        RateLimiter::for('lead-form', function (Request $request) {
-            $token = $request->route()->originalParameter('leadForm');
+        RateLimiter::for('form', function (Request $request) {
+            $token = $request->route()->originalParameter('form');
 
             return [
-                Limit::perMinute(5)->by("lead-form:{$token}:{$request->ip()}"),
-                Limit::perHour(60)->by("lead-form:{$token}"),
+                Limit::perMinute(5)->by("form:{$token}:{$request->ip()}"),
+                Limit::perHour(60)->by("form:{$token}"),
             ];
         });
     }

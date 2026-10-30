@@ -8,7 +8,6 @@ use App\Enums\Plan;
 use App\Enums\WorkspaceType;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,7 +18,6 @@ use Illuminate\Support\Facades\Storage;
 
 /** Owns every lead, client, policy and the rest; its type comes from the template it was made from. */
 #[Fillable(['name', 'type', 'timezone', 'bio'])]
-#[Hidden(['lead_form_token'])]
 class Workspace extends Model
 {
     /** @use HasFactory<WorkspaceFactory> */
@@ -140,6 +138,22 @@ class Workspace extends Model
     public function notifications(): HasMany
     {
         return $this->hasMany(DatabaseNotification::class);
+    }
+
+    /**
+     * @return HasMany<Form, $this>
+     */
+    public function forms(): HasMany
+    {
+        return $this->hasMany(Form::class);
+    }
+
+    /**
+     * @return HasMany<FormResponse, $this>
+     */
+    public function formResponses(): HasMany
+    {
+        return $this->hasMany(FormResponse::class);
     }
 
     /**

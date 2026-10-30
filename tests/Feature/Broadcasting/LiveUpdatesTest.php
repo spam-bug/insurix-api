@@ -23,9 +23,9 @@ function changeBroadcast(callable $matches): void
 it('tells the workspace when someone fills in its shareable form', function () {
     Event::fake([WorkspaceDataChanged::class]);
     $agent = User::factory()->create();
-    workspaceOf($agent)->forceFill(['lead_form_token' => 'form-token'])->save();
+    contactFormOf($agent);
 
-    $this->postJson('/api/v1/public/lead-forms/form-token', ['name' => 'Gregoria de Jesus', 'email' => 'gregoria@example.com'])->assertCreated();
+    $this->postJson('/api/v1/public/forms/form-token/responses', ['answers' => ['name' => 'Gregoria de Jesus', 'email' => 'gregoria@example.com']])->assertCreated();
 
     changeBroadcast(fn (array $payload, WorkspaceDataChanged $event) => $event->workspaceId === workspaceOf($agent)->id
         && $payload['topic'] === 'leads'

@@ -26,7 +26,6 @@ return new class extends Migration
             $table->string('timezone', 64)->default('Asia/Manila');
             $table->text('bio')->nullable();
             $table->string('logo_path')->nullable();
-            $table->string('lead_form_token', 64)->nullable()->unique();
             $table->timestamps();
         });
 

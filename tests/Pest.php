@@ -2,7 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Actions\Forms\CreateForm;
+use App\Actions\Forms\PublishForm;
+use App\DataTransferObject\Forms\FormData;
+use App\Enums\FormTemplate;
 use App\Enums\WorkspaceRole;
+use App\Models\Form;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -74,12 +79,13 @@ function memberOf(Workspace $workspace): User
     return $owner;
 }
 
-/** Gives the user's workspace a shareable form token, and returns the user. */
-function withLeadForm(User $user, string $token): User
+/** Gives the user's workspace a published contact form with this link token, and returns the form. */
+function contactFormOf(User $user, string $token = 'form-token'): Form
 {
-    workspaceOf($user)->forceFill(['lead_form_token' => $token])->save();
+    $form = app(CreateForm::class)->handle(workspaceOf($user), new FormData('Contact form', FormTemplate::Contact));
+    $form->update(['token' => $token]);
 
-    return $user;
+    return app(PublishForm::class)->handle($form);
 }
 
 /** The API prefix for the user's own workspace, e.g. ws($agent).'/leads'. */
