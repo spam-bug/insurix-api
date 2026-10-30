@@ -270,6 +270,7 @@ it('lists templates, field types and the details a field can link to', function 
     $this->actingAs(User::factory()->create())->getJson('/api/v1/form-catalog')
         ->assertOk()
         ->assertJsonPath('data.templates.0.value', 'contact')
+        ->assertJsonPath('data.templates.0.document.settings.title', 'Get in touch')
         ->assertJsonFragment(['value' => 'phone', 'label' => 'Phone', 'type' => 'phone', 'options' => [], 'aliases' => ImportField::Phone->headerNames()])
         ->assertJsonFragment(['value' => 'divider', 'label' => 'Divider', 'layout' => true, 'has_options' => false]);
 });
