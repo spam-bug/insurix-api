@@ -19,7 +19,8 @@ class RegisterUser
 
     /**
      * Creates the person's account. While onboarding is switched off, they also get an insurance
-     * workspace right away, unless an invite is waiting to add them to someone else's.
+     * workspace right away, unless an invite is waiting to add them to someone else's. A link to
+     * confirm their email goes out too.
      */
     public function handle(RegisterUserData $data): User
     {
@@ -32,6 +33,8 @@ class RegisterUser
 
             return $user;
         });
+
+        $user->sendEmailVerificationNotification();
 
         Auth::guard('web')->login($user);
         session()->regenerate();

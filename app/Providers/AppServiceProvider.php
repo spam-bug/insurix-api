@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Policies\NotificationPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
 use Laravel\Pennant\Feature as Pennant;
@@ -48,6 +50,17 @@ class AppServiceProvider extends ServiceProvider
 
         // Laravel's own notification model, so its policy isn't found by naming convention.
         Gate::policy(DatabaseNotification::class, NotificationPolicy::class);
+
+        // Verification links open the frontend's page, which posts the signed details back to the
+        // API. The signature is relative, so it holds whatever host the browser calls the API on.
+        VerifyEmail::createUrlUsing(function (User $user) {
+            $apiUrl = URL::temporarySignedRoute('verification.verify', now()->addDay(), [
+                'user' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ], absolute: false);
+
+            return config('app.frontend_url').'/verify-email?'.http_build_query(['link' => $apiUrl]);
+        });
 
         // Reset links open the frontend's reset page, which posts the token back to the API.
         ResetPassword::createUrlUsing(fn (User $user, string $token) => config('app.frontend_url').'/reset-password?'.http_build_query([

@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\V1\ApplicationRequirementController;
 use App\Http\Controllers\Api\V1\ApplicationStageController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
+use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
+use App\Http\Controllers\Api\V1\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\V1\Auth\RegisteredUserController;
@@ -103,6 +105,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/two-factor-challenge', [TwoFactorChallengeController::class, 'store']);
         Route::post('/auth/forgot-password', [PasswordResetLinkController::class, 'store']);
         Route::post('/auth/reset-password', [PasswordResetController::class, 'store']);
+
+        // Laravel signs URLs by route name, so this one API route has a name (the framework's own).
+        Route::post('/auth/email-verification/{user}/{hash}', [EmailVerificationController::class, 'store'])
+            ->name('verification.verify');
     });
 
     Route::get('/public/forms/{form:token}', [PublicFormController::class, 'show']);
@@ -116,6 +122,8 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/auth/user', [CurrentUserController::class, 'show']);
         Route::post('/auth/logout', [AuthenticatedSessionController::class, 'destroy']);
+        Route::post('/auth/email-verification-notification', [EmailVerificationNotificationController::class, 'store'])
+            ->middleware('throttle:6,1');
 
         Route::prefix('account')->group(function () {
             Route::delete('/', [AccountController::class, 'destroy']);
