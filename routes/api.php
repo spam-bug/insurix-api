@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Account\AccountController;
 use App\Http\Controllers\Api\V1\Account\OtherSessionsController;
 use App\Http\Controllers\Api\V1\Account\PasswordController;
 use App\Http\Controllers\Api\V1\Account\PhotoController;
@@ -117,6 +118,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/logout', [AuthenticatedSessionController::class, 'destroy']);
 
         Route::prefix('account')->group(function () {
+            Route::delete('/', [AccountController::class, 'destroy']);
             Route::put('/profile', [ProfileController::class, 'update']);
             Route::post('/photo', [PhotoController::class, 'store']);
             Route::delete('/photo', [PhotoController::class, 'destroy']);
