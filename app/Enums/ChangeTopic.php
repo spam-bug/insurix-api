@@ -13,6 +13,7 @@ enum ChangeTopic: string
     case FollowUps = 'follow-ups';
     case Documents = 'documents';
     case Notes = 'notes';
+    case Forms = 'forms';
     case Products = 'products';
     case Team = 'team';
     case Workspace = 'workspace';
