@@ -161,3 +161,33 @@ it('keeps another workspace’s members and invites out of reach', function () {
         ->assertNotFound();
     $this->deleteJson(ws($owner)."/invitations/{$invitation->id}")->assertNotFound();
 });
+
+it('stops inviting once members and pending invites fill the plan’s seats', function () {
+    Notification::fake();
+    $owner = User::factory()->create();
+    inviteTo($owner, 'ben@example.com');
+
+    $this->postJson(ws($owner).'/invitations', ['email' => 'cara@example.com'])
+        ->assertJsonValidationErrors(['email' => '2 people']);
+    inviteTo($owner, 'ben@example.com');
+});
+
+it('gives Premium workspaces more seats', function () {
+    Notification::fake();
+    $owner = User::factory()->create();
+    workspaceOf($owner)->forceFill(['plan' => 'premium', 'plan_ends_at' => now()->addMonth()])->save();
+    inviteTo($owner, 'ben@example.com');
+
+    inviteTo($owner, 'cara@example.com');
+});
+
+it('turns away an invite once the workspace is full', function () {
+    Notification::fake();
+    $owner = User::factory()->create();
+    $token = inviteTo($owner, 'ben@example.com');
+    workspaceOf($owner)->users()->attach(User::factory()->create(), ['role' => 'member']);
+
+    $this->actingAs(User::factory()->create(['email' => 'ben@example.com']))
+        ->postJson("/api/v1/invitations/{$token}/accept")
+        ->assertJsonValidationErrors(['invitation' => 'full']);
+});

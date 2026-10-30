@@ -17,7 +17,7 @@ class MeasureStorage
     {
         return [
             'used' => (int) $workspace->documents()->sum('size'),
-            'limit' => config('insurix.storage_limit_bytes'),
+            'limit' => $workspace->currentPlan()->storageLimitBytes(),
         ];
     }
 }

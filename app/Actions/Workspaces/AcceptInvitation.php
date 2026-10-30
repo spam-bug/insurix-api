@@ -23,8 +23,8 @@ class AcceptInvitation
 
     /**
      * Adds the signed-in user to the workspace with the invited role. The email check lives in
-     * the invitation policy; here an invite works once and only until it expires. The owner
-     * hears about it through the bell.
+     * the invitation policy; here an invite works once, only until it expires, and only while the
+     * plan has a seat free. The owner hears about it through the bell.
      */
     public function handle(WorkspaceInvitation $invitation, User $user): Workspace
     {
@@ -38,6 +38,10 @@ class AcceptInvitation
         $workspace = $invitation->workspace;
 
         DB::transaction(function () use ($invitation, $user, $workspace) {
+            if ($workspace->members()->lockForUpdate()->count() >= $workspace->currentPlan()->seatLimit()) {
+                throw ValidationException::withMessages(['invitation' => 'This workspace is full. Ask the owner to make room.']);
+            }
+
             $workspace->users()->syncWithoutDetaching([$user->id => ['role' => $invitation->role]]);
             $invitation->update(['accepted_at' => now()]);
         });

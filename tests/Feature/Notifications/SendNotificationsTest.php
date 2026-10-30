@@ -60,6 +60,7 @@ it('tells only the owner when someone accepts an invite', function () {
     Notification::fake();
     $owner = User::factory()->create();
     $member = teammateOf($owner);
+    workspaceOf($owner)->forceFill(['plan' => 'premium', 'plan_ends_at' => now()->addMonth()])->save();
     $ben = User::factory()->create(['email' => 'ben@example.com', 'name' => 'Ben']);
     WorkspaceInvitation::factory()->for(workspaceOf($owner))->create(['email' => 'ben@example.com', 'token' => 'join']);
 
@@ -107,7 +108,7 @@ it('sends each member a morning count of follow-ups due today and overdue', func
 it('tells the owner once when an upload takes storage past 90%', function () {
     Notification::fake();
     Storage::fake(Document::DISK);
-    config(['insurix.storage_limit_bytes' => 100 * 1024]);
+    config(['insurix.plans.free.storage_bytes' => 100 * 1024]);
     $owner = User::factory()->create();
     $member = teammateOf($owner);
     $client = Client::factory()->for(workspaceOf($owner))->create();

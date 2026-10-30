@@ -5,16 +5,22 @@ declare(strict_types=1);
 return [
 
     /*
-    | How much file storage each workspace gets for documents, in bytes. Plans can raise it later.
+    | What each plan allows. Null means no limit. Seats count the owner, members and pending
+    | invites. Workspaces already over a limit keep what they have; only new additions are blocked.
     */
 
-    'storage_limit_bytes' => (int) env('INSURIX_STORAGE_LIMIT_BYTES', 1024 * 1024 * 1024),
-
-    /*
-    | How many forms a Free workspace can have. Premium has no limit.
-    */
-
-    'free_form_limit' => (int) env('INSURIX_FREE_FORM_LIMIT', 3),
+    'plans' => [
+        'free' => [
+            'seats' => (int) env('INSURIX_FREE_SEATS', 2),
+            'forms' => (int) env('INSURIX_FREE_FORMS', 3),
+            'storage_bytes' => (int) env('INSURIX_FREE_STORAGE_BYTES', 1024 * 1024 * 1024),
+        ],
+        'premium' => [
+            'seats' => (int) env('INSURIX_PREMIUM_SEATS', 10),
+            'forms' => null,
+            'storage_bytes' => (int) env('INSURIX_PREMIUM_STORAGE_BYTES', 20 * 1024 * 1024 * 1024),
+        ],
+    ],
 
     /*
     | Who may use each feature: "off" (nobody), "premium" (Premium workspaces only) or "free"

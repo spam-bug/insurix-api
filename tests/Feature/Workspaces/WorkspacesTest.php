@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Plan;
+use App\Models\Document;
 use App\Models\Lead;
 use App\Models\User;
 use App\Models\Workspace;
@@ -126,4 +127,21 @@ it('lets members work in the workspace', function () {
         ->assertCreated();
 
     expect(workspaceOf($owner)->leads()->sole()->activities()->sole()->user_id)->toBe($member->id);
+});
+
+it('shows how much of its plan a workspace uses', function () {
+    $owner = User::factory()->create();
+    $workspace = workspaceOf($owner);
+    $workspace->users()->attach(User::factory()->create(), ['role' => 'member']);
+    Document::factory()->create(['workspace_id' => $workspace->id, 'client_id' => null, 'size' => 1500]);
+
+    $this->actingAs($owner)->postJson(ws($owner).'/forms', ['name' => 'Survey'])->assertCreated();
+
+    $this->getJson(ws($owner).'/usage')
+        ->assertOk()
+        ->assertExactJson(['data' => [
+            'seats' => ['used' => 2, 'limit' => 2],
+            'forms' => ['used' => 1, 'limit' => 3],
+            'storage' => ['used' => 1500, 'limit' => 1024 * 1024 * 1024],
+        ]]);
 });
