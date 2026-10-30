@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Enums\Feature;
+use App\Enums\Plan;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Policies\NotificationPolicy;
@@ -17,6 +19,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
+use Laravel\Pennant\Feature as Pennant;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         Model::preventLazyLoading(! $this->app->isProduction());
 
         $this->configureRateLimiting();
+        $this->defineFeatures();
 
         // Bound for every route, not only those whose controller asks for it, so the membership
         // middleware always gets the model and scoped child bindings have their parent.
@@ -50,6 +54,17 @@ class AppServiceProvider extends ServiceProvider
             'token' => $token,
             'email' => $user->getEmailForPasswordReset(),
         ]));
+    }
+
+    /**
+     * Each feature's access level comes from config, so the array store keeps nothing stale. A
+     * workspace is checked against its plan; any other scope (a user, nobody) counts as Free.
+     */
+    private function defineFeatures(): void
+    {
+        foreach (Feature::cases() as $feature) {
+            Pennant::define($feature, fn (mixed $scope) => $feature->access()->allows($scope instanceof Workspace ? $scope->plan : Plan::Free));
+        }
     }
 
     /**

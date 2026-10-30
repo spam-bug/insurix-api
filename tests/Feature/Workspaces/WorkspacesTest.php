@@ -2,22 +2,38 @@
 
 declare(strict_types=1);
 
+use App\Enums\Plan;
 use App\Models\Lead;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-it('creates a new account without a workspace, leaving that to onboarding', function () {
+it('creates a new account without a workspace when onboarding is on', function () {
+    config(['insurix.features.workspace-onboarding' => 'free']);
+
     $this->postJson('/api/v1/auth/register', [
         'name' => 'Ana Reyes',
         'email' => 'ana@example.com',
         'password' => 'correct-horse-battery',
         'password_confirmation' => 'correct-horse-battery',
     ])->assertCreated()
+        ->assertJsonPath('data.features', ['workspace-onboarding'])
         ->assertJsonCount(0, 'data.workspaces');
 
     expect(Workspace::count())->toBe(0);
+});
+
+it('lists a Premium feature only for Premium workspaces', function () {
+    config(['insurix.features.workspace-switcher' => 'premium']);
+    $agent = User::factory()->create();
+    $free = Workspace::factory()->withMember($agent)->create();
+    $premium = Workspace::factory()->withMember($agent)->create(['plan' => Plan::Premium]);
+
+    $this->actingAs($agent)->getJson('/api/v1/workspaces')
+        ->assertOk()
+        ->assertJsonFragment(['id' => $free->id, 'plan' => ['value' => 'free', 'label' => 'Free'], 'features' => []])
+        ->assertJsonFragment(['id' => $premium->id, 'plan' => ['value' => 'premium', 'label' => 'Premium'], 'features' => ['workspace-switcher']]);
 });
 
 it('lists only the user’s workspaces, with their role in each', function () {

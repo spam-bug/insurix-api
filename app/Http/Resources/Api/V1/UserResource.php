@@ -7,6 +7,7 @@ namespace App\Http\Resources\Api\V1;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Laravel\Pennant\Feature;
 
 /**
  * The signed-in agent's own account.
@@ -29,6 +30,7 @@ class UserResource extends JsonResource
             'phone' => $this->phone,
             'avatar_url' => $this->avatarUrl(),
             'two_factor_enabled' => $this->hasEnabledTwoFactorAuthentication(),
+            'features' => array_keys(array_filter(Feature::for($this->resource)->all())),
             'workspaces' => WorkspaceResource::collection($this->whenLoaded('workspaces')),
             'created_at' => $this->created_at?->toIso8601String(),
         ];

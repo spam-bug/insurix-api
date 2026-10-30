@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use App\Models\WorkspaceInvitation;
 use Illuminate\Support\Facades\Hash;
 
 it('registers an agent and signs them in', function () {
@@ -42,3 +43,28 @@ it('rejects invalid registration data', function (array $payload, string $invali
     'unconfirmed password' => [['password_confirmation' => 'different-password'], 'password'],
     'short password' => [['password' => 'short', 'password_confirmation' => 'short'], 'password'],
 ]);
+
+it('creates an insurance workspace for the new agent while onboarding is off', function () {
+    $this->postJson('/api/v1/auth/register', [
+        'name' => 'Jane Agent',
+        'email' => 'jane@example.com',
+        'password' => 'secret-password',
+        'password_confirmation' => 'secret-password',
+    ])->assertCreated()
+        ->assertJsonPath('data.features', [])
+        ->assertJsonPath('data.workspaces.0.name', "Jane Agent's workspace")
+        ->assertJsonPath('data.workspaces.0.type.value', 'insurance')
+        ->assertJsonPath('data.workspaces.0.plan.value', 'free')
+        ->assertJsonPath('data.workspaces.0.role.value', 'owner');
+});
+
+it('creates no workspace for an agent with a pending invite', function () {
+    WorkspaceInvitation::factory()->create(['email' => 'jane@example.com']);
+
+    $this->postJson('/api/v1/auth/register', [
+        'name' => 'Jane Agent',
+        'email' => 'jane@example.com',
+        'password' => 'secret-password',
+        'password_confirmation' => 'secret-password',
+    ])->assertCreated()->assertJsonCount(0, 'data.workspaces');
+});
