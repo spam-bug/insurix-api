@@ -15,6 +15,7 @@ use App\Models\PolicyEvent;
 use App\Models\PolicyRenewal;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\WorkspaceExport;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -174,6 +175,7 @@ return [
         PolicyRenewal::class,
         Product::class,
         User::class,
+        WorkspaceExport::class,
     ],
 
 ];
