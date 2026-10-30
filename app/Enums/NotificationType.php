@@ -8,6 +8,7 @@ namespace App\Enums;
 enum NotificationType: string
 {
     case FormLead = 'form_lead';
+    case FormResponse = 'form_response';
     case RenewalComingUp = 'renewal_coming_up';
     case FollowUpsDue = 'follow_ups_due';
     case MemberJoined = 'member_joined';
@@ -19,6 +20,7 @@ enum NotificationType: string
     {
         return match ($this) {
             self::FormLead => 'Lead',
+            self::FormResponse => 'Form',
             self::RenewalComingUp => 'Renewal',
             self::FollowUpsDue => 'Follow-ups',
             self::MemberJoined => 'Team',

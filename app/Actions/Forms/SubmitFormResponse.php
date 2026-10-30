@@ -12,7 +12,9 @@ use App\Enums\ChangeTopic;
 use App\Enums\FormResponseStatus;
 use App\Models\Form;
 use App\Models\FormResponse;
+use App\Notifications\FormResponseNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class SubmitFormResponse
 {
@@ -23,8 +25,9 @@ class SubmitFormResponse
 
     /**
      * Saves a visitor's answers with the fields they answered. When the form adds responses to
-     * Leads and the answers are enough for a lead, it becomes one right away. A filled-in honeypot
-     * is dropped silently, so bots get the same answer as people.
+     * Leads and the answers are enough for a lead, it becomes one (or fills in the person already
+     * there) right away; otherwise everyone hears about the new response through the bell. A
+     * filled-in honeypot is dropped silently, so bots get the same answer as people.
      */
     public function handle(Form $form, FormResponseData $data): ?FormResponse
     {
@@ -45,6 +48,7 @@ class SubmitFormResponse
 
         if ($response->status === FormResponseStatus::New) {
             $this->announceWorkspaceChange->handle($form->workspace_id, new WorkspaceChangeData(ChangeTopic::Forms, ChangeAction::Created, $response->id, $form->name));
+            Notification::send($form->workspace->users, new FormResponseNotification($response, $form->name));
         }
 
         return $response;

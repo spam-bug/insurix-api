@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\FormResponseStatus;
 use App\Enums\ImportField;
+use App\Models\Client;
 use App\Models\Form;
 use App\Models\Lead;
 use App\Models\User;
@@ -257,4 +258,49 @@ it('lists templates, field types and the details a field can link to', function 
         ->assertJsonPath('data.templates.0.value', 'contact')
         ->assertJsonFragment(['value' => 'phone', 'label' => 'Phone', 'type' => 'phone', 'options' => [], 'aliases' => ImportField::Phone->headerNames()])
         ->assertJsonFragment(['value' => 'divider', 'label' => 'Divider', 'layout' => true, 'has_options' => false]);
+});
+
+it('fills in a lead who answers again instead of adding them twice', function () {
+    $agent = User::factory()->create();
+    contactFormOf($agent);
+    $lead = Lead::factory()->for(workspaceOf($agent))->create(['name' => 'Gregoria de Jesus', 'email' => 'Gregoria@example.com', 'phone' => null, 'notes' => 'Met at the fair']);
+
+    $this->postJson('/api/v1/public/forms/form-token/responses', ['answers' => [
+        'name' => 'Gregoria', 'email' => 'gregoria@example.com', 'phone' => '+63 917 555 0100', 'notes' => 'Call me',
+    ]])->assertCreated();
+
+    expect(Lead::count())->toBe(1)
+        ->and($lead->refresh())->phone->toBe('0917 555 0100')->notes->toBe('Met at the fair')->name->toBe('Gregoria de Jesus')
+        ->and(workspaceOf($agent)->formResponses()->sole())->status->toBe(FormResponseStatus::Added)->lead_id->toBe($lead->id)
+        ->and($lead->followUps()->sole()->title)->toBe('Reach out to Gregoria de Jesus: sent your form again');
+
+    $notification = $agent->notifications()->sole();
+    expect($notification->type)->toBe('form_response')
+        ->and($notification->data['body'])->toBe('They’re already in your workspace; added their phone.')
+        ->and($notification->data['subject'])->toMatchArray(['kind' => 'lead', 'id' => $lead->id]);
+});
+
+it('matches a client by phone, however it’s written, with nothing new to add', function () {
+    $agent = User::factory()->create();
+    contactFormOf($agent);
+    $client = Client::factory()->for(workspaceOf($agent))->create(['name' => 'Juan Cruz', 'phone' => '0917 555 0100']);
+
+    $this->postJson('/api/v1/public/forms/form-token/responses', ['answers' => ['name' => 'Juan', 'phone' => '+639175550100']])->assertCreated();
+
+    expect(Lead::count())->toBe(0)
+        ->and(workspaceOf($agent)->formResponses()->sole()->client_id)->toBe($client->id)
+        ->and($agent->notifications()->sole()->data['body'])->toBe('They’re already in your workspace; nothing new to add.');
+});
+
+it('tells everyone about responses that don’t become leads', function () {
+    $agent = User::factory()->create();
+    $form = publishedForm($agent, [question('rating', 'short_text', ['required' => true])]);
+
+    $this->postJson("/api/v1/public/forms/{$form->token}/responses", ['answers' => ['rating' => 'Great']])->assertCreated();
+
+    $notification = $agent->notifications()->sole();
+    expect($notification->type)->toBe('form_response')
+        ->and($notification->data['title'])->toBe('New response to Survey')
+        ->and($notification->data['body'])->toBe('Someone answered Survey.')
+        ->and($notification->data['subject'])->toBe(['kind' => 'form', 'id' => $form->id, 'name' => 'Survey']);
 });
