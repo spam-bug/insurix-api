@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,9 +22,12 @@ use Illuminate\Support\Facades\Storage;
 class Workspace extends Model
 {
     /** @use HasFactory<WorkspaceFactory> */
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
 
     public const DEFAULT_TIMEZONE = 'Asia/Manila';
+
+    /** How long a deleted workspace can be restored before it's removed for good. */
+    public const DELETION_GRACE_DAYS = 30;
 
     /**
      * Agents are in the Philippines for now; the timezone sets where the workspace's day starts.
