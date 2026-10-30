@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Enums\Plan;
 use App\Models\Workspace;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -29,7 +30,8 @@ class WorkspaceResource extends JsonResource
             'timezone' => $this->timezone,
             'bio' => $this->bio,
             'logo_url' => $this->logoUrl(),
-            'plan' => ['value' => $this->plan->value, 'label' => $this->plan->label()],
+            'plan' => ['value' => $this->currentPlan()->value, 'label' => $this->currentPlan()->label()],
+            'plan_ends_at' => $this->currentPlan() === Plan::Premium ? $this->plan_ends_at?->toIso8601String() : null,
             'features' => array_keys(array_filter(Feature::for($this->resource)->all())),
             'role' => $this->whenPivotLoadedAs('membership', 'workspace_members', fn () => [
                 'value' => $this->membership->role->value,

@@ -65,10 +65,12 @@ use App\Http\Controllers\Api\V1\PolicyController;
 use App\Http\Controllers\Api\V1\PolicyPremiumMixController;
 use App\Http\Controllers\Api\V1\PolicyRenewalController;
 use App\Http\Controllers\Api\V1\PolicyStatusCountController;
+use App\Http\Controllers\Api\V1\PremiumLinkClaimController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductSuggestionController;
 use App\Http\Controllers\Api\V1\ProductSummaryController;
 use App\Http\Controllers\Api\V1\PublicLeadFormController;
+use App\Http\Controllers\Api\V1\PublicPremiumLinkController;
 use App\Http\Controllers\Api\V1\ReadAllNotificationsController;
 use App\Http\Controllers\Api\V1\RequirementController;
 use App\Http\Controllers\Api\V1\SearchController;
@@ -93,6 +95,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/public/lead-forms/{leadForm:lead_form_token}', [PublicLeadFormController::class, 'show']);
     Route::post('/public/lead-forms/{leadForm:lead_form_token}', [PublicLeadFormController::class, 'store'])
         ->middleware('throttle:lead-form');
+    Route::get('/public/premium-links/{premiumLink:token}', [PublicPremiumLinkController::class, 'show'])
+        ->middleware('throttle:30,1');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/auth/user', [CurrentUserController::class, 'show']);
@@ -119,6 +123,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/workspaces', [WorkspaceController::class, 'store']);
         Route::get('/invitations/{invitation:token}', [InvitationController::class, 'show'])->can('accept', 'invitation');
         Route::post('/invitations/{invitation:token}/accept', [InvitationController::class, 'update'])->can('accept', 'invitation');
+        Route::post('/premium-links/{premiumLink:token}/claims', [PremiumLinkClaimController::class, 'store'])
+            ->middleware('throttle:6,1');
 
         // Everything a workspace owns. Members only (others get a 404), and child records must
         // belong to the workspace in the URL.

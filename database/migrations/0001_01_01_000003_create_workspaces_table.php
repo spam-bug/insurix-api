@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('type', 50);
             $table->string('plan', 20)->default(Plan::Free->value);
+            $table->timestamp('plan_ends_at')->nullable();
             $table->string('timezone', 64)->default('Asia/Manila');
             $table->text('bio')->nullable();
             $table->string('logo_path')->nullable();
