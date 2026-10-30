@@ -11,10 +11,26 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** One visitor's answers, keyed by field id, with the fields as they were when answered. */
-#[Fillable(['workspace_id', 'lead_id', 'client_id', 'status', 'answers', 'fields', 'meta'])]
+#[Fillable(['form_id', 'workspace_id', 'lead_id', 'client_id', 'status', 'answers', 'fields', 'meta'])]
 class FormResponse extends Model
 {
     use HasUuids;
+
+    /** Who answered, from the linked name questions; null when the form doesn't ask. */
+    public function personName(): ?string
+    {
+        $answers = [];
+
+        foreach ($this->fields as $field) {
+            $answer = $this->answers[$field['id']] ?? null;
+
+            if (($field['link'] ?? null) !== null && is_string($answer) && trim($answer) !== '') {
+                $answers[$field['link']] = trim($answer);
+            }
+        }
+
+        return $answers['name'] ?? (trim(($answers['first_name'] ?? '').' '.($answers['last_name'] ?? '')) ?: null);
+    }
 
     /**
      * @return BelongsTo<Form, $this>
