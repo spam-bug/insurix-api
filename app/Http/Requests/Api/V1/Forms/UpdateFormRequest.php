@@ -7,6 +7,7 @@ namespace App\Http\Requests\Api\V1\Forms;
 use App\Enums\FormFieldType;
 use App\Enums\ImportField;
 use App\Models\Workspace;
+use App\Support\FormTheme;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -32,7 +33,7 @@ class UpdateFormRequest extends FormRequest
 
         return [
             'name' => ['sometimes', 'string', 'max:120'],
-            'draft' => ['sometimes', 'array:sections,settings'],
+            'draft' => ['sometimes', 'array:sections,settings,theme'],
             'draft.sections' => ['required_with:draft', 'array', 'min:1', 'max:20'],
             'draft.sections.*' => ['array:id,title,description,fields'],
             'draft.sections.*.id' => [...$id, 'distinct'],
@@ -57,6 +58,15 @@ class UpdateFormRequest extends FormRequest
             'draft.settings.submit_label' => ['nullable', 'string', 'max:40'],
             'draft.settings.success_message' => ['nullable', 'string', 'max:500'],
             'draft.settings.auto_add_leads' => ['boolean'],
+            'draft.theme' => ['sometimes', 'array:mode,accent,radius,field_style,show_logo,font,background,hide_branding'],
+            'draft.theme.mode' => ['required_with:draft.theme', Rule::in(FormTheme::MODES)],
+            'draft.theme.accent' => ['required_with:draft.theme', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'draft.theme.radius' => ['required_with:draft.theme', Rule::in(FormTheme::RADII)],
+            'draft.theme.field_style' => ['required_with:draft.theme', Rule::in(FormTheme::FIELD_STYLES)],
+            'draft.theme.show_logo' => ['boolean'],
+            'draft.theme.font' => ['required_with:draft.theme', Rule::in(FormTheme::FONTS)],
+            'draft.theme.background' => ['required_with:draft.theme', Rule::in(FormTheme::BACKGROUNDS)],
+            'draft.theme.hide_branding' => ['boolean'],
         ];
     }
 }

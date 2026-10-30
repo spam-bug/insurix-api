@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Support\FormTheme;
+
 /** Ready-made forms to start from. Picking one copies its document into a new, editable form. Most link their fields to leads; Feedback doesn't. */
 enum FormTemplate: string
 {
@@ -41,7 +43,7 @@ enum FormTemplate: string
     /**
      * The template's sections and settings, in the shape the builder edits.
      *
-     * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>}
+     * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>, theme: array<string, mixed>}
      */
     public function document(): array
     {
@@ -118,7 +120,7 @@ enum FormTemplate: string
     /**
      * A new form without a template: one empty section, not linked to anything.
      *
-     * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>}
+     * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>, theme: array<string, mixed>}
      */
     public static function blankDocument(string $title): array
     {
@@ -127,7 +129,7 @@ enum FormTemplate: string
 
     /**
      * @param  list<array<string, mixed>>  $sections
-     * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>}
+     * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>, theme: array<string, mixed>}
      */
     private static function form(string $title, ?string $description, array $sections, bool $addToLeads = true): array
     {
@@ -140,6 +142,7 @@ enum FormTemplate: string
                 'success_message' => 'Thank you! I’ll be in touch soon.',
                 'auto_add_leads' => $addToLeads,
             ],
+            'theme' => FormTheme::defaults(),
         ];
     }
 

@@ -43,6 +43,7 @@ use App\Http\Controllers\Api\V1\FollowUpController;
 use App\Http\Controllers\Api\V1\FollowUpSummaryController;
 use App\Http\Controllers\Api\V1\FormCatalogController;
 use App\Http\Controllers\Api\V1\FormController;
+use App\Http\Controllers\Api\V1\FormPreviewController;
 use App\Http\Controllers\Api\V1\FormPublicationController;
 use App\Http\Controllers\Api\V1\FormResponseController;
 use App\Http\Controllers\Api\V1\FormResponseImportController;
@@ -76,6 +77,7 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductSuggestionController;
 use App\Http\Controllers\Api\V1\ProductSummaryController;
 use App\Http\Controllers\Api\V1\PublicFormController;
+use App\Http\Controllers\Api\V1\PublicFormPreviewController;
 use App\Http\Controllers\Api\V1\PublicPremiumLinkController;
 use App\Http\Controllers\Api\V1\ReadAllNotificationsController;
 use App\Http\Controllers\Api\V1\RequirementController;
@@ -101,6 +103,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/public/forms/{form:token}', [PublicFormController::class, 'show']);
     Route::post('/public/forms/{form:token}/responses', [PublicFormController::class, 'store'])
         ->middleware('throttle:form');
+    Route::get('/public/form-previews/{token}', [PublicFormPreviewController::class, 'show'])
+        ->middleware('throttle:60,1');
     Route::get('/public/premium-links/{premiumLink:token}', [PublicPremiumLinkController::class, 'show'])
         ->middleware('throttle:30,1');
 
@@ -160,6 +164,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/forms/{form}/publication', [FormPublicationController::class, 'destroy']);
             Route::post('/forms/{form}/default', [DefaultFormController::class, 'store']);
             Route::post('/forms/{form}/token', [FormTokenController::class, 'store']);
+            Route::post('/forms/{form}/preview', [FormPreviewController::class, 'store']);
             Route::post('/forms/{form}/response-imports', [FormResponseImportController::class, 'store']);
             Route::get('/form-responses', [FormResponseController::class, 'index']);
             Route::post('/form-responses/status', [FormResponseStatusController::class, 'store']);

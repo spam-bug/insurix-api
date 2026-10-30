@@ -9,6 +9,7 @@ enum Feature: string
 {
     case WorkspaceOnboarding = 'workspace-onboarding';
     case WorkspaceSwitcher = 'workspace-switcher';
+    case FormPremiumTheme = 'form-premium-theme';
 
     public function access(): FeatureAccess
     {

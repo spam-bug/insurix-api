@@ -9,7 +9,7 @@ use App\DataTransferObject\Data;
 class UpdateFormData extends Data
 {
     /**
-     * @param  array{sections: list<array<string, mixed>>, settings: array<string, mixed>}|null  $draft
+     * @param  array{sections: list<array<string, mixed>>, settings: array<string, mixed>, theme?: array<string, mixed>}|null  $draft
      */
     public function __construct(
         public readonly ?string $name = null,
