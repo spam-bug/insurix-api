@@ -8,6 +8,7 @@ use App\Models\Document;
 use App\Models\Import;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceExport;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,6 +25,7 @@ class PurgeWorkspace
 
         Storage::disk(Document::DISK)->deleteDirectory("documents/{$workspace->id}");
         Storage::disk(Import::DISK)->deleteDirectory("imports/{$workspace->id}");
+        Storage::disk(WorkspaceExport::DISK)->deleteDirectory("exports/{$workspace->id}");
 
         if ($workspace->logo_path) {
             Storage::disk(User::UPLOADS_DISK)->delete($workspace->logo_path);

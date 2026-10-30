@@ -88,6 +88,8 @@ use App\Http\Controllers\Api\V1\RequirementController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\UnreadNotificationCountController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
+use App\Http\Controllers\Api\V1\WorkspaceExportController;
+use App\Http\Controllers\Api\V1\WorkspaceExportDownloadController;
 use App\Http\Controllers\Api\V1\WorkspaceInvitationController;
 use App\Http\Controllers\Api\V1\WorkspaceLogoController;
 use App\Http\Controllers\Api\V1\WorkspaceMemberController;
@@ -171,6 +173,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/invitations', [WorkspaceInvitationController::class, 'index']);
             Route::post('/invitations', [WorkspaceInvitationController::class, 'store']);
             Route::delete('/invitations/{invitation}', [WorkspaceInvitationController::class, 'destroy']);
+
+            Route::get('/exports', [WorkspaceExportController::class, 'index']);
+            Route::post('/exports', [WorkspaceExportController::class, 'store'])->middleware('throttle:6,1');
+            Route::get('/exports/{export}/download', [WorkspaceExportDownloadController::class, 'show']);
 
             Route::get('/notifications/unread-count', [UnreadNotificationCountController::class, 'index']);
             Route::post('/notifications/read-all', [ReadAllNotificationsController::class, 'store']);

@@ -71,6 +71,14 @@ class Workspace extends Model
     }
 
     /**
+     * @return HasMany<WorkspaceExport, $this>
+     */
+    public function exports(): HasMany
+    {
+        return $this->hasMany(WorkspaceExport::class);
+    }
+
+    /**
      * @return HasMany<WorkspaceInvitation, $this>
      */
     public function invitations(): HasMany

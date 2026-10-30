@@ -14,6 +14,7 @@ enum NotificationType: string
     case MemberJoined = 'member_joined';
     case StorageAlmostFull = 'storage_almost_full';
     case Mention = 'mention';
+    case ExportReady = 'export_ready';
 
     /** The short tag shown on the notification. */
     public function label(): string
@@ -26,6 +27,7 @@ enum NotificationType: string
             self::MemberJoined => 'Team',
             self::StorageAlmostFull => 'Storage',
             self::Mention => 'Mention',
+            self::ExportReady => 'Export',
         };
     }
 }
