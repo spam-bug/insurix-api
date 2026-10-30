@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Plan;
 use App\Enums\WorkspaceRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name');
             $table->string('type', 50);
+            $table->string('plan', 20)->default(Plan::Free->value);
             $table->string('timezone', 64)->default('Asia/Manila');
             $table->text('bio')->nullable();
             $table->string('logo_path')->nullable();

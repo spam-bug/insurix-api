@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Plan;
 use App\Enums\WorkspaceType;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -24,13 +25,16 @@ class Workspace extends Model
     /** @use HasFactory<WorkspaceFactory> */
     use HasFactory, HasUuids;
 
+    public const DEFAULT_TIMEZONE = 'Asia/Manila';
+
     /**
      * Agents are in the Philippines for now; the timezone sets where the workspace's day starts.
      *
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'timezone' => 'Asia/Manila',
+        'timezone' => self::DEFAULT_TIMEZONE,
+        'plan' => Plan::Free->value,
     ];
 
     public function logoUrl(): ?string
@@ -147,6 +151,7 @@ class Workspace extends Model
     {
         return [
             'type' => WorkspaceType::class,
+            'plan' => Plan::class,
         ];
     }
 }
