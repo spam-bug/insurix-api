@@ -18,7 +18,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
 
 /** Owns every lead, client, policy and the rest; its type comes from the template it was made from. */
-#[Fillable(['name', 'type', 'timezone', 'bio'])]
+#[Fillable(['name', 'type', 'timezone'])]
 class Workspace extends Model
 {
     /** @use HasFactory<WorkspaceFactory> */

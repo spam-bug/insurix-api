@@ -17,7 +17,7 @@ class UpdateWorkspace
     public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange) {}
 
     /**
-     * The workspace's name, the timezone its day starts in, and the bio on its lead form.
+     * The workspace's name and the timezone its day starts in.
      */
     public function handle(Workspace $workspace, WorkspaceSettingsData $data): Workspace
     {
