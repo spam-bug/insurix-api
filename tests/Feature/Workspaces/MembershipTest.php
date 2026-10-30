@@ -36,3 +36,14 @@ it('only lets the owner hand over, and only to a member of this workspace', func
     $this->postJson(ws($owner).'/ownership', ['member_id' => workspaceOf($owner)->members()->where('user_id', $owner->id)->sole()->id])
         ->assertUnprocessable()->assertJsonValidationErrors('member_id');
 });
+
+it('lets a member leave, but not the owner', function () {
+    [$owner, $member] = ownerWithMember();
+    $url = ws($owner).'/membership';
+
+    $this->actingAs($member)->deleteJson($url)->assertNoContent();
+    expect(workspaceOf($owner)->users()->whereKey($member->id)->exists())->toBeFalse();
+    $this->getJson(ws($owner))->assertNotFound();
+
+    $this->actingAs($owner)->deleteJson($url)->assertUnprocessable()->assertJsonValidationErrors('workspace');
+});

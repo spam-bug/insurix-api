@@ -87,6 +87,7 @@ use App\Http\Controllers\Api\V1\WorkspaceController;
 use App\Http\Controllers\Api\V1\WorkspaceInvitationController;
 use App\Http\Controllers\Api\V1\WorkspaceLogoController;
 use App\Http\Controllers\Api\V1\WorkspaceMemberController;
+use App\Http\Controllers\Api\V1\WorkspaceMembershipController;
 use App\Http\Controllers\Api\V1\WorkspaceOwnershipController;
 use App\Http\Middleware\EnsureWorkspaceMember;
 use Illuminate\Support\Facades\Route;
@@ -148,6 +149,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/members', [WorkspaceMemberController::class, 'index']);
             Route::delete('/members/{member}', [WorkspaceMemberController::class, 'destroy']);
             Route::post('/ownership', [WorkspaceOwnershipController::class, 'store']);
+            Route::delete('/membership', [WorkspaceMembershipController::class, 'destroy']);
             Route::get('/invitations', [WorkspaceInvitationController::class, 'index']);
             Route::post('/invitations', [WorkspaceInvitationController::class, 'store']);
             Route::delete('/invitations/{invitation}', [WorkspaceInvitationController::class, 'destroy']);
