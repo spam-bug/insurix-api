@@ -43,6 +43,7 @@ class SaveImportRows
         private RecordLeadActivity $recordLeadActivity,
         private RecordPolicyEvent $recordPolicyEvent,
         private MarkResponsesAdded $markResponsesAdded,
+        private FillInPerson $fillInPerson,
     ) {}
 
     /**
@@ -144,8 +145,6 @@ class SaveImportRows
     }
 
     /**
-     * Fills in only what the existing record doesn't have yet; nothing the agent already typed is overwritten.
-     *
      * @template T of Client|Lead
      *
      * @param  T|null  $person
@@ -154,16 +153,9 @@ class SaveImportRows
      */
     private function fillIn(Client|Lead|null $person, array $data): Client|Lead|null
     {
-        if ($person === null) {
-            return null;
+        if ($person !== null) {
+            $this->fillInPerson->handle($person, $data);
         }
-
-        foreach ($data as $field => $value) {
-            if ($person->isFillable($field) && blank($person->getAttribute($field))) {
-                $person->setAttribute($field, $value);
-            }
-        }
-        $person->save();
 
         return $person;
     }
