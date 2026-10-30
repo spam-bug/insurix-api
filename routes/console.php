@@ -18,3 +18,6 @@ Schedule::command('leads:rescore')->dailyAt('05:15')->timezone('Asia/Manila');
 // After the reminders and scores are in: each member's morning count of follow-ups for today.
 Schedule::command('follow-ups:notify-due')->dailyAt('07:00')->timezone('Asia/Manila');
 Schedule::command('notifications:prune')->dailyAt('03:00')->timezone('Asia/Manila');
+
+// Workspace exports past the days they're kept.
+Schedule::command('exports:prune')->dailyAt('02:45')->timezone('Asia/Manila');
