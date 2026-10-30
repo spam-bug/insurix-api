@@ -33,4 +33,16 @@ class WorkspacePolicy
             ->wherePivot('role', WorkspaceRole::Owner)
             ->exists();
     }
+
+    /**
+     * Only the owner brings back a deleted workspace. Read from the members table, since the
+     * user's workspaces leave out deleted ones.
+     */
+    public function restore(User $user, Workspace $workspace): bool
+    {
+        return $workspace->members()
+            ->where('user_id', $user->id)
+            ->where('role', WorkspaceRole::Owner)
+            ->exists();
+    }
 }

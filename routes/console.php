@@ -19,5 +19,8 @@ Schedule::command('leads:rescore')->dailyAt('05:15')->timezone('Asia/Manila');
 Schedule::command('follow-ups:notify-due')->dailyAt('07:00')->timezone('Asia/Manila');
 Schedule::command('notifications:prune')->dailyAt('03:00')->timezone('Asia/Manila');
 
+// Deleted workspaces past their grace period, with their files.
+Schedule::command('workspaces:purge')->dailyAt('02:30')->timezone('Asia/Manila');
+
 // Workspace exports past the days they're kept.
 Schedule::command('exports:prune')->dailyAt('02:45')->timezone('Asia/Manila');

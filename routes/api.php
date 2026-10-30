@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Account\AccountController;
 use App\Http\Controllers\Api\V1\Account\OtherSessionsController;
 use App\Http\Controllers\Api\V1\Account\PasswordController;
 use App\Http\Controllers\Api\V1\Account\PhotoController;
@@ -16,6 +17,8 @@ use App\Http\Controllers\Api\V1\ApplicationRequirementController;
 use App\Http\Controllers\Api\V1\ApplicationStageController;
 use App\Http\Controllers\Api\V1\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Api\V1\Auth\CurrentUserController;
+use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
+use App\Http\Controllers\Api\V1\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\V1\Auth\RegisteredUserController;
@@ -33,6 +36,7 @@ use App\Http\Controllers\Api\V1\ClientPolicyController;
 use App\Http\Controllers\Api\V1\ClientSummaryController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\DefaultFormController;
+use App\Http\Controllers\Api\V1\DeletedWorkspaceController;
 use App\Http\Controllers\Api\V1\DocumentAssignmentController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DocumentDownloadController;
@@ -89,6 +93,9 @@ use App\Http\Controllers\Api\V1\WorkspaceExportDownloadController;
 use App\Http\Controllers\Api\V1\WorkspaceInvitationController;
 use App\Http\Controllers\Api\V1\WorkspaceLogoController;
 use App\Http\Controllers\Api\V1\WorkspaceMemberController;
+use App\Http\Controllers\Api\V1\WorkspaceMembershipController;
+use App\Http\Controllers\Api\V1\WorkspaceOwnershipController;
+use App\Http\Controllers\Api\V1\WorkspaceRestorationController;
 use App\Http\Middleware\EnsureWorkspaceMember;
 use Illuminate\Support\Facades\Route;
 
@@ -100,6 +107,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/two-factor-challenge', [TwoFactorChallengeController::class, 'store']);
         Route::post('/auth/forgot-password', [PasswordResetLinkController::class, 'store']);
         Route::post('/auth/reset-password', [PasswordResetController::class, 'store']);
+
+        // Laravel signs URLs by route name, so this one API route has a name (the framework's own).
+        Route::post('/auth/email-verification/{user}/{hash}', [EmailVerificationController::class, 'store'])
+            ->name('verification.verify');
     });
 
     Route::get('/public/forms/{form:token}', [PublicFormController::class, 'show']);
@@ -113,8 +124,11 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/auth/user', [CurrentUserController::class, 'show']);
         Route::post('/auth/logout', [AuthenticatedSessionController::class, 'destroy']);
+        Route::post('/auth/email-verification-notification', [EmailVerificationNotificationController::class, 'store'])
+            ->middleware('throttle:6,1');
 
         Route::prefix('account')->group(function () {
+            Route::delete('/', [AccountController::class, 'destroy']);
             Route::put('/profile', [ProfileController::class, 'update']);
             Route::post('/photo', [PhotoController::class, 'store']);
             Route::delete('/photo', [PhotoController::class, 'destroy']);
@@ -139,15 +153,23 @@ Route::prefix('v1')->group(function () {
         Route::post('/premium-links/{premiumLink:token}/claims', [PremiumLinkClaimController::class, 'store'])
             ->middleware('throttle:6,1');
 
+        // Deleted workspaces the owner can still restore. Outside the members-only group below,
+        // which can't see deleted workspaces.
+        Route::get('/deleted-workspaces', [DeletedWorkspaceController::class, 'index']);
+        Route::post('/deleted-workspaces/{workspace}/restoration', [WorkspaceRestorationController::class, 'store'])->withTrashed();
+
         // Everything a workspace owns. Members only (others get a 404), and child records must
         // belong to the workspace in the URL.
         Route::prefix('workspaces/{workspace}')->middleware(EnsureWorkspaceMember::class)->scopeBindings()->group(function () {
             Route::get('/', [WorkspaceController::class, 'show']);
             Route::put('/', [WorkspaceController::class, 'update']);
+            Route::delete('/', [WorkspaceController::class, 'destroy']);
             Route::post('/logo', [WorkspaceLogoController::class, 'store']);
             Route::delete('/logo', [WorkspaceLogoController::class, 'destroy']);
             Route::get('/members', [WorkspaceMemberController::class, 'index']);
             Route::delete('/members/{member}', [WorkspaceMemberController::class, 'destroy']);
+            Route::post('/ownership', [WorkspaceOwnershipController::class, 'store']);
+            Route::delete('/membership', [WorkspaceMembershipController::class, 'destroy']);
             Route::get('/invitations', [WorkspaceInvitationController::class, 'index']);
             Route::post('/invitations', [WorkspaceInvitationController::class, 'store']);
             Route::delete('/invitations/{invitation}', [WorkspaceInvitationController::class, 'destroy']);
