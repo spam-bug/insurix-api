@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Imports;
 
+use App\Actions\Forms\MarkResponsesAdded;
 use App\Actions\Leads\RecordLeadActivity;
 use App\Actions\Notifications\AnnounceWorkspaceChange;
 use App\Actions\Policies\PreparePolicyAttributes;
@@ -41,13 +42,15 @@ class SaveImportRows
         private PreparePolicyAttributes $preparePolicyAttributes,
         private RecordLeadActivity $recordLeadActivity,
         private RecordPolicyEvent $recordPolicyEvent,
+        private MarkResponsesAdded $markResponsesAdded,
     ) {}
 
     /**
      * Saves the checked rows: valid ones become new clients (with their policy) or leads; a later
      * row for the same person adds its policy to that client. Duplicates are skipped, or, when
      * the agent chose to, fill in what the existing record is missing (and add the row's policy).
-     * Progress is saved after each batch, and the workspace hears about it once at the end.
+     * Progress is saved after each batch, and the workspace hears about it once at the end. Rows
+     * that came from form responses mark those responses as added, with the lead or client.
      */
     public function handle(Import $import): void
     {
@@ -69,6 +72,10 @@ class SaveImportRows
 
         $import->update(['status' => ImportStatus::Completed]);
         Storage::disk(Import::DISK)->delete($import->path);
+
+        if ($import->responses !== null) {
+            $this->markResponsesAdded->handle($import);
+        }
 
         $topic = $import->kind === ImportKind::Clients ? ChangeTopic::Clients : ChangeTopic::Leads;
         $this->announceWorkspaceChange->handle($import->workspace_id, new WorkspaceChangeData($topic, ChangeAction::Created, count: $import->imported_rows));
@@ -119,7 +126,10 @@ class SaveImportRows
             }
         }
 
-        $row->update(['status' => $row->duplicate_id ? ImportRowStatus::Updated : ImportRowStatus::Imported]);
+        $row->update([
+            'status' => $row->duplicate_id ? ImportRowStatus::Updated : ImportRowStatus::Imported,
+            'record_id' => $import->kind === ImportKind::Leads ? $lead->id : $client->id,
+        ]);
     }
 
     /**
