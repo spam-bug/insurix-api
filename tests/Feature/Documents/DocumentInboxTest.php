@@ -47,7 +47,7 @@ it('uploads from the Documents page straight to a client of the workspace only',
 });
 
 it('refuses uploads over the workspace’s storage limit', function () {
-    config(['insurix.storage_limit_bytes' => 50 * 1024]);
+    config(['insurix.plans.free.storage_bytes' => 50 * 1024]);
     $agent = User::factory()->create();
     unassignedDocument($agent, ['size' => 40 * 1024]);
 
@@ -106,7 +106,7 @@ it('lists inbox files and summarizes types, inbox and storage', function () {
         ->assertJsonPath('data.unassigned', 1)
         ->assertJsonPath('data.by_category.valid_id', 1)
         ->assertJsonPath('data.by_category.medical_record', 0)
-        ->assertJsonPath('data.storage', ['used' => 1500, 'limit' => config('insurix.storage_limit_bytes')]);
+        ->assertJsonPath('data.storage', ['used' => 1500, 'limit' => config('insurix.plans.free.storage_bytes')]);
 });
 
 it('serves a file inline for the preview', function () {
