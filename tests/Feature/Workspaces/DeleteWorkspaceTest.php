@@ -53,6 +53,7 @@ it('purges workspaces past the grace period, with their data and files', functio
     $workspace = workspaceOf($owner);
     Lead::factory()->for($workspace)->create();
     Storage::disk('local')->put("documents/{$workspace->id}/unassigned/file.pdf", 'pdf');
+    Storage::disk('local')->put("exports/{$workspace->id}/export.zip", 'zip');
     $workspace->delete();
 
     $this->travel(29)->days();
@@ -64,4 +65,5 @@ it('purges workspaces past the grace period, with their data and files', functio
     expect(Workspace::withTrashed()->find($workspace->id))->toBeNull()
         ->and(Lead::count())->toBe(0);
     Storage::disk('local')->assertMissing("documents/{$workspace->id}/unassigned/file.pdf");
+    Storage::disk('local')->assertMissing("exports/{$workspace->id}/export.zip");
 });
