@@ -33,9 +33,9 @@ function teammateOf(User $owner): User
 it('tells everyone in the workspace about a new form lead, and stores it for the bell', function () {
     $owner = User::factory()->create();
     $member = teammateOf($owner);
-    workspaceOf($owner)->forceFill(['lead_form_token' => 'form-token'])->save();
+    contactFormOf($owner);
 
-    $this->postJson('/api/v1/public/lead-forms/form-token', ['name' => 'Gregoria de Jesus', 'email' => 'gregoria@example.com'])->assertCreated();
+    $this->postJson('/api/v1/public/forms/form-token/responses', ['answers' => ['name' => 'Gregoria de Jesus', 'email' => 'gregoria@example.com']])->assertCreated();
 
     foreach ([$owner, $member] as $user) {
         $notification = $user->notifications()->sole();

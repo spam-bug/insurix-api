@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-/** Ready-made forms to start from. Picking one copies its document into a new, editable form. */
+/** Ready-made forms to start from. Picking one copies its document into a new, editable form. Most link their fields to leads; Feedback doesn't. */
 enum FormTemplate: string
 {
     case Contact = 'contact';
@@ -12,6 +12,7 @@ enum FormTemplate: string
     case PolicyReview = 'policy_review';
     case ClientDetails = 'client_details';
     case Referral = 'referral';
+    case Feedback = 'feedback';
 
     public function label(): string
     {
@@ -21,6 +22,7 @@ enum FormTemplate: string
             self::PolicyReview => 'Policy review',
             self::ClientDetails => 'Client details update',
             self::Referral => 'Referral',
+            self::Feedback => 'Feedback survey',
         };
     }
 
@@ -32,6 +34,7 @@ enum FormTemplate: string
             self::PolicyReview => 'For people who already have a policy and want it checked.',
             self::ClientDetails => 'Clients send their birthdate, civil status, occupation and address.',
             self::Referral => 'A client recommends a friend or family member.',
+            self::Feedback => 'Ask clients how you’re doing. Not linked to leads.',
         };
     }
 
@@ -101,30 +104,32 @@ enum FormTemplate: string
                     self::custom('consent', FormFieldType::Consent, 'They agreed that I share their details', required: true),
                 ]),
             ]),
+            self::Feedback => self::form('How did I do?', 'Your feedback helps me serve you better.', [
+                self::section('feedback', null, null, [
+                    self::choice('rating', FormFieldType::SingleChoice, 'How happy are you with my service?', ['Very happy', 'Happy', 'Okay', 'Unhappy']),
+                    self::custom('best', FormFieldType::LongText, 'What did I do well?'),
+                    self::custom('better', FormFieldType::LongText, 'What could I do better?'),
+                    self::choice('recommend', FormFieldType::YesNo, 'Would you recommend me to a friend?', []),
+                ]),
+            ], addToLeads: false),
         };
     }
 
     /**
-     * A new form without a template: just what turning a response into a lead needs.
+     * A new form without a template: one empty section, not linked to anything.
      *
      * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>}
      */
-    public static function blankDocument(): array
+    public static function blankDocument(string $title): array
     {
-        return self::form('Untitled form', null, [
-            self::section('main', null, null, [
-                self::linked(ImportField::Name, required: true),
-                self::linked(ImportField::Email),
-                self::linked(ImportField::Phone),
-            ]),
-        ]);
+        return self::form($title, null, [self::section('main', null, null, [])], addToLeads: false);
     }
 
     /**
      * @param  list<array<string, mixed>>  $sections
      * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>}
      */
-    private static function form(string $title, ?string $description, array $sections): array
+    private static function form(string $title, ?string $description, array $sections, bool $addToLeads = true): array
     {
         return [
             'sections' => $sections,
@@ -133,7 +138,7 @@ enum FormTemplate: string
                 'description' => $description,
                 'submit_label' => 'Send',
                 'success_message' => 'Thank you! I’ll be in touch soon.',
-                'auto_add_leads' => true,
+                'auto_add_leads' => $addToLeads,
             ],
         ];
     }

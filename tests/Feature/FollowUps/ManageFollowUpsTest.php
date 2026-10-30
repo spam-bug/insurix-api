@@ -133,9 +133,10 @@ it('keeps a client’s status when a meeting is scheduled', function () {
 
 it('adds a follow-up due now for a shareable form submission', function () {
     Carbon::setTestNow('2026-10-17 02:00:00');
-    $agent = withLeadForm(User::factory()->create(), 'form-token');
+    $agent = User::factory()->create();
+    contactFormOf($agent);
 
-    $this->postJson('/api/v1/public/lead-forms/form-token', ['name' => 'Gregoria de Jesus', 'phone' => '0917 555 0100'])->assertCreated();
+    $this->postJson('/api/v1/public/forms/form-token/responses', ['answers' => ['name' => 'Gregoria de Jesus', 'phone' => '0917 555 0100']])->assertCreated();
 
     $followUp = workspaceOf($agent)->followUps()->sole();
     expect($followUp->type)->toBe(FollowUpType::Call)

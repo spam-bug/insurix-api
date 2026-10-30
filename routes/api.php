@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\V1\ClientHistoryController;
 use App\Http\Controllers\Api\V1\ClientPolicyController;
 use App\Http\Controllers\Api\V1\ClientSummaryController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
+use App\Http\Controllers\Api\V1\DefaultFormController;
 use App\Http\Controllers\Api\V1\DocumentAssignmentController;
 use App\Http\Controllers\Api\V1\DocumentController;
 use App\Http\Controllers\Api\V1\DocumentDownloadController;
@@ -40,6 +41,10 @@ use App\Http\Controllers\Api\V1\FollowUpCalendarController;
 use App\Http\Controllers\Api\V1\FollowUpCompletionController;
 use App\Http\Controllers\Api\V1\FollowUpController;
 use App\Http\Controllers\Api\V1\FollowUpSummaryController;
+use App\Http\Controllers\Api\V1\FormCatalogController;
+use App\Http\Controllers\Api\V1\FormController;
+use App\Http\Controllers\Api\V1\FormPublicationController;
+use App\Http\Controllers\Api\V1\FormTokenController;
 use App\Http\Controllers\Api\V1\ImportController;
 use App\Http\Controllers\Api\V1\ImportFixController;
 use App\Http\Controllers\Api\V1\ImportRowController;
@@ -49,8 +54,6 @@ use App\Http\Controllers\Api\V1\InvitationController;
 use App\Http\Controllers\Api\V1\LeadActivityController;
 use App\Http\Controllers\Api\V1\LeadController;
 use App\Http\Controllers\Api\V1\LeadFollowUpController;
-use App\Http\Controllers\Api\V1\LeadFormController;
-use App\Http\Controllers\Api\V1\LeadFormTokenController;
 use App\Http\Controllers\Api\V1\LeadMeetingController;
 use App\Http\Controllers\Api\V1\LeadPromotionController;
 use App\Http\Controllers\Api\V1\LeadStatusController;
@@ -69,7 +72,7 @@ use App\Http\Controllers\Api\V1\PremiumLinkClaimController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductSuggestionController;
 use App\Http\Controllers\Api\V1\ProductSummaryController;
-use App\Http\Controllers\Api\V1\PublicLeadFormController;
+use App\Http\Controllers\Api\V1\PublicFormController;
 use App\Http\Controllers\Api\V1\PublicPremiumLinkController;
 use App\Http\Controllers\Api\V1\ReadAllNotificationsController;
 use App\Http\Controllers\Api\V1\RequirementController;
@@ -92,9 +95,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/auth/reset-password', [PasswordResetController::class, 'store']);
     });
 
-    Route::get('/public/lead-forms/{leadForm:lead_form_token}', [PublicLeadFormController::class, 'show']);
-    Route::post('/public/lead-forms/{leadForm:lead_form_token}', [PublicLeadFormController::class, 'store'])
-        ->middleware('throttle:lead-form');
+    Route::get('/public/forms/{form:token}', [PublicFormController::class, 'show']);
+    Route::post('/public/forms/{form:token}/responses', [PublicFormController::class, 'store'])
+        ->middleware('throttle:form');
     Route::get('/public/premium-links/{premiumLink:token}', [PublicPremiumLinkController::class, 'show'])
         ->middleware('throttle:30,1');
 
@@ -123,6 +126,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/workspaces', [WorkspaceController::class, 'store']);
         Route::get('/invitations/{invitation:token}', [InvitationController::class, 'show'])->can('accept', 'invitation');
         Route::post('/invitations/{invitation:token}/accept', [InvitationController::class, 'update'])->can('accept', 'invitation');
+        Route::get('/form-catalog', [FormCatalogController::class, 'index']);
         Route::post('/premium-links/{premiumLink:token}/claims', [PremiumLinkClaimController::class, 'store'])
             ->middleware('throttle:6,1');
 
@@ -144,8 +148,15 @@ Route::prefix('v1')->group(function () {
             Route::get('/notifications', [NotificationController::class, 'index']);
             Route::patch('/notifications/{notification}', [NotificationController::class, 'update']);
 
-            Route::get('/lead-form', [LeadFormController::class, 'show']);
-            Route::post('/lead-form/regenerate', [LeadFormTokenController::class, 'store']);
+            Route::get('/forms', [FormController::class, 'index']);
+            Route::post('/forms', [FormController::class, 'store']);
+            Route::get('/forms/{form}', [FormController::class, 'show']);
+            Route::patch('/forms/{form}', [FormController::class, 'update']);
+            Route::delete('/forms/{form}', [FormController::class, 'destroy']);
+            Route::post('/forms/{form}/publication', [FormPublicationController::class, 'store']);
+            Route::delete('/forms/{form}/publication', [FormPublicationController::class, 'destroy']);
+            Route::post('/forms/{form}/default', [DefaultFormController::class, 'store']);
+            Route::post('/forms/{form}/token', [FormTokenController::class, 'store']);
 
             Route::get('/leads/status-counts', [LeadStatusCountController::class, 'index']);
             Route::post('/leads/bulk/status', [BulkLeadStatusController::class, 'update']);
