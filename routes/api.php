@@ -94,6 +94,7 @@ use App\Http\Controllers\Api\V1\WorkspaceMemberController;
 use App\Http\Controllers\Api\V1\WorkspaceMembershipController;
 use App\Http\Controllers\Api\V1\WorkspaceOwnershipController;
 use App\Http\Controllers\Api\V1\WorkspaceRestorationController;
+use App\Http\Controllers\Api\V1\WorkspaceUsageController;
 use App\Http\Middleware\EnsureWorkspaceMember;
 use Illuminate\Support\Facades\Route;
 
@@ -164,6 +165,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/', [WorkspaceController::class, 'destroy']);
             Route::post('/logo', [WorkspaceLogoController::class, 'store']);
             Route::delete('/logo', [WorkspaceLogoController::class, 'destroy']);
+            Route::get('/usage', [WorkspaceUsageController::class, 'index']);
             Route::get('/members', [WorkspaceMemberController::class, 'index']);
             Route::delete('/members/{member}', [WorkspaceMemberController::class, 'destroy']);
             Route::post('/ownership', [WorkspaceOwnershipController::class, 'store']);
