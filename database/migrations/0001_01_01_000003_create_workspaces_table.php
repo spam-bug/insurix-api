@@ -13,7 +13,8 @@ return new class extends Migration
     /**
      * Workspaces own every lead, client, policy and the rest. A user can belong to several,
      * each created from a template that fixes its type. The timezone sets where the
-     * workspace's day starts; the bio, logo and token are for its public lead form.
+     * workspace's day starts; the bio, logo and token are for its public lead form. A deleted
+     * workspace is kept (deleted_at) for a grace period in which the owner can restore it.
      */
     public function up(): void
     {
@@ -27,6 +28,9 @@ return new class extends Migration
             $table->text('bio')->nullable();
             $table->string('logo_path')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('deleted_at');
         });
 
         Schema::create('workspace_members', function (Blueprint $table) {

@@ -37,6 +37,7 @@ class WorkspaceResource extends JsonResource
                 'value' => $this->membership->role->value,
                 'label' => $this->membership->role->label(),
             ]),
+            'members_count' => $this->whenCounted('members'),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

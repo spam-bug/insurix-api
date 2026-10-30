@@ -15,4 +15,10 @@ class UserPolicy
     {
         return $user->is($account);
     }
+
+    /** Agents only ever delete their own account. */
+    public function delete(User $user, User $account): bool
+    {
+        return $user->is($account);
+    }
 }

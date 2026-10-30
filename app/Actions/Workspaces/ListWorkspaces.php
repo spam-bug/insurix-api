@@ -11,12 +11,13 @@ use Illuminate\Database\Eloquent\Collection;
 class ListWorkspaces
 {
     /**
-     * Every workspace the user belongs to, with their role in each, oldest first.
+     * Every workspace the user belongs to, with their role and its member count in each, oldest
+     * first. The count tells deleting an account which workspaces take teammates down with it.
      *
      * @return Collection<int, Workspace>
      */
     public function handle(User $user): Collection
     {
-        return $user->workspaces()->oldest('workspaces.created_at')->get();
+        return $user->workspaces()->withCount('members')->oldest('workspaces.created_at')->get();
     }
 }
