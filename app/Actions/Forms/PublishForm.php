@@ -43,7 +43,7 @@ class PublishForm
     }
 
     /**
-     * @param  array{sections: list<array<string, mixed>>, settings: array<string, mixed>}  $draft
+     * @param  array{sections: list<array<string, mixed>>, settings: array<string, mixed>, theme?: array<string, mixed>}  $draft
      * @return list<string>
      */
     private function problems(array $draft): array

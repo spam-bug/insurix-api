@@ -24,6 +24,7 @@ return [
     'features' => [
         'workspace-onboarding' => env('INSURIX_FEATURE_WORKSPACE_ONBOARDING', 'off'),
         'workspace-switcher' => env('INSURIX_FEATURE_WORKSPACE_SWITCHER', 'off'),
+        'form-premium-theme' => env('INSURIX_FEATURE_FORM_PREMIUM_THEME', 'premium'),
     ],
 
 ];

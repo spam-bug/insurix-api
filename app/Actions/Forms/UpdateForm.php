@@ -34,8 +34,8 @@ class UpdateForm
     }
 
     /**
-     * @param  array{sections: list<array<string, mixed>>, settings: array<string, mixed>}  $draft
-     * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>}
+     * @param  array{sections: list<array<string, mixed>>, settings: array<string, mixed>, theme?: array<string, mixed>}  $draft
+     * @return array{sections: list<array<string, mixed>>, settings: array<string, mixed>, theme?: array<string, mixed>}
      */
     private function withLinkedTypes(array $draft): array
     {
