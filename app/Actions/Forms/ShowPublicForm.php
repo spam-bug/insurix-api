@@ -32,7 +32,6 @@ class ShowPublicForm
             'form' => ['token' => $form->token, 'status' => $form->status->value, 'document' => $document],
             'agent' => [
                 'name' => $workspace->name,
-                'bio' => $workspace->bio,
                 'avatar_url' => $owner?->avatarUrl(),
                 'logo_url' => $workspace->logoUrl(),
             ],

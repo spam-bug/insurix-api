@@ -67,15 +67,14 @@ it('lets the owner change the workspace settings, but not a member', function ()
     $owner = User::factory()->create();
     $member = User::factory()->create();
     workspaceOf($owner)->users()->attach($member, ['role' => 'member']);
-    $settings = ['name' => 'Reyes Insurance', 'timezone' => 'Asia/Singapore', 'bio' => 'Life and health.'];
+    $settings = ['name' => 'Reyes Insurance', 'timezone' => 'Asia/Singapore'];
 
     $this->actingAs($member)->putJson(ws($owner), $settings)->assertForbidden();
 
     $this->actingAs($owner)->putJson(ws($owner), $settings)
         ->assertOk()
         ->assertJsonPath('data.name', 'Reyes Insurance')
-        ->assertJsonPath('data.timezone', 'Asia/Singapore')
-        ->assertJsonPath('data.bio', 'Life and health.');
+        ->assertJsonPath('data.timezone', 'Asia/Singapore');
     $this->putJson(ws($owner), ['name' => 'X', 'timezone' => 'Mars/Base'])->assertJsonValidationErrors('timezone');
 });
 

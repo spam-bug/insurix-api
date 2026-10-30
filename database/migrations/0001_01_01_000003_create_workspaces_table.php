@@ -13,7 +13,7 @@ return new class extends Migration
     /**
      * Workspaces own every lead, client, policy and the rest. A user can belong to several,
      * each created from a template that fixes its type. The timezone sets where the
-     * workspace's day starts; the bio, logo and token are for its public lead form. A deleted
+     * workspace's day starts; the logo is shown on its public forms. A deleted
      * workspace is kept (deleted_at) for a grace period in which the owner can restore it.
      */
     public function up(): void
@@ -25,7 +25,6 @@ return new class extends Migration
             $table->string('plan', 20)->default(Plan::Free->value);
             $table->timestamp('plan_ends_at')->nullable();
             $table->string('timezone', 64)->default('Asia/Manila');
-            $table->text('bio')->nullable();
             $table->string('logo_path')->nullable();
             $table->timestamps();
             $table->softDeletes();

@@ -11,6 +11,5 @@ class WorkspaceSettingsData extends Data
     public function __construct(
         public readonly string $name,
         public readonly string $timezone,
-        public readonly ?string $bio = null,
     ) {}
 }

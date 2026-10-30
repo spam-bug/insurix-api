@@ -28,7 +28,6 @@ class WorkspaceResource extends JsonResource
             'name' => $this->name,
             'type' => ['value' => $this->type->value, 'label' => $this->type->label()],
             'timezone' => $this->timezone,
-            'bio' => $this->bio,
             'logo_url' => $this->logoUrl(),
             'plan' => ['value' => $this->currentPlan()->value, 'label' => $this->currentPlan()->label()],
             'plan_ends_at' => $this->currentPlan() === Plan::Premium ? $this->plan_ends_at?->toIso8601String() : null,
