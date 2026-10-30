@@ -219,6 +219,20 @@ it('rate limits each visitor per form by their own IP', function () {
     $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.2'])->postJson('/api/v1/public/forms/form-token/responses', $answers)->assertCreated();
 });
 
+it('counts each form’s responses and the ones still new', function () {
+    $agent = User::factory()->create();
+    $form = publishedForm($agent, [question('comments', 'long_text', ['required' => true])]);
+
+    foreach (['One', 'Two', 'Three'] as $comment) {
+        $this->postJson("/api/v1/public/forms/{$form->token}/responses", ['answers' => ['comments' => $comment]])->assertCreated();
+    }
+    $form->responses()->oldest()->first()->update(['status' => FormResponseStatus::Dismissed]);
+
+    $listed = collect($this->actingAs($agent)->getJson(ws($agent).'/forms')->assertOk()->json('data'))->firstWhere('id', $form->id);
+
+    expect($listed)->responses_count->toBe(3)->new_responses_count->toBe(2);
+});
+
 it('switches the default form, and won’t delete the default', function () {
     $agent = User::factory()->create();
     $contact = contactFormOf($agent);

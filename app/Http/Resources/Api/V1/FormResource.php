@@ -29,6 +29,7 @@ class FormResource extends JsonResource
             'published' => $this->published,
             'has_unpublished_changes' => $this->draft !== $this->published,
             'responses_count' => $this->whenCounted('responses'),
+            'new_responses_count' => $this->whenCounted('new_responses'),
             'published_at' => $this->published_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
