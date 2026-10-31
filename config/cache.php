@@ -10,6 +10,7 @@ use App\Models\Form;
 use App\Models\FormResponse;
 use App\Models\Lead;
 use App\Models\LeadActivity;
+use App\Models\Note;
 use App\Models\Policy;
 use App\Models\PolicyEvent;
 use App\Models\PolicyRenewal;
@@ -171,6 +172,7 @@ return [
         FormResponse::class,
         Lead::class,
         LeadActivity::class,
+        Note::class,
         Policy::class,
         PolicyEvent::class,
         PolicyRenewal::class,
