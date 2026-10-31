@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\V1\ClientDocumentController;
 use App\Http\Controllers\Api\V1\ClientFollowUpController;
 use App\Http\Controllers\Api\V1\ClientHistoryController;
 use App\Http\Controllers\Api\V1\ClientPolicyController;
+use App\Http\Controllers\Api\V1\ClientServiceRequestController;
 use App\Http\Controllers\Api\V1\ClientSummaryController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
 use App\Http\Controllers\Api\V1\DefaultFormController;
@@ -87,6 +88,9 @@ use App\Http\Controllers\Api\V1\PublicPremiumLinkController;
 use App\Http\Controllers\Api\V1\ReadAllNotificationsController;
 use App\Http\Controllers\Api\V1\RequirementController;
 use App\Http\Controllers\Api\V1\SearchController;
+use App\Http\Controllers\Api\V1\ServiceRequestController;
+use App\Http\Controllers\Api\V1\ServiceRequestStatusController;
+use App\Http\Controllers\Api\V1\ServiceRequestSummaryController;
 use App\Http\Controllers\Api\V1\UnreadNotificationCountController;
 use App\Http\Controllers\Api\V1\WorkspaceController;
 use App\Http\Controllers\Api\V1\WorkspaceExportController;
@@ -284,6 +288,13 @@ Route::prefix('v1')->group(function () {
             Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->can('delete', 'note');
             Route::post('/notes/{note}/pin', [NotePinController::class, 'store'])->can('pin', 'note');
             Route::delete('/notes/{note}/pin', [NotePinController::class, 'destroy'])->can('pin', 'note');
+
+            Route::get('/service-requests', [ServiceRequestController::class, 'index']);
+            Route::get('/service-requests/summary', [ServiceRequestSummaryController::class, 'index']);
+            Route::post('/clients/{client}/service-requests', [ClientServiceRequestController::class, 'store']);
+            Route::put('/service-requests/{serviceRequest}', [ServiceRequestController::class, 'update']);
+            Route::patch('/service-requests/{serviceRequest}/status', [ServiceRequestStatusController::class, 'update']);
+            Route::delete('/service-requests/{serviceRequest}', [ServiceRequestController::class, 'destroy'])->can('delete', 'serviceRequest');
 
             Route::get('/follow-ups', [FollowUpController::class, 'index']);
             Route::get('/follow-ups/summary', [FollowUpSummaryController::class, 'index']);
