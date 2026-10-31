@@ -14,6 +14,7 @@ enum ChangeTopic: string
     case Documents = 'documents';
     case Notes = 'notes';
     case ServiceRequests = 'service-requests';
+    case Automations = 'automations';
     case Forms = 'forms';
     case Products = 'products';
     case Team = 'team';

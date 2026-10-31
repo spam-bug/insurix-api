@@ -10,6 +10,7 @@ enum Feature: string
     case WorkspaceOnboarding = 'workspace-onboarding';
     case WorkspaceSwitcher = 'workspace-switcher';
     case FormPremiumTheme = 'form-premium-theme';
+    case Automations = 'automations';
 
     public function access(): FeatureAccess
     {

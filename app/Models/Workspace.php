@@ -127,6 +127,14 @@ class Workspace extends Model
     }
 
     /**
+     * @return HasMany<Automation, $this>
+     */
+    public function automations(): HasMany
+    {
+        return $this->hasMany(Automation::class);
+    }
+
+    /**
      * @return HasMany<ServiceRequest, $this>
      */
     public function serviceRequests(): HasMany

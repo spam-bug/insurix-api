@@ -34,7 +34,7 @@ it('lists a Premium feature only for Premium workspaces', function () {
     $this->actingAs($agent)->getJson('/api/v1/workspaces')
         ->assertOk()
         ->assertJsonFragment(['id' => $free->id, 'plan' => ['value' => 'free', 'label' => 'Free'], 'features' => []])
-        ->assertJsonFragment(['id' => $premium->id, 'plan' => ['value' => 'premium', 'label' => 'Premium'], 'features' => ['form-premium-theme', 'workspace-switcher']]);
+        ->assertJsonFragment(['id' => $premium->id, 'plan' => ['value' => 'premium', 'label' => 'Premium'], 'features' => ['form-premium-theme', 'automations', 'workspace-switcher']]);
 });
 
 it('lists only the user’s workspaces, with their role in each', function () {

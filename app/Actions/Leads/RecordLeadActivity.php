@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Leads;
 
+use App\Actions\Automations\QueueLeadAutomations;
 use App\Enums\LeadActivityType;
 use App\Models\Lead;
 use App\Models\LeadActivity;
@@ -12,11 +13,11 @@ use Illuminate\Support\Facades\DB;
 
 class RecordLeadActivity
 {
-    public function __construct(private ScoreLead $scoreLead) {}
+    public function __construct(private ScoreLead $scoreLead, private QueueLeadAutomations $queueLeadAutomations) {}
 
     /**
      * Logs what happened to the lead. Every change to a lead passes through here, so it's also
-     * where the lead's score is brought up to date.
+     * where the lead's score is brought up to date and its automations are set off.
      *
      * @param  array<string, mixed>|null  $properties
      */
@@ -31,6 +32,7 @@ class RecordLeadActivity
             ]);
 
             $this->scoreLead->handle($lead);
+            $this->queueLeadAutomations->handle($lead, $activity);
 
             return $activity;
         });

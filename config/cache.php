@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\ApplicationRequirement;
+use App\Models\Automation;
 use App\Models\Client;
 use App\Models\Document;
 use App\Models\FollowUp;
@@ -165,6 +166,7 @@ return [
         Carbon::class,
         CarbonImmutable::class,
         ApplicationRequirement::class,
+        Automation::class,
         Client::class,
         Document::class,
         FollowUp::class,

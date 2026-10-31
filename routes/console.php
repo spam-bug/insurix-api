@@ -15,6 +15,10 @@ Artisan::command('inspire', function () {
 Schedule::command('policies:queue-follow-ups')->dailyAt('05:00')->timezone('Asia/Manila');
 Schedule::command('leads:rescore')->dailyAt('05:15')->timezone('Asia/Manila');
 
+// Automations for leads that have gone quiet, after the scores are fresh and before the morning
+// count of follow-ups, so the follow-ups they add are in it.
+Schedule::command('automations:run-idle')->dailyAt('05:30')->timezone('Asia/Manila');
+
 // After the reminders and scores are in: each member's morning count of follow-ups for today.
 Schedule::command('follow-ups:notify-due')->dailyAt('07:00')->timezone('Asia/Manila');
 Schedule::command('notifications:prune')->dailyAt('03:00')->timezone('Asia/Manila');
