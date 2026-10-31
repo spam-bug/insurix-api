@@ -9,6 +9,8 @@ use App\Actions\Forms\PublishForm;
 use App\Actions\Leads\ScoreLead;
 use App\DataTransferObject\Forms\FormData;
 use App\Enums\ApplicationStage;
+use App\Enums\AutomationMatch;
+use App\Enums\AutomationTrigger;
 use App\Enums\ContactChannel;
 use App\Enums\DocumentCategory;
 use App\Enums\FollowUpType;
@@ -58,6 +60,7 @@ class DemoSeeder extends Seeder
         $clients = $this->clients($workspace, $agent, $products);
         $this->followUps($workspace, $clients);
         $this->serviceRequests($agent, $clients);
+        $this->automations($workspace, $agent);
         $this->forms($workspace);
 
         Cache::flush();
@@ -298,6 +301,29 @@ class DemoSeeder extends Seeder
                 ...$extra,
             ]);
         }
+    }
+
+    /** Two rules to show on the Automations page; they only run once the workspace has Premium. */
+    private function automations(Workspace $workspace, User $agent): void
+    {
+        $workspace->automations()->create([
+            'user_id' => $agent->id,
+            'name' => 'Call new form leads within the hour',
+            'trigger' => AutomationTrigger::LeadCreated,
+            'match' => AutomationMatch::All,
+            'conditions' => [['field' => 'source', 'operator' => 'is', 'value' => LeadSource::ShareableForm->value]],
+            'actions' => [['type' => 'add_follow_up', 'follow_up_type' => 'call', 'title' => 'Call the new form lead', 'due_in_hours' => 1]],
+        ]);
+
+        $workspace->automations()->create([
+            'user_id' => $agent->id,
+            'name' => 'Nudge contacted leads that went quiet',
+            'trigger' => AutomationTrigger::LeadIdle,
+            'idle_days' => 3,
+            'match' => AutomationMatch::All,
+            'conditions' => [['field' => 'stage', 'operator' => 'is', 'value' => LeadStatus::Contacted->value]],
+            'actions' => [['type' => 'add_follow_up', 'follow_up_type' => 'message', 'title' => 'Check in with a short message', 'due_in_hours' => 2]],
+        ]);
     }
 
     private function forms(Workspace $workspace): void
