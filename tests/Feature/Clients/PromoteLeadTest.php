@@ -11,7 +11,11 @@ use App\Models\User;
 
 it('promotes a lead to a client, carrying its details over', function () {
     $agent = User::factory()->create();
-    $lead = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create(['notes' => 'Wants family cover.']);
+    $lead = Lead::factory()->for(workspaceOf($agent))->status(LeadStatus::Qualified)->create([
+        'notes' => 'Wants family cover.',
+        'preferred_channel' => 'telegram',
+        'telegram_username' => 'ana_reyes',
+    ]);
 
     $response = $this->actingAs($agent)
         ->postJson(ws($agent)."/leads/{$lead->id}/promote", [
@@ -24,6 +28,8 @@ it('promotes a lead to a client, carrying its details over', function () {
         ->assertJsonPath('data.name', $lead->name)
         ->assertJsonPath('data.email', $lead->email)
         ->assertJsonPath('data.notes', 'Wants family cover.')
+        ->assertJsonPath('data.preferred_channel.value', 'telegram')
+        ->assertJsonPath('data.telegram_username', 'ana_reyes')
         ->assertJsonPath('data.birthdate', '1988-04-12')
         ->assertJsonPath('data.civil_status', ['value' => 'married', 'label' => 'Married'])
         ->assertJsonPath('data.occupation', 'Nurse');
