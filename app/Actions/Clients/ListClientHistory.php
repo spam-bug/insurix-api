@@ -10,6 +10,7 @@ use App\Models\FollowUp;
 use App\Models\LeadActivity;
 use App\Models\Note;
 use App\Models\PolicyEvent;
+use App\Models\ServiceRequest;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -20,7 +21,8 @@ class ListClientHistory
      * the lead they were promoted from, the timeline of each of their policies, and the
      * documents uploaded for them. Documents count from their upload; a deleted one drops out.
      * Follow-ups completed without a lead (a client added directly) have no lead activity, so
-     * they're listed from the follow-ups themselves, and their notes from the notes.
+     * they're listed from the follow-ups themselves, and their notes from the notes. Each service
+     * request shows when it was opened and, once done, when it was resolved.
      *
      * @return Collection<int, array<string, mixed>>
      */
@@ -82,15 +84,37 @@ class ListClientHistory
                     'note_id' => $note->id,
                 ]));
 
+            $serviceRequests = $client->serviceRequests()
+                ->with('user:id,name')
+                ->latest()
+                ->latest('id')
+                ->limit($limit)
+                ->get()
+                ->flatMap(fn (ServiceRequest $serviceRequest) => array_filter([
+                    $this->entry('request', $serviceRequest->id, 'opened', $serviceRequest->created_at, $serviceRequest->user, $this->requestDetails($serviceRequest)),
+                    $serviceRequest->resolved_at
+                        ? [...$this->entry('request', $serviceRequest->id, 'resolved', $serviceRequest->resolved_at, null, $this->requestDetails($serviceRequest)), 'id' => "request-resolved-{$serviceRequest->id}"]
+                        : null,
+                ]));
+
             return $leadActivity
                 ->concat($directNotes)
                 ->concat($completedFollowUps)
                 ->concat($policyEvents)
                 ->concat($documents)
+                ->concat($serviceRequests)
                 ->sortByDesc(fn (array $entry) => [$entry['created_at'], $entry['id']])
                 ->take($limit)
                 ->values();
         });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function requestDetails(ServiceRequest $serviceRequest): array
+    {
+        return ['request' => ['id' => $serviceRequest->id, 'type' => $serviceRequest->type->label(), 'title' => $serviceRequest->title]];
     }
 
     /**
