@@ -124,6 +124,13 @@ it('publishes only complete forms, without needing lead fields', function () {
         ->assertJsonPath('data.has_unpublished_changes', false);
 });
 
+it('asks to confirm the email before publishing a form', function () {
+    $agent = User::factory()->unverified()->create();
+    $form = $this->actingAs($agent)->postJson(ws($agent).'/forms', ['name' => 'Survey'])->assertCreated()->json('data');
+
+    $this->postJson(ws($agent)."/forms/{$form['id']}/publication")->assertForbidden();
+});
+
 it('shows visitors the published form, never a draft', function () {
     $agent = User::factory()->create();
     $form = $this->actingAs($agent)->postJson(ws($agent).'/forms', ['name' => 'Survey'])->json('data');
