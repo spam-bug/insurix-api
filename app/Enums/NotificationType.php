@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Models\User;
+
 /** What a bell notification is about; stored in the notifications table's type column. */
 enum NotificationType: string
 {
@@ -29,5 +31,21 @@ enum NotificationType: string
             self::Mention => 'Mention',
             self::ExportReady => 'Export',
         };
+    }
+
+    /** In app is on for everything; email only for what's personal or time-sensitive. */
+    public function isOnByDefault(NotificationChannel $channel): bool
+    {
+        return $channel === NotificationChannel::InApp || in_array($this, [
+            self::Mention,
+            self::FollowUpsDue,
+            self::RenewalComingUp,
+            self::FormLead,
+        ], true);
+    }
+
+    public function isOnFor(User $user, NotificationChannel $channel): bool
+    {
+        return $user->notification_preferences[$this->value][$channel->value] ?? $this->isOnByDefault($channel);
     }
 }
