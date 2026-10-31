@@ -12,8 +12,8 @@ it('lists every kind, all on until the user turns one off', function () {
 
     $this->actingAs($agent)->getJson('/api/v1/account/notification-preferences')
         ->assertOk()
-        ->assertJsonCount(8, 'data')
-        ->assertJsonPath('data.*.enabled', array_fill(0, 8, true));
+        ->assertJsonCount(9, 'data')
+        ->assertJsonPath('data.*.enabled', array_fill(0, 9, true));
 });
 
 it('saves one switch at a time and keeps the others', function () {

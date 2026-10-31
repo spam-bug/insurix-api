@@ -17,6 +17,7 @@ enum NotificationType: string
     case StorageAlmostFull = 'storage_almost_full';
     case Mention = 'mention';
     case ExportReady = 'export_ready';
+    case Automation = 'automation';
 
     /** The short tag shown on the notification. */
     public function label(): string
@@ -30,6 +31,7 @@ enum NotificationType: string
             self::StorageAlmostFull => 'Storage',
             self::Mention => 'Mention',
             self::ExportReady => 'Export',
+            self::Automation => 'Automation',
         };
     }
 

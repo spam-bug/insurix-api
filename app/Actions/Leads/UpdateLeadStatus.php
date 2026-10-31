@@ -20,9 +20,10 @@ class UpdateLeadStatus
     public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange, private RecordLeadActivity $recordLeadActivity) {}
 
     /**
-     * A promoted lead's stage is settled; its client is where the work continues.
+     * A promoted lead's stage is settled; its client is where the work continues. A move made by
+     * an automation has no actor and names the automation, so it doesn't set off other automations.
      */
-    public function handle(Lead $lead, LeadStatus $status, User $actor): Lead
+    public function handle(Lead $lead, LeadStatus $status, ?User $actor, ?string $automationId = null): Lead
     {
         if ($lead->status === LeadStatus::Converted) {
             throw ValidationException::withMessages(['status' => 'This lead is already a client.']);
@@ -34,12 +35,13 @@ class UpdateLeadStatus
             return $lead;
         }
 
-        $lead = DB::transaction(function () use ($lead, $status, $previous, $actor) {
+        $lead = DB::transaction(function () use ($lead, $status, $previous, $actor, $automationId) {
             $lead->update(['status' => $status]);
 
             $this->recordLeadActivity->handle($lead, LeadActivityType::StatusChanged, $actor, properties: [
                 'from' => $previous->value,
                 'to' => $status->value,
+                ...($automationId ? ['automation_id' => $automationId] : []),
             ]);
 
             return $lead;
