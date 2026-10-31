@@ -9,6 +9,7 @@ use App\Actions\Forms\PublishForm;
 use App\Actions\Leads\ScoreLead;
 use App\DataTransferObject\Forms\FormData;
 use App\Enums\ApplicationStage;
+use App\Enums\ContactChannel;
 use App\Enums\DocumentCategory;
 use App\Enums\FollowUpType;
 use App\Enums\FormTemplate;
@@ -113,6 +114,7 @@ class DemoSeeder extends Seeder
                 'name' => $name,
                 'email' => $this->email($name),
                 'phone' => $this->phone(),
+                ...$this->contactPreference($name),
                 'address' => fake()->randomElement(['Quezon City', 'Makati City', 'Pasig City', 'Cebu City', 'Davao City', 'Antipolo, Rizal']),
                 'source' => $source,
                 'interest' => $interest,
@@ -157,6 +159,7 @@ class DemoSeeder extends Seeder
                 'name' => $name,
                 'email' => $this->email($name),
                 'phone' => $this->phone(),
+                ...$this->contactPreference($name),
                 'address' => fake()->randomElement(['Quezon City', 'Makati City', 'Taguig City', 'Mandaluyong City', 'Cebu City']),
                 'occupation' => fake()->randomElement(['Teacher', 'Nurse', 'Small business owner', 'Engineer', 'Call center manager', 'OFW']),
                 'notes' => null,
@@ -270,6 +273,21 @@ class DemoSeeder extends Seeder
             $form = app(CreateForm::class)->handle($workspace, new FormData($template->label(), $template));
             app(PublishForm::class)->handle($form);
         }
+    }
+
+    /**
+     * Most Filipino clients are easiest to reach on Viber or Messenger; a few prefer WhatsApp or a call.
+     *
+     * @return array{preferred_channel: ?ContactChannel, messenger_username: ?string}
+     */
+    private function contactPreference(string $name): array
+    {
+        $channel = fake()->randomElement([ContactChannel::Viber, ContactChannel::Viber, ContactChannel::Messenger, ContactChannel::Messenger, ContactChannel::WhatsApp, ContactChannel::Call, null]);
+
+        return [
+            'preferred_channel' => $channel,
+            'messenger_username' => $channel === ContactChannel::Messenger ? str($name)->lower()->replace(' ', '.')->ascii()->toString() : null,
+        ];
     }
 
     private function email(string $name): string
