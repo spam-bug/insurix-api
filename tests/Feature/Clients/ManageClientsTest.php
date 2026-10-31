@@ -54,8 +54,12 @@ it('updates a client', function () {
             'phone' => null,
             'civil_status' => 'widowed',
             'occupation' => 'Teacher',
+            'preferred_channel' => 'messenger',
+            'messenger_username' => 'm.me/teodora.alonso',
         ])
         ->assertOk()
+        ->assertJsonPath('data.preferred_channel.value', 'messenger')
+        ->assertJsonPath('data.messenger_username', 'teodora.alonso')
         ->assertJsonPath('data.name', 'Teodora Alonso')
         ->assertJsonPath('data.email', 'teodora@example.com')
         ->assertJsonPath('data.phone', null)
@@ -68,9 +72,9 @@ it('validates client updates', function () {
     $client = Client::factory()->for(workspaceOf($agent))->create();
 
     $this->actingAs($agent)
-        ->putJson(ws($agent)."/clients/{$client->id}", ['email' => 'not-an-email'])
+        ->putJson(ws($agent)."/clients/{$client->id}", ['email' => 'not-an-email', 'preferred_channel' => 'whatsapp'])
         ->assertUnprocessable()
-        ->assertJsonValidationErrors(['name', 'email']);
+        ->assertJsonValidationErrors(['name', 'email', 'phone']);
 });
 
 it('forbids another agent’s client', function () {
