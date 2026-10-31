@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\ChatUsername;
+use App\Enums\ContactChannel;
 use App\Enums\LeadInterest;
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
@@ -18,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'phone', 'address', 'source', 'interest', 'notes', 'status', 'meeting_at'])]
+#[Fillable(['name', 'email', 'phone', 'preferred_channel', 'messenger_username', 'telegram_username', 'address', 'source', 'interest', 'notes', 'status', 'meeting_at'])]
 class Lead extends Model
 {
     /** @use HasFactory<LeadFactory> */
@@ -93,6 +95,9 @@ class Lead extends Model
         return [
             'source' => LeadSource::class,
             'interest' => LeadInterest::class,
+            'preferred_channel' => ContactChannel::class,
+            'messenger_username' => ChatUsername::class,
+            'telegram_username' => ChatUsername::class,
             'status' => LeadStatus::class,
             'meeting_at' => 'immutable_datetime',
             'score_reasons' => 'array',
