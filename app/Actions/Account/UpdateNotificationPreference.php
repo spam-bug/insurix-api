@@ -16,7 +16,7 @@ class UpdateNotificationPreference
         return DB::transaction(function () use ($user, $data) {
             $locked = User::lockForUpdate()->findOrFail($user->id);
             $preferences = $locked->notification_preferences ?? [];
-            $preferences[$data->type->value][$data->channel->value] = $data->enabled;
+            $preferences[$data->type->value] = $data->enabled;
 
             $locked->forceFill(['notification_preferences' => $preferences])->save();
 

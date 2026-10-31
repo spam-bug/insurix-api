@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Account;
 
-use App\Enums\NotificationChannel;
 use App\Enums\NotificationType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -26,7 +25,6 @@ class UpdateNotificationPreferenceRequest extends FormRequest
     {
         return [
             'type' => ['required', Rule::enum(NotificationType::class)],
-            'channel' => ['required', Rule::enum(NotificationChannel::class)],
             'enabled' => ['required', 'boolean'],
         ];
     }

@@ -13,7 +13,7 @@ use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Http\JsonResponse;
 
-/** Which kinds of notification the user gets in the app and by email, across workspaces. */
+/** Which kinds of notification the user gets (in the bell and by email), across workspaces. */
 class NotificationPreferenceController extends Controller
 {
     public function index(#[CurrentUser] User $user, ListNotificationPreferences $listNotificationPreferences): JsonResponse

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
-use App\Enums\NotificationChannel;
 use App\Enums\NotificationType;
 use App\Models\User;
 use App\Models\Workspace;
@@ -16,8 +15,8 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * Something in a workspace a user should know about: kept for the bell and pushed to the
- * user's open tabs, and emailed, each as the user chose per kind. Each kind says what it's
+ * Something in a workspace a user should know about: kept for the bell, pushed to the
+ * user's open tabs and emailed, unless the user turned that kind off. Each kind says what it's
  * about; the app builds the link and actions.
  */
 abstract class WorkspaceNotification extends Notification implements ShouldQueue
@@ -38,12 +37,7 @@ abstract class WorkspaceNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        $type = $this->notificationType();
-
-        return [
-            ...$type->isOnFor($notifiable, NotificationChannel::InApp) ? [WorkspaceDatabaseChannel::class, 'broadcast'] : [],
-            ...$type->isOnFor($notifiable, NotificationChannel::Email) ? ['mail'] : [],
-        ];
+        return $this->notificationType()->isOnFor($notifiable) ? [WorkspaceDatabaseChannel::class, 'broadcast', 'mail'] : [];
     }
 
     /** The button opens the app, which finds the record from the type and subject (`/w/{id}/open`). */

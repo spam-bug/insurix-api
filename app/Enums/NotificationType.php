@@ -33,19 +33,9 @@ enum NotificationType: string
         };
     }
 
-    /** In app is on for everything; email only for what's personal or time-sensitive. */
-    public function isOnByDefault(NotificationChannel $channel): bool
+    /** One switch per kind covers the bell and email; every kind is on until the user turns it off. */
+    public function isOnFor(User $user): bool
     {
-        return $channel === NotificationChannel::InApp || in_array($this, [
-            self::Mention,
-            self::FollowUpsDue,
-            self::RenewalComingUp,
-            self::FormLead,
-        ], true);
-    }
-
-    public function isOnFor(User $user, NotificationChannel $channel): bool
-    {
-        return $user->notification_preferences[$this->value][$channel->value] ?? $this->isOnByDefault($channel);
+        return $user->notification_preferences[$this->value] ?? true;
     }
 }

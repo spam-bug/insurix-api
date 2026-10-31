@@ -7,42 +7,40 @@ use App\Notifications\FollowUpsDueNotification;
 use App\Notifications\MemberJoinedNotification;
 use Illuminate\Notifications\Messages\MailMessage;
 
-it('lists every kind with in app on and email on only for the personal or urgent ones', function () {
+it('lists every kind, all on until the user turns one off', function () {
     $agent = User::factory()->create();
 
-    $preferences = collect($this->actingAs($agent)->getJson('/api/v1/account/notification-preferences')->assertOk()->json('data'))->keyBy('type');
-
-    expect($preferences)->toHaveCount(8)
-        ->and($preferences->every(fn (array $preference) => $preference['in_app']))->toBeTrue()
-        ->and($preferences->where('email', true)->keys()->sort()->values()->all())
-        ->toBe(['follow_ups_due', 'form_lead', 'mention', 'renewal_coming_up']);
+    $this->actingAs($agent)->getJson('/api/v1/account/notification-preferences')
+        ->assertOk()
+        ->assertJsonCount(8, 'data')
+        ->assertJsonPath('data.*.enabled', array_fill(0, 8, true));
 });
 
 it('saves one switch at a time and keeps the others', function () {
     $agent = User::factory()->create();
     $this->actingAs($agent);
 
-    $this->patchJson('/api/v1/account/notification-preferences', ['type' => 'mention', 'channel' => 'email', 'enabled' => false])->assertOk();
-    $this->patchJson('/api/v1/account/notification-preferences', ['type' => 'member_joined', 'channel' => 'email', 'enabled' => true])
+    $this->patchJson('/api/v1/account/notification-preferences', ['type' => 'mention', 'enabled' => false])->assertOk();
+    $this->patchJson('/api/v1/account/notification-preferences', ['type' => 'member_joined', 'enabled' => false])
         ->assertOk()
-        ->assertJsonFragment(['type' => 'mention', 'in_app' => true, 'email' => false])
-        ->assertJsonFragment(['type' => 'member_joined', 'in_app' => true, 'email' => true]);
+        ->assertJsonFragment(['type' => 'mention', 'enabled' => false])
+        ->assertJsonFragment(['type' => 'member_joined', 'enabled' => false])
+        ->assertJsonFragment(['type' => 'form_lead', 'enabled' => true]);
 
-    $this->patchJson('/api/v1/account/notification-preferences', ['type' => 'gossip', 'channel' => 'sms', 'enabled' => 'yes'])
-        ->assertJsonValidationErrors(['type', 'channel', 'enabled']);
+    $this->patchJson('/api/v1/account/notification-preferences', ['type' => 'gossip', 'enabled' => 'yes'])
+        ->assertJsonValidationErrors(['type', 'enabled']);
 });
 
-it('sends each notification only through the channels the user left on', function () {
+it('sends a kind to the bell and by email together, or not at all once turned off', function () {
     $agent = User::factory()->create();
     $workspace = workspaceOf($agent);
-    $workspaceId = $workspace->id;
 
-    expect((new FollowUpsDueNotification($workspaceId, 2, 0))->via($agent))->toContain('mail', 'broadcast')
-        ->and((new MemberJoinedNotification($workspace, $agent))->via($agent))->not->toContain('mail');
+    expect((new MemberJoinedNotification($workspace, $agent))->via($agent))->toContain('mail', 'broadcast');
 
-    $agent->forceFill(['notification_preferences' => ['follow_ups_due' => ['in_app' => false, 'email' => true]]])->save();
+    $agent->forceFill(['notification_preferences' => ['member_joined' => false]])->save();
 
-    expect((new FollowUpsDueNotification($workspaceId, 2, 0))->via($agent))->toBe(['mail']);
+    expect((new MemberJoinedNotification($workspace, $agent))->via($agent))->toBe([])
+        ->and((new FollowUpsDueNotification($workspace->id, 2, 0))->via($agent))->toContain('mail');
 });
 
 it('emails the notification with a link that opens it in the app', function () {
