@@ -20,6 +20,8 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
 use App\Enums\RenewalTerm;
+use App\Enums\ServiceRequestStatus;
+use App\Enums\ServiceRequestType;
 use App\Models\Client;
 use App\Models\Document;
 use App\Models\FollowUp;
@@ -55,6 +57,7 @@ class DemoSeeder extends Seeder
         $this->leads($workspace);
         $clients = $this->clients($workspace, $agent, $products);
         $this->followUps($workspace, $clients);
+        $this->serviceRequests($agent, $clients);
         $this->forms($workspace);
 
         Cache::flush();
@@ -263,6 +266,36 @@ class DemoSeeder extends Seeder
                 'notes' => null,
                 'due_at' => $followUp['due_at'],
                 'completed_at' => $followUp['completed_at'] ?? null,
+            ]);
+        }
+    }
+
+    /**
+     * A claim waiting on the insurer, a beneficiary change due soon, an overdue inquiry and one
+     * that's done.
+     *
+     * @param  array<string, Client>  $clients
+     */
+    private function serviceRequests(User $agent, array $clients): void
+    {
+        $requests = [
+            ['carlo', ServiceRequestType::Claim, ServiceRequestStatus::WaitingOnInsurer, 'Hospital confinement in October', 5, ['claim_amount' => 48_500, 'insurer_reference' => 'CLM-2026-10482']],
+            ['liza', ServiceRequestType::PolicyChange, ServiceRequestStatus::InProgress, 'Add her daughter as beneficiary', 3, []],
+            ['teresa', ServiceRequestType::Inquiry, ServiceRequestStatus::Open, 'Asks how to raise her coverage', -2, []],
+            ['roberto', ServiceRequestType::Claim, ServiceRequestStatus::Resolved, 'Windshield replacement', null, ['claim_amount' => 12_000, 'insurer_reference' => 'MTR-88214', 'resolved_at' => now()->subDays(4)]],
+        ];
+
+        foreach ($requests as [$key, $type, $status, $title, $dueInDays, $extra]) {
+            $client = $clients[$key];
+            $client->serviceRequests()->create([
+                'workspace_id' => $client->workspace_id,
+                'policy_id' => $client->policies()->value('id'),
+                'user_id' => $agent->id,
+                'type' => $type,
+                'status' => $status,
+                'title' => $title,
+                'due_on' => $dueInDays === null ? null : today()->addDays($dueInDays),
+                ...$extra,
             ]);
         }
     }
