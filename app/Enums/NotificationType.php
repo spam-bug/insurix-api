@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Models\User;
+
 /** What a bell notification is about; stored in the notifications table's type column. */
 enum NotificationType: string
 {
@@ -29,5 +31,11 @@ enum NotificationType: string
             self::Mention => 'Mention',
             self::ExportReady => 'Export',
         };
+    }
+
+    /** One switch per kind covers the bell and email; every kind is on until the user turns it off. */
+    public function isOnFor(User $user): bool
+    {
+        return $user->notification_preferences[$this->value] ?? true;
     }
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Account\AccountController;
+use App\Http\Controllers\Api\V1\Account\NotificationPreferenceController;
 use App\Http\Controllers\Api\V1\Account\OtherSessionsController;
 use App\Http\Controllers\Api\V1\Account\PasswordController;
 use App\Http\Controllers\Api\V1\Account\PhotoController;
@@ -135,6 +136,9 @@ Route::prefix('v1')->group(function () {
             Route::delete('/photo', [PhotoController::class, 'destroy']);
 
             Route::put('/password', [PasswordController::class, 'update']);
+
+            Route::get('/notification-preferences', [NotificationPreferenceController::class, 'index']);
+            Route::patch('/notification-preferences', [NotificationPreferenceController::class, 'update']);
 
             Route::post('/two-factor', [TwoFactorController::class, 'store']);
             Route::post('/two-factor/confirm', [TwoFactorConfirmationController::class, 'store']);
