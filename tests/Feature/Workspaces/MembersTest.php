@@ -64,6 +64,13 @@ it('does not invite people already in the workspace, or as owner', function () {
     $this->postJson(ws($owner).'/invitations', ['email' => 'ben@example.com', 'role' => 'owner'])->assertJsonValidationErrors('role');
 });
 
+it('asks the owner to confirm their email before inviting', function () {
+    $owner = User::factory()->unverified()->create();
+
+    $this->actingAs($owner)->postJson(ws($owner).'/invitations', ['email' => 'ben@example.com'])->assertForbidden();
+    expect(WorkspaceInvitation::count())->toBe(0);
+});
+
 it('only lets the owner manage invites', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();

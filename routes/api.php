@@ -173,7 +173,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/ownership', [WorkspaceOwnershipController::class, 'store']);
             Route::delete('/membership', [WorkspaceMembershipController::class, 'destroy']);
             Route::get('/invitations', [WorkspaceInvitationController::class, 'index']);
-            Route::post('/invitations', [WorkspaceInvitationController::class, 'store']);
+            Route::post('/invitations', [WorkspaceInvitationController::class, 'store'])->middleware('verified');
             Route::delete('/invitations/{invitation}', [WorkspaceInvitationController::class, 'destroy']);
 
             Route::get('/exports', [WorkspaceExportController::class, 'index']);
@@ -190,7 +190,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/forms/{form}', [FormController::class, 'show']);
             Route::patch('/forms/{form}', [FormController::class, 'update']);
             Route::delete('/forms/{form}', [FormController::class, 'destroy']);
-            Route::post('/forms/{form}/publication', [FormPublicationController::class, 'store']);
+            Route::post('/forms/{form}/publication', [FormPublicationController::class, 'store'])->middleware('verified');
             Route::delete('/forms/{form}/publication', [FormPublicationController::class, 'destroy']);
             Route::post('/forms/{form}/default', [DefaultFormController::class, 'store']);
             Route::post('/forms/{form}/token', [FormTokenController::class, 'store']);
