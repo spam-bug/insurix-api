@@ -66,6 +66,32 @@ it('validates lead details', function (array $overrides, string|array $invalidFi
     'invalid email' => [['email' => 'not-an-email'], 'email'],
     'unknown source' => [['source' => 'billboard'], 'source'],
     'unknown interest' => [['interest' => 'pet'], 'interest'],
+    'unknown channel' => [['preferred_channel' => 'fax'], 'preferred_channel'],
+    'messenger without a username' => [['preferred_channel' => 'messenger'], 'messenger_username'],
+    'telegram without a username' => [['preferred_channel' => 'telegram'], 'telegram_username'],
+    'viber without a phone' => [['preferred_channel' => 'viber', 'phone' => null], 'phone'],
+    'email channel without an email' => [['preferred_channel' => 'email', 'email' => null], 'email'],
+]);
+
+it('keeps the preferred channel and only the username from pasted chat links', function (string $pasted, string $username) {
+    $agent = User::factory()->create();
+
+    $this->actingAs($agent)
+        ->postJson(ws($agent).'/leads', validLeadPayload([
+            'preferred_channel' => 'messenger',
+            'messenger_username' => $pasted,
+            'telegram_username' => '@ana_reyes',
+        ]))
+        ->assertCreated()
+        ->assertJsonPath('data.preferred_channel', ['value' => 'messenger', 'label' => 'Messenger'])
+        ->assertJsonPath('data.messenger_username', $username)
+        ->assertJsonPath('data.telegram_username', 'ana_reyes');
+})->with([
+    'plain username' => ['ana.reyes', 'ana.reyes'],
+    'at sign' => ['@ana.reyes', 'ana.reyes'],
+    'm.me link' => ['m.me/ana.reyes', 'ana.reyes'],
+    'facebook profile' => ['https://www.facebook.com/ana.reyes/', 'ana.reyes'],
+    'numeric profile' => ['https://www.facebook.com/profile.php?id=100012345', '100012345'],
 ]);
 
 it('creates a lead from just a name and contact details', function () {

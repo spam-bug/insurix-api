@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Casts\ChatUsername;
 use App\Enums\CivilStatus;
+use App\Enums\ContactChannel;
 use Database\Factories\ClientFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -15,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
-#[Fillable(['lead_id', 'name', 'email', 'phone', 'address', 'birthdate', 'civil_status', 'occupation', 'notes'])]
+#[Fillable(['lead_id', 'name', 'email', 'phone', 'preferred_channel', 'messenger_username', 'telegram_username', 'address', 'birthdate', 'civil_status', 'occupation', 'notes'])]
 class Client extends Model
 {
     /** @use HasFactory<ClientFactory> */
@@ -91,6 +93,9 @@ class Client extends Model
         return [
             'birthdate' => 'immutable_date',
             'civil_status' => CivilStatus::class,
+            'preferred_channel' => ContactChannel::class,
+            'messenger_username' => ChatUsername::class,
+            'telegram_username' => ChatUsername::class,
         ];
     }
 }

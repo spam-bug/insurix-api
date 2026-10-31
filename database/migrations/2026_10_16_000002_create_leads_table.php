@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->nullable();
             $table->string('phone', 50)->nullable();
+            $table->string('preferred_channel', 30)->nullable();
+            $table->string('messenger_username')->nullable();
+            $table->string('telegram_username')->nullable();
             $table->string('address')->nullable();
             $table->string('source', 50);
             $table->string('interest', 50)->nullable();
