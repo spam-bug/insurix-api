@@ -14,6 +14,7 @@ use App\Models\Policy;
 use App\Models\PolicyEvent;
 use App\Models\PolicyRenewal;
 use App\Models\Product;
+use App\Models\ServiceRequest;
 use App\Models\User;
 use App\Models\WorkspaceExport;
 use Carbon\Carbon;
@@ -174,6 +175,7 @@ return [
         PolicyEvent::class,
         PolicyRenewal::class,
         Product::class,
+        ServiceRequest::class,
         User::class,
         WorkspaceExport::class,
     ],

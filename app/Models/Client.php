@@ -58,6 +58,14 @@ class Client extends Model
     }
 
     /**
+     * @return HasMany<ServiceRequest, $this>
+     */
+    public function serviceRequests(): HasMany
+    {
+        return $this->hasMany(ServiceRequest::class);
+    }
+
+    /**
      * @return HasMany<Note, $this>
      */
     public function notes(): HasMany
