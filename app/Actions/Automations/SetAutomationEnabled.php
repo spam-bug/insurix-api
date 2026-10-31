@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Actions\Automations;
+
+use App\Actions\Notifications\AnnounceWorkspaceChange;
+use App\DataTransferObject\Workspaces\WorkspaceChangeData;
+use App\Enums\ChangeAction;
+use App\Enums\ChangeTopic;
+use App\Models\Automation;
+use Illuminate\Support\Facades\DB;
+
+class SetAutomationEnabled
+{
+    public function __construct(private AnnounceWorkspaceChange $announceWorkspaceChange) {}
+
+    /** Turns it on or off without touching the rule itself. */
+    public function handle(Automation $automation, bool $enabled): Automation
+    {
+        DB::transaction(fn () => $automation->update(['enabled' => $enabled]));
+
+        $this->announceWorkspaceChange->handle($automation->workspace_id, new WorkspaceChangeData(ChangeTopic::Automations, ChangeAction::Updated, $automation->id, $automation->name));
+
+        return $automation;
+    }
+}

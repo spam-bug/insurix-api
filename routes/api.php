@@ -24,6 +24,8 @@ use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Api\V1\Auth\RegisteredUserController;
 use App\Http\Controllers\Api\V1\Auth\TwoFactorChallengeController;
+use App\Http\Controllers\Api\V1\AutomationController;
+use App\Http\Controllers\Api\V1\AutomationEnabledController;
 use App\Http\Controllers\Api\V1\BulkLeadController;
 use App\Http\Controllers\Api\V1\BulkLeadStatusController;
 use App\Http\Controllers\Api\V1\BulkPolicyFollowUpController;
@@ -288,6 +290,12 @@ Route::prefix('v1')->group(function () {
             Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->can('delete', 'note');
             Route::post('/notes/{note}/pin', [NotePinController::class, 'store'])->can('pin', 'note');
             Route::delete('/notes/{note}/pin', [NotePinController::class, 'destroy'])->can('pin', 'note');
+
+            Route::get('/automations', [AutomationController::class, 'index']);
+            Route::post('/automations', [AutomationController::class, 'store']);
+            Route::put('/automations/{automation}', [AutomationController::class, 'update']);
+            Route::put('/automations/{automation}/enabled', [AutomationEnabledController::class, 'update']);
+            Route::delete('/automations/{automation}', [AutomationController::class, 'destroy'])->can('delete', 'automation');
 
             Route::get('/service-requests', [ServiceRequestController::class, 'index']);
             Route::get('/service-requests/summary', [ServiceRequestSummaryController::class, 'index']);
