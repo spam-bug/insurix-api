@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\V1\ClientPolicyController;
 use App\Http\Controllers\Api\V1\ClientServiceRequestController;
 use App\Http\Controllers\Api\V1\ClientSummaryController;
 use App\Http\Controllers\Api\V1\CommissionSummaryController;
+use App\Http\Controllers\Api\V1\DashboardTrendController;
 use App\Http\Controllers\Api\V1\DefaultFormController;
 use App\Http\Controllers\Api\V1\DeletedWorkspaceController;
 use App\Http\Controllers\Api\V1\DocumentAssignmentController;
@@ -259,6 +260,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/requirements/{requirement}', [RequirementController::class, 'destroy'])->withoutScopedBindings()->can('delete', 'requirement');
             Route::post('/policies/{policy}/renewals', [PolicyRenewalController::class, 'store']);
             Route::get('/commissions/summary', [CommissionSummaryController::class, 'index']);
+            Route::get('/dashboard/trends', [DashboardTrendController::class, 'index']);
 
             Route::post('/clients/{client}/documents', [ClientDocumentController::class, 'store']);
             Route::get('/documents/{document}/download', [DocumentDownloadController::class, 'show'])->can('view', 'document');
