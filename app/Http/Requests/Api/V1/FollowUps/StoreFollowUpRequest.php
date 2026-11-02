@@ -28,6 +28,7 @@ class StoreFollowUpRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'due_at' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'message' => ['nullable', 'string', 'max:1000'],
         ];
     }
 }
