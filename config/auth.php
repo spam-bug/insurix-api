@@ -46,7 +46,7 @@ return [
             'provider' => 'users',
         ],
 
-        // The Insurix team, in the staff console. A separate guard, so an agent session never reaches it.
+        // The Suvvi team, in the staff console. A separate guard, so an agent session never reaches it.
         'staff' => [
             'driver' => 'session',
             'provider' => 'staff',

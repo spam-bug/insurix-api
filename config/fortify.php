@@ -163,7 +163,7 @@ return [
     |
     */
 
-    // Insurix's API has its own token-based auth endpoints and only uses Fortify's two-factor
+    // Suvvi's API has its own token-based auth endpoints and only uses Fortify's two-factor
     // building blocks (secret, QR code, recovery codes). Its routes are switched off in
     // AppServiceProvider; the agent's password is checked by our own requests.
     'features' => [
