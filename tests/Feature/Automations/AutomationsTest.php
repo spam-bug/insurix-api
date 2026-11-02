@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Enums\AutomationRunStatus;
 use App\Enums\AutomationTrigger;
+use App\Enums\FollowUpType;
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Enums\Plan;
@@ -63,7 +65,28 @@ it('validates each condition and action for its own kind', function (array $over
     'follow-up without a title' => [['actions' => [['type' => 'add_follow_up', 'follow_up_type' => 'call', 'due_in_hours' => 1]]], ['actions.0.title']],
     'moving to Client' => [['actions' => [['type' => 'move_to_stage', 'stage' => 'converted']]], ['actions.0.stage']],
     'quiet days missing' => [['trigger' => 'lead_idle'], ['idle_days']],
+    'a wait at the end' => [['actions' => [['type' => 'add_note', 'body' => 'Hi'], ['type' => 'wait', 'amount' => 1, 'unit' => 'days']]], ['actions']],
+    'only waits' => [['actions' => [['type' => 'wait', 'amount' => 1, 'unit' => 'days']]], ['actions']],
+    'more than 3 waits' => [['actions' => [
+        ...array_fill(0, 4, ['type' => 'wait', 'amount' => 1, 'unit' => 'hours']),
+        ['type' => 'add_note', 'body' => 'Hi'],
+    ]], ['actions']],
+    'a wait longer than a month' => [['actions' => [['type' => 'wait', 'amount' => 31, 'unit' => 'days'], ['type' => 'add_note', 'body' => 'Hi']]], ['actions.0.amount']],
+    'a form message without its link' => [['actions' => [['type' => 'send_form', 'message' => 'Fill this in', 'due_in_hours' => 1]]], ['actions.0.form_id', 'actions.0.message']],
 ]);
+
+it('only sends forms that are published in the same workspace', function () {
+    $agent = premiumAgent();
+    $own = contactFormOf($agent, 'own-form');
+    $other = contactFormOf(User::factory()->create(), 'other-form');
+    $sendForm = fn (string $formId) => automationPayload(['actions' => [['type' => 'send_form', 'form_id' => $formId, 'message' => '{form_link}', 'due_in_hours' => 1]]]);
+
+    $this->actingAs($agent)->postJson(ws($agent).'/automations', $sendForm($other->id))->assertJsonValidationErrors(['actions.0.form_id']);
+    $this->postJson(ws($agent).'/automations', $sendForm($own->id))->assertCreated();
+
+    $own->update(['status' => 'closed']);
+    $this->postJson(ws($agent).'/automations', $sendForm($own->id))->assertJsonValidationErrors(['actions.0.form_id']);
+});
 
 it('runs on a new lead that matches its conditions', function () {
     $agent = premiumAgent();
@@ -169,4 +192,75 @@ it('lists automations with how often they ran, and deletes them', function () {
 
     $this->deleteJson(ws($agent)."/automations/{$automation->id}")->assertNoContent();
     expect(Automation::count())->toBe(0)->and(FollowUp::count())->toBe(1);
+});
+
+it('drafts messages with the lead’s first name, the agent’s name and the form’s link', function () {
+    $agent = premiumAgent();
+    $form = contactFormOf($agent, 'quote-form');
+    Automation::factory()->for(workspaceOf($agent))->for($agent)->create(['conditions' => [], 'actions' => [
+        ['type' => 'draft_message', 'message' => 'Hi {first_name}, it’s {agent_name}.', 'due_in_hours' => 1],
+        ['type' => 'send_form', 'form_id' => $form->id, 'message' => 'Fill this in: {form_link}', 'due_in_hours' => 2],
+    ]]);
+
+    $this->actingAs($agent)->postJson(ws($agent).'/leads', ['name' => 'Ana Reyes', 'phone' => '0917 555 0100'])->assertCreated();
+
+    [$message, $formMessage] = FollowUp::orderBy('due_at')->get();
+    expect($message->type)->toBe(FollowUpType::Message)
+        ->and($message->notes)->toBe("Hi Ana, it’s {$agent->name}.")
+        ->and($formMessage->type)->toBe(FollowUpType::Message)
+        ->and($formMessage->title)->toBe('Send the form “Contact form”')
+        ->and($formMessage->notes)->toBe('Fill this in: '.config('app.frontend_url').'/f/quote-form');
+});
+
+it('pauses at a wait and carries on once it’s over, with the steps as they were saved', function () {
+    $agent = premiumAgent();
+    $automation = Automation::factory()->for(workspaceOf($agent))->create(['conditions' => [], 'actions' => [
+        ['type' => 'add_follow_up', 'follow_up_type' => 'message', 'title' => 'Welcome them', 'due_in_hours' => 1],
+        ['type' => 'wait', 'amount' => 2, 'unit' => 'days'],
+        ['type' => 'add_follow_up', 'follow_up_type' => 'call', 'title' => 'Check in', 'due_in_hours' => 0],
+    ]]);
+
+    $this->actingAs($agent)->postJson(ws($agent).'/leads', ['name' => 'Ana', 'phone' => '0917 555 0100'])->assertCreated();
+    expect(FollowUp::pluck('title')->all())->toBe(['Welcome them'])
+        ->and($automation->runs()->sole()->status)->toBe(AutomationRunStatus::Waiting);
+
+    $automation->update(['actions' => [['type' => 'add_note', 'body' => 'Edited later']]]);
+    $this->travel(47)->hours();
+    $this->artisan('automations:resume')->assertSuccessful();
+    expect(FollowUp::count())->toBe(1);
+
+    $this->travel(2)->hours();
+    $this->artisan('automations:resume');
+    $this->artisan('automations:resume');
+
+    expect(FollowUp::orderBy('created_at')->pluck('title')->all())->toBe(['Welcome them', 'Check in'])
+        ->and($automation->runs()->sole()->status)->toBe(AutomationRunStatus::Completed);
+});
+
+it('stops a waiting run when the lead became a client or the automation was turned off', function () {
+    $agent = premiumAgent();
+    $automation = Automation::factory()->for(workspaceOf($agent))->create(['conditions' => [], 'actions' => [
+        ['type' => 'wait', 'amount' => 1, 'unit' => 'days'],
+        ['type' => 'add_follow_up', 'follow_up_type' => 'call', 'title' => 'Check in', 'due_in_hours' => 0],
+    ]]);
+    $this->actingAs($agent)->postJson(ws($agent).'/leads', ['name' => 'Became a client', 'phone' => '0917 555 0100'])->assertCreated();
+    $this->postJson(ws($agent).'/leads', ['name' => 'Still a lead', 'phone' => '0917 555 0101'])->assertCreated();
+    Lead::where('name', 'Became a client')->sole()->update(['status' => LeadStatus::Converted]);
+
+    $this->travel(25)->hours();
+    $this->artisan('automations:resume');
+
+    expect(FollowUp::sole()->lead->name)->toBe('Still a lead')
+        ->and($automation->runs()->with('lead')->get()->mapWithKeys(fn ($run) => [$run->lead->name => $run->status])->all())->toEqual([
+            'Became a client' => AutomationRunStatus::Stopped,
+            'Still a lead' => AutomationRunStatus::Completed,
+        ]);
+
+    $this->postJson(ws($agent).'/leads', ['name' => 'After it was turned off', 'phone' => '0917 555 0102'])->assertCreated();
+    $automation->update(['enabled' => false]);
+    $this->travel(25)->hours();
+    $this->artisan('automations:resume');
+
+    expect(FollowUp::count())->toBe(1)
+        ->and($automation->runs()->latest('id')->first()->status)->toBe(AutomationRunStatus::Stopped);
 });
