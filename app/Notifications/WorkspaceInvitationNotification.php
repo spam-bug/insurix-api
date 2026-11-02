@@ -29,8 +29,8 @@ class WorkspaceInvitationNotification extends Notification implements ShouldQueu
         $inviter = $this->invitation->inviter?->name ?? 'Someone';
 
         return (new MailMessage)
-            ->subject("Join {$this->invitation->workspace->name} on Insurix")
-            ->line("{$inviter} invited you to help manage {$this->invitation->workspace->name} on Insurix.")
+            ->subject("Join {$this->invitation->workspace->name} on Suvvi")
+            ->line("{$inviter} invited you to help manage {$this->invitation->workspace->name} on Suvvi.")
             ->action('Accept the invite', config('app.frontend_url')."/invitations/{$this->token}")
             ->line('The link works for 7 days. Sign in or create an account with this email address to accept it.');
     }
