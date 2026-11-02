@@ -31,10 +31,7 @@ export default function StaffTwoFactorSetup({
 				description="If you lose your phone, each of these signs you in once. Keep them somewhere safe, like a password manager."
 			>
 				<div className="flex flex-col gap-5">
-					<ul
-						className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-3 font-mono text-sm"
-						aria-label="Recovery codes"
-					>
+					<ul className="grid gap-1.5 rounded-lg bg-muted p-3 font-mono text-sm" aria-label="Recovery codes">
 						{recovery_codes.map((code) => (
 							<li key={code}>{code}</li>
 						))}

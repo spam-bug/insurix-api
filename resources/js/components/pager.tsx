@@ -21,28 +21,30 @@ export function Pager({ page, noun }: PagerProps) {
 			<span>
 				Showing {meta.from}–{meta.to} of {formatCount(meta.total)} {noun}
 			</span>
-			<div className="flex gap-1">
-				<Button
-					variant="outline"
-					size="sm"
-					disabled={!links.prev}
-					nativeButton={false}
-					render={links.prev ? <Link href={links.prev} preserveScroll /> : <span />}
-				>
-					<ChevronLeftIcon data-icon="inline-start" />
-					Previous
-				</Button>
-				<Button
-					variant="outline"
-					size="sm"
-					disabled={!links.next}
-					nativeButton={false}
-					render={links.next ? <Link href={links.next} preserveScroll /> : <span />}
-				>
-					Next
-					<ChevronRightIcon data-icon="inline-end" />
-				</Button>
-			</div>
+			{meta.last_page > 1 && (
+				<div className="flex gap-1">
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={!links.prev}
+						nativeButton={false}
+						render={links.prev ? <Link href={links.prev} preserveScroll /> : <span />}
+					>
+						<ChevronLeftIcon data-icon="inline-start" />
+						Previous
+					</Button>
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={!links.next}
+						nativeButton={false}
+						render={links.next ? <Link href={links.next} preserveScroll /> : <span />}
+					>
+						Next
+						<ChevronRightIcon data-icon="inline-end" />
+					</Button>
+				</div>
+			)}
 		</nav>
 	)
 }
