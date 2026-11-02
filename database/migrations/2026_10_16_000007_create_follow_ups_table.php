@@ -26,6 +26,8 @@ return new class extends Migration
             $table->string('type', 30);
             $table->string('title');
             $table->text('notes')->nullable();
+            // Text for the agent to send the person, e.g. drafted by an automation.
+            $table->text('message')->nullable();
             $table->dateTime('due_at');
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();

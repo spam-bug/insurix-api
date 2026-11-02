@@ -149,7 +149,7 @@ class RunAutomation
                 FollowUpType::Message,
                 'Send your drafted message',
                 $this->dueAt($action),
-                $this->fillIn($action['message'], $automation, $lead),
+                message: $this->fillIn($action['message'], $automation, $lead),
             )),
             AutomationActionType::SendForm => $this->sendForm($automation, $lead, $action),
             AutomationActionType::MoveToStage => $lead->status->value === $action['stage']
@@ -184,7 +184,7 @@ class RunAutomation
             FollowUpType::Message,
             "Send the form “{$form->name}”",
             $this->dueAt($action),
-            $this->fillIn($action['message'], $automation, $lead, $form),
+            message: $this->fillIn($action['message'], $automation, $lead, $form),
         ));
     }
 

@@ -15,5 +15,6 @@ class FollowUpData extends Data
         public readonly string $title,
         public readonly CarbonImmutable $dueAt,
         public readonly ?string $notes = null,
+        public readonly ?string $message = null,
     ) {}
 }

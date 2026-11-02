@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Something the agent means to do for a lead or a client by a due time. It keeps the lead it
  * started on after promotion (so it stays in the lead's history) and gains the client.
  */
-#[Fillable(['workspace_id', 'lead_id', 'client_id', 'policy_id', 'reminder_key', 'type', 'title', 'notes', 'due_at', 'completed_at'])]
+#[Fillable(['workspace_id', 'lead_id', 'client_id', 'policy_id', 'reminder_key', 'type', 'title', 'notes', 'message', 'due_at', 'completed_at'])]
 class FollowUp extends Model
 {
     /** @use HasFactory<FollowUpFactory> */
