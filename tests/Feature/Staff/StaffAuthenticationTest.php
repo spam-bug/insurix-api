@@ -9,7 +9,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 use PragmaRX\Google2FA\Google2FA;
 
 /** The code the staff member's authenticator app would show right now. */
-function currentCode(Staff $staff): string
+function staffCode(Staff $staff): string
 {
     return app(Google2FA::class)->getCurrentOtp(decrypt($staff->fresh()->two_factor_secret));
 }
@@ -24,7 +24,7 @@ it('signs staff in with a password, then a code from their app', function () {
     $this->post('/staff/two-factor-challenge', ['code' => '000000'])->assertSessionHasErrors('code');
     $this->assertGuest('staff');
 
-    $this->post('/staff/two-factor-challenge', ['code' => currentCode($staff)])->assertRedirect('/staff/workspaces');
+    $this->post('/staff/two-factor-challenge', ['code' => staffCode($staff)])->assertRedirect('/staff/workspaces');
     $this->assertAuthenticatedAs($staff, 'staff');
 });
 
@@ -51,7 +51,7 @@ it('lets a recovery code in once, and only within a few minutes of the password'
     $this->post('/staff/two-factor-challenge', ['recovery_code' => 'recovery-code-one'])->assertSessionHasErrors('recovery_code');
 
     $this->travel(6)->minutes();
-    $this->post('/staff/two-factor-challenge', ['code' => currentCode($staff)])->assertSessionHasErrors('code');
+    $this->post('/staff/two-factor-challenge', ['code' => staffCode($staff)])->assertSessionHasErrors('code');
     $this->assertGuest('staff');
 });
 
@@ -66,7 +66,7 @@ it('makes new staff set up two-factor before the console opens', function () {
         ->whereType('qr_code_svg', 'string'));
 
     $this->post('/staff/two-factor', ['code' => '000000'])->assertSessionHasErrors('code');
-    $this->post('/staff/two-factor', ['code' => currentCode($staff)])->assertRedirect('/staff/two-factor');
+    $this->post('/staff/two-factor', ['code' => staffCode($staff)])->assertRedirect('/staff/two-factor');
 
     $this->get('/staff/two-factor')->assertInertia(fn (Assert $page) => $page->where('confirmed', true)->has('recovery_codes', 8));
     $this->get('/staff/workspaces')->assertOk();
