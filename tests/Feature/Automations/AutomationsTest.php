@@ -206,10 +206,10 @@ it('drafts messages with the lead’s first name, the agent’s name and the for
 
     [$message, $formMessage] = FollowUp::orderBy('due_at')->get();
     expect($message->type)->toBe(FollowUpType::Message)
-        ->and($message->notes)->toBe("Hi Ana, it’s {$agent->name}.")
+        ->and($message->message)->toBe("Hi Ana, it’s {$agent->name}.")
         ->and($formMessage->type)->toBe(FollowUpType::Message)
         ->and($formMessage->title)->toBe('Send the form “Contact form”')
-        ->and($formMessage->notes)->toBe('Fill this in: '.config('app.frontend_url').'/f/quote-form');
+        ->and($formMessage->message)->toBe('Fill this in: '.config('app.frontend_url').'/f/quote-form');
 });
 
 it('pauses at a wait and carries on once it’s over, with the steps as they were saved', function () {
