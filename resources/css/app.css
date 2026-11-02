@@ -1,9 +1,358 @@
-@import 'tailwindcss';
+/* The staff console's theme: the Insurix palette and tokens, copied from the frontend's app/globals.css. Keep them in step. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
+@source "../js";
+@source "../views";
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+	--font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	--font-heading: "Inter", ui-sans-serif, system-ui, sans-serif;
+	--color-primary-soft: var(--primary-soft);
+	--color-brand: var(--brand);
+	--color-highlight: var(--highlight);
+	--color-highlight-foreground: var(--highlight-foreground);
+	--color-notification: var(--notification);
+	--color-notification-foreground: var(--notification-foreground);
+	--color-attention: var(--attention);
+	--color-attention-fill: var(--attention-fill);
+	--color-attention-foreground: var(--attention-foreground);
+	--color-attention-soft: var(--attention-soft);
+	--color-bar: var(--bar);
+	--color-border-strong: var(--border-strong);
+	--color-faint: var(--faint);
+	--color-primary-hover: var(--primary-hover);
+	--color-primary-strong: var(--primary-strong);
+	--color-success: var(--success);
+	--color-success-soft: var(--success-soft);
+	--color-warning: var(--warning);
+	--color-warning-soft: var(--warning-soft);
+	--color-info: var(--info);
+	--color-info-soft: var(--info-soft);
+	--color-destructive-soft: var(--destructive-soft);
+	--color-destructive-solid: var(--destructive-solid);
+	--color-sidebar-ring: var(--sidebar-ring);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar: var(--sidebar);
+	--color-chart-5: var(--chart-5);
+	--color-chart-4: var(--chart-4);
+	--color-chart-3: var(--chart-3);
+	--color-chart-2: var(--chart-2);
+	--color-chart-1: var(--chart-1);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	/* Controls use 6px (rounded-lg), cards 8px (rounded-xl). */
+	--radius-sm: calc(var(--radius) * 0.75);
+	--radius-md: var(--radius);
+	--radius-lg: var(--radius);
+	--radius-xl: 0.5rem;
+	--radius-2xl: 1rem;
+	--radius-3xl: 1.25rem;
+	--radius-4xl: 1.5rem;
+	--shadow-xs: var(--elevation-xs);
+	--shadow-sm: var(--elevation-sm);
+	--shadow-md: var(--elevation-md);
+	--shadow-lg: var(--elevation-lg);
+	--shadow-xl: var(--elevation-xl);
+}
+
+/*
+ * The palette: fixed shades per colour, numbered light (50) to dark (975). Pick tokens from here
+ * instead of new hex values; the semantic tokens below map onto these steps per mode. Only the
+ * steps in use are defined, on a shared ladder so new ones slot in between.
+ */
+:root {
+	--gray-0: #ffffff;
+	--gray-50: #f4f6f9;
+	--gray-100: #eff2f7;
+	--gray-200: #e1e5ed;
+	--gray-300: #cfd5e1;
+	--gray-400: #97a3b4;
+	--gray-500: #8792a8;
+	--gray-600: #616e87;
+	--gray-700: #515f79;
+	--gray-750: #364152;
+	--gray-800: #2b3543;
+	--gray-850: #1e2631;
+	--gray-875: #18202b;
+	--gray-900: #141b25;
+	--gray-925: #10161f;
+	--navy-100: #eef2f8;
+	--navy-300: #9fb0cf;
+	--navy-400: #7f93ba;
+	--navy-500: #7489b0;
+	--navy-800: #1c2b48;
+	--navy-850: #172340;
+	--navy-900: #0f1a2e;
+	--navy-950: #090f1a;
+	--blue-50: #e3edfe;
+	--blue-100: #c7dafc;
+	--blue-300: #7dafff;
+	--blue-500: #3b86f2;
+	--blue-600: #2b66dc;
+	--blue-700: #2459c4;
+	--blue-900: #1e3a66;
+	--red-50: #fee4e2;
+	--red-400: #f97066;
+	--red-600: #d92d20;
+	--red-700: #b42318;
+	--red-950: #2c1513;
+	--cyan-50: #d6f7fc;
+	--cyan-200: #a6ecf6;
+	--cyan-400: #3de0f7;
+	--cyan-700: #0a7184;
+	--cyan-900: #13282d;
+	--cyan-950: #04262c;
+	--green-50: #dcfae6;
+	--green-400: #47cd89;
+	--green-700: #147a3c;
+	--green-950: #10241a;
+	--amber-50: #fef0c7;
+	--amber-400: #fdb022;
+	--amber-500: #f79009;
+	--amber-700: #a9560a;
+	--amber-950: #2a1f0b;
+	--indigo-600: #4f3af5;
+}
+
+/*
+ * Insurix design tokens. Blue is the primary (buttons, links, active nav); the swatch blue (--brand)
+ * fills shapes. Red (--notification) marks counts that need the agent, cyan (--attention) marks
+ * policies and dates that need them; red also marks errors, in a deeper shade. Indigo (--highlight)
+ * marks premium features. Text shades are deeper than the fills where the bright swatch would fail
+ * contrast. The greys share the sidebar's navy hue (219°), with more saturation the lighter they get.
+ */
+:root,
+[data-form-mode="light"] {
+	--background: var(--gray-50);
+	--foreground: var(--gray-925);
+	--card: var(--gray-0);
+	--card-foreground: var(--gray-925);
+	--popover: var(--gray-0);
+	--popover-foreground: var(--gray-925);
+	--brand: var(--blue-500);
+	--primary: var(--blue-600);
+	--primary-hover: var(--blue-700);
+	--primary-foreground: var(--gray-0);
+	--primary-soft: var(--blue-50);
+	--primary-strong: var(--blue-600);
+	--highlight: var(--indigo-600);
+	--highlight-foreground: var(--gray-0);
+	--notification: var(--red-600);
+	--notification-foreground: var(--gray-0);
+	--attention: var(--cyan-700);
+	--attention-fill: var(--cyan-400);
+	--attention-foreground: var(--cyan-950);
+	--attention-soft: var(--cyan-50);
+	--secondary: var(--gray-100);
+	--secondary-foreground: var(--gray-925);
+	--muted: var(--gray-100);
+	--muted-foreground: var(--gray-700);
+	--faint: var(--gray-600);
+	--accent: var(--gray-100);
+	--accent-foreground: var(--gray-925);
+	--destructive: var(--red-700);
+	--destructive-soft: var(--red-50);
+	/* Fill behind white text on destructive buttons; dark mode's text red is too light for it. */
+	--destructive-solid: var(--red-700);
+	--success: var(--green-700);
+	--success-soft: var(--green-50);
+	--warning: var(--amber-700);
+	--warning-soft: var(--amber-50);
+	--info: var(--blue-600);
+	--info-soft: var(--blue-50);
+	--border: var(--gray-200);
+	--border-strong: var(--gray-300);
+	--input: var(--gray-300);
+	--ring: var(--blue-600);
+	--bar: var(--gray-500);
+	--chart-1: var(--blue-500);
+	--chart-2: var(--blue-100);
+	--chart-3: var(--blue-600);
+	--chart-4: var(--gray-500);
+	--chart-5: var(--gray-200);
+	--radius: 0.375rem;
+	/* A dark navy sidebar in light mode too; see the sidebar tokens below. */
+	--sidebar: var(--navy-900);
+	--sidebar-foreground: var(--navy-300);
+	--sidebar-primary: var(--blue-500);
+	--sidebar-primary-foreground: var(--gray-0);
+	--sidebar-accent: var(--navy-800);
+	--sidebar-accent-foreground: var(--gray-0);
+	--sidebar-border: var(--navy-800);
+	--sidebar-ring: var(--blue-300);
+	/*
+	 * Elevation, tinted with the sidebar navy. Each step pairs a soft cast shadow with a tight
+	 * contact shadow that fades as the element rises: xs buttons and inputs, sm cards, md menus
+	 * and popovers, lg sheets and dragged items, xl dialogs.
+	 */
+	--elevation-xs: 0 1px 2px rgb(15 26 46 / 0.06);
+	--elevation-sm: 0 1px 3px rgb(15 26 46 / 0.06), 0 1px 2px rgb(15 26 46 / 0.05);
+	--elevation-md: 0 4px 10px -2px rgb(15 26 46 / 0.09), 0 2px 4px -2px rgb(15 26 46 / 0.05);
+	--elevation-lg: 0 12px 24px -6px rgb(15 26 46 / 0.12), 0 4px 8px -4px rgb(15 26 46 / 0.04);
+	--elevation-xl: 0 24px 48px -12px rgb(15 26 46 / 0.2), 0 2px 4px rgb(15 26 46 / 0.02);
+	--shadow-surface: var(--elevation-sm);
+}
+
+.dark,
+[data-form-mode="dark"] {
+	--background: var(--gray-925);
+	--foreground: var(--gray-100);
+	--card: var(--gray-875);
+	--card-foreground: var(--gray-100);
+	--popover: var(--gray-875);
+	--popover-foreground: var(--gray-100);
+	--brand: var(--blue-500);
+	--primary: var(--blue-600);
+	--primary-hover: var(--blue-500);
+	--primary-foreground: var(--gray-0);
+	--primary-soft: var(--navy-850);
+	--primary-strong: var(--blue-300);
+	--highlight: var(--indigo-600);
+	--highlight-foreground: var(--gray-0);
+	--notification: var(--red-600);
+	--notification-foreground: var(--gray-0);
+	--attention: var(--cyan-200);
+	--attention-fill: var(--cyan-200);
+	--attention-foreground: var(--cyan-950);
+	--attention-soft: var(--cyan-900);
+	--secondary: var(--gray-900);
+	--secondary-foreground: var(--gray-100);
+	--muted: var(--gray-900);
+	--muted-foreground: var(--gray-400);
+	--faint: var(--gray-500);
+	--accent: var(--gray-850);
+	--accent-foreground: var(--gray-100);
+	--destructive: var(--red-400);
+	--destructive-soft: var(--red-950);
+	--destructive-solid: var(--red-600);
+	--success: var(--green-400);
+	--success-soft: var(--green-950);
+	--warning: var(--amber-400);
+	--warning-soft: var(--amber-950);
+	--info: var(--blue-300);
+	--info-soft: var(--navy-850);
+	--border: var(--gray-800);
+	--border-strong: var(--gray-750);
+	--input: var(--gray-750);
+	--ring: var(--blue-300);
+	--bar: var(--gray-600);
+	--chart-1: var(--blue-500);
+	--chart-2: var(--blue-900);
+	--chart-3: var(--blue-300);
+	--chart-4: var(--gray-600);
+	--chart-5: var(--gray-800);
+	/* Darker than the page, as in light mode, so the sidebar sits back. */
+	--sidebar: var(--navy-950);
+	--sidebar-foreground: var(--navy-300);
+	--sidebar-primary: var(--blue-500);
+	--sidebar-primary-foreground: var(--gray-0);
+	--sidebar-accent: var(--navy-850);
+	--sidebar-accent-foreground: var(--gray-0);
+	--sidebar-border: var(--navy-850);
+	--sidebar-ring: var(--blue-300);
+	/* Dark surfaces get lighter as they rise; shadows only separate what floats, so they're darker and cards have none. */
+	--elevation-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+	--elevation-sm: 0 1px 3px rgb(0 0 0 / 0.3), 0 1px 2px rgb(0 0 0 / 0.2);
+	--elevation-md: 0 4px 12px -2px rgb(0 0 0 / 0.45), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+	--elevation-lg: 0 12px 28px -6px rgb(0 0 0 / 0.55), 0 4px 8px -4px rgb(0 0 0 / 0.25);
+	--elevation-xl: 0 24px 56px -12px rgb(0 0 0 / 0.65), 0 2px 4px rgb(0 0 0 / 0.15);
+	--shadow-surface: 0 0 #0000;
+}
+
+/*
+ * The navy sidebar looks the same in both modes: inside it, the general tokens (text, muted text,
+ * borders, hover fills) take light-on-navy values.
+ */
+[data-slot="sidebar"] {
+	--foreground: var(--navy-100);
+	/* Navy-tinted rather than grey, so quiet text and icons don't look washed out on the navy. */
+	--muted-foreground: var(--navy-400);
+	--faint: var(--navy-500);
+	--border: var(--navy-800);
+	--input: var(--navy-800);
+	--muted: var(--navy-800);
+	--accent: var(--navy-800);
+	--accent-foreground: var(--gray-0);
+}
+
+/* The darker navy in dark mode takes the next shade up for its lines and hover fills. */
+.dark [data-slot="sidebar"] {
+	--border: var(--navy-850);
+	--input: var(--navy-850);
+	--muted: var(--navy-850);
+	--accent: var(--navy-850);
+}
+
+/* Cards have no border: the fill stands out from the page, helped by a soft shadow in light mode. */
+@utility surface {
+	background-color: var(--card);
+	border-radius: var(--radius-xl);
+	/* Composes with ring utilities, so a selected surface keeps its shadow. */
+	--tw-shadow: var(--shadow-surface);
+	box-shadow:
+		var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000), var(--tw-ring-offset-shadow, 0 0 #0000),
+		var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+/* Small uppercase mono labels: section titles, KPI names, table headers. */
+@utility label-caps {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-sm/[1.45] text-foreground;
+	}
+	html {
+		@apply font-sans;
+	}
+}
+
+/* Scrolls without showing a scrollbar, for areas that are obviously scrollable (the form builder's canvas). */
+@utility scrollbar-none {
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+/* A slim scrollbar for side panels. */
+@utility scrollbar-thin {
+	scrollbar-width: thin;
+	scrollbar-color: var(--border) transparent;
 }
