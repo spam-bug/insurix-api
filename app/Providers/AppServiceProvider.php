@@ -6,6 +6,8 @@ namespace App\Providers;
 
 use App\Enums\Feature;
 use App\Enums\Plan;
+use App\Enums\StaffRole;
+use App\Models\Staff;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Policies\NotificationPolicy;
@@ -50,6 +52,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Laravel's own notification model, so its policy isn't found by naming convention.
         Gate::policy(DatabaseNotification::class, NotificationPolicy::class);
+
+        // In the staff console, admins change accounts; support only looks them up.
+        Gate::define('change-accounts', fn (Staff $staff) => $staff->role === StaffRole::Admin);
 
         // Verification links open the frontend's page, which posts the signed details back to the
         // API. The signature is relative, so it holds whatever host the browser calls the API on.

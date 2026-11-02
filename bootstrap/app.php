@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // The workspace check needs the bound Workspace, so it must run after route model binding,
         // even on routes whose `can` middleware the priority sorting moves bindings for.
         $middleware->appendToPriorityList(SubstituteBindings::class, EnsureWorkspaceMember::class);
+        // Pages only exist in the staff console; the agents' app is a separate frontend on the API.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('staff*') ? route('staff.login') : null);
+        $middleware->redirectUsersTo(fn (Request $request) => $request->is('staff*') ? route('staff.workspaces.index') : '/');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

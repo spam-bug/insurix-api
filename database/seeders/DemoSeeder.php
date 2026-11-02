@@ -31,6 +31,7 @@ use App\Models\Lead;
 use App\Models\Note;
 use App\Models\Policy;
 use App\Models\Product;
+use App\Models\Staff;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Seeder;
@@ -41,7 +42,8 @@ use Illuminate\Support\Facades\Cache;
  * A believable workspace for demos and landing page screenshots: a Filipino agent with leads in
  * every stage, clients with policies (some renewing or pending soon), today's follow-ups, forms,
  * documents and notes. Run by hand: `php artisan db:seed --class=DemoSeeder`.
- * Signs in as demo@insurix.test / password.
+ * Signs in as demo@insurix.test / password. Also adds a staff admin for the console at /staff:
+ * staff@insurix.test / password, who sets up two-factor on first sign-in.
  */
 class DemoSeeder extends Seeder
 {
@@ -54,6 +56,8 @@ class DemoSeeder extends Seeder
         ]);
         $workspace = $agent->workspaces()->sole();
         $workspace->update(['name' => 'Santos Insurance Advisory']);
+
+        Staff::factory()->create(['name' => 'Insurix Staff', 'email' => 'staff@insurix.test']);
 
         $products = $this->products($workspace);
         $this->leads($workspace);
