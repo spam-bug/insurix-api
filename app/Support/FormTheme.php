@@ -6,7 +6,7 @@ namespace App\Support;
 
 /**
  * A form's look: light or dark (or the visitor's choice), accent colour, corners, field style,
- * logo, and the Premium extras (font, page background, no "Powered by Insurix"). The frontend
+ * logo, and the Premium extras (font, page background, no "Powered by Suvvi"). The frontend
  * turns these into CSS variables; here they're validated and trimmed to what the plan allows.
  */
 class FormTheme

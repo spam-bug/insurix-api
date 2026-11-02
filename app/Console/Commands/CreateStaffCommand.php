@@ -18,7 +18,7 @@ use Illuminate\Validation\Rules\Password;
     {email : Their work email, used to sign in to the staff console}
     {--name= : Their name; asked for when left out}
     {--role=admin : admin or support}')]
-#[Description('Add someone to the Insurix team, with access to the staff console')]
+#[Description('Add someone to the Suvvi team, with access to the staff console')]
 class CreateStaffCommand extends Command
 {
     public function handle(CreateStaff $createStaff): int

@@ -18,7 +18,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// The staff console: the Insurix team's own pages, signed in through the `staff` guard.
+// The staff console: the Suvvi team's own pages, signed in through the `staff` guard.
 Route::prefix('staff')->name('staff.')->middleware(HandleInertiaRequests::class)->group(function () {
     Route::middleware('guest:staff')->group(function () {
         Route::get('login', [StaffSessionController::class, 'create'])->name('login');
