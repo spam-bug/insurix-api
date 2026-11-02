@@ -14,10 +14,15 @@ return new class extends Migration
             $table->id();
             $table->foreignUuid('automation_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('lead_id')->constrained()->cascadeOnDelete();
+            $table->string('status', 20)->default('completed');
+            // The steps after a wait, kept as they were, so editing the automation doesn't change a run that's waiting.
+            $table->json('pending_actions')->nullable();
+            $table->timestamp('resume_at')->nullable();
             $table->timestamp('created_at')->useCurrent();
 
             $table->index(['automation_id', 'lead_id', 'created_at']);
             $table->index('lead_id');
+            $table->index(['status', 'resume_at']);
         });
     }
 
