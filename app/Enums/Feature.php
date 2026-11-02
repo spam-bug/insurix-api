@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-/** Features that can be switched on or off, each with its access level set in config/insurix.php. */
+/** Features that can be switched on or off, each with its access level set in config/suvvi.php. */
 enum Feature: string
 {
     case WorkspaceOnboarding = 'workspace-onboarding';
@@ -14,6 +14,6 @@ enum Feature: string
 
     public function access(): FeatureAccess
     {
-        return FeatureAccess::from(config("insurix.features.{$this->value}"));
+        return FeatureAccess::from(config("suvvi.features.{$this->value}"));
     }
 }

@@ -27,7 +27,7 @@ function YesNo({ yes, label }: { yes: boolean; label: string }) {
 /** Agents, to look someone up and see the workspaces they're in. */
 export default function StaffUsers({ users, filters }: StaffUsersProps) {
 	return (
-		<ConsoleLayout title="Users" description="Agents with an Insurix account. Look someone up by name or email.">
+		<ConsoleLayout title="Users" description="Agents with an Suvvi account. Look someone up by name or email.">
 			<Form action="/staff/users" method="get" className="flex flex-wrap items-end gap-2">
 				{({ processing }) => (
 					<>

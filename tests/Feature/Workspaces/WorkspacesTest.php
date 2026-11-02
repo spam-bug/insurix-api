@@ -11,7 +11,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 it('creates a new account without a workspace when onboarding is on', function () {
-    config(['insurix.features.workspace-onboarding' => 'free']);
+    config(['suvvi.features.workspace-onboarding' => 'free']);
 
     $this->postJson('/api/v1/auth/register', [
         'name' => 'Ana Reyes',
@@ -26,7 +26,7 @@ it('creates a new account without a workspace when onboarding is on', function (
 });
 
 it('lists a Premium feature only for Premium workspaces', function () {
-    config(['insurix.features.workspace-switcher' => 'premium']);
+    config(['suvvi.features.workspace-switcher' => 'premium']);
     $agent = User::factory()->create();
     $free = Workspace::factory()->withMember($agent)->create();
     $premium = Workspace::factory()->withMember($agent)->create(['plan' => Plan::Premium]);

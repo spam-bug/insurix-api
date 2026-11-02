@@ -40,7 +40,7 @@ class WorkspaceDeletedNotification extends Notification implements ShouldQueue
     {
         $message = (new MailMessage)
             ->subject("{$this->workspaceName} was deleted")
-            ->line("{$this->ownerName} deleted {$this->workspaceName} on Insurix, so you no longer have access to it.");
+            ->line("{$this->ownerName} deleted {$this->workspaceName} on Suvvi, so you no longer have access to it.");
 
         return $this->restorableUntil
             ? $message->line("They can restore it until {$this->restorableUntil->toFormattedDateString()}. After that, its data is removed for good.")

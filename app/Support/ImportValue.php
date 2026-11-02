@@ -10,7 +10,7 @@ use InvalidArgumentException;
 use Throwable;
 
 /**
- * Cleans one spreadsheet value into what Insurix stores. Each method returns null for an empty
+ * Cleans one spreadsheet value into what Suvvi stores. Each method returns null for an empty
  * cell and throws InvalidArgumentException, with a message for the agent, when it can't be read.
  */
 class ImportValue

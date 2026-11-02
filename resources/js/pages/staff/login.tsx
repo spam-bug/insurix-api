@@ -9,7 +9,7 @@ import { AuthLayout } from "@/layouts/auth-layout"
 
 export default function StaffLogin() {
 	return (
-		<AuthLayout title="Sign in" description="The staff console is for the Insurix team.">
+		<AuthLayout title="Sign in" description="The staff console is for the Suvvi team.">
 			<Form action="/staff/login" method="post" disableWhileProcessing resetOnError={["password"]}>
 				{({ errors, processing }) => (
 					<FieldGroup>

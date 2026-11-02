@@ -9,7 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 
-/** Laravel's verification email, queued, in Insurix's words. */
+/** Laravel's verification email, queued, in Suvvi's words. */
 class VerifyEmailNotification extends VerifyEmail implements ShouldQueue
 {
     use Queueable;
@@ -17,9 +17,9 @@ class VerifyEmailNotification extends VerifyEmail implements ShouldQueue
     protected function buildMailMessage($url): MailMessage
     {
         return (new MailMessage)
-            ->subject('Confirm your email for Insurix')
+            ->subject('Confirm your email for Suvvi')
             ->line('Confirm this is your email address, so password resets and invites reach you.')
             ->action('Confirm email', $url)
-            ->line('The link works for 24 hours. If you didn’t create an Insurix account, you can ignore this email.');
+            ->line('The link works for 24 hours. If you didn’t create an Suvvi account, you can ignore this email.');
     }
 }

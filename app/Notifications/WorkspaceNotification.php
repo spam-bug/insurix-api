@@ -52,7 +52,7 @@ abstract class WorkspaceNotification extends Notification implements ShouldQueue
             ->subject("{$title} · {$workspace->name}")
             ->greeting($title)
             ->line($body)
-            ->action('Open in Insurix', "{$frontendUrl}/w/{$workspace->id}/open?{$query}")
+            ->action('Open in Suvvi', "{$frontendUrl}/w/{$workspace->id}/open?{$query}")
             ->line("You get this email for {$workspace->name}. Choose which emails you get in [your notification settings]({$frontendUrl}/w/{$workspace->id}/settings/notifications).");
     }
 
