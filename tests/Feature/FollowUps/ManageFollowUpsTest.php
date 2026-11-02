@@ -32,6 +32,35 @@ it('adds a follow-up to a lead', function () {
     expect(FollowUp::first()->workspace_id)->toBe(workspaceOf($agent)->id);
 });
 
+it('keeps a message to send, with every way to reach the person', function () {
+    $agent = User::factory()->create();
+    $lead = Lead::factory()->for(workspaceOf($agent))->create([
+        'phone' => '0917 555 0100',
+        'preferred_channel' => 'messenger',
+        'messenger_username' => 'ana.reyes',
+    ]);
+
+    $followUp = $this->actingAs($agent)
+        ->postJson(ws($agent)."/leads/{$lead->id}/follow-ups", [
+            'type' => 'message',
+            'title' => 'Welcome Ana',
+            'due_at' => '2026-10-20T09:30:00+08:00',
+            'message' => 'Hi Ana, thanks for reaching out!',
+        ])
+        ->assertCreated()
+        ->assertJsonPath('data.message', 'Hi Ana, thanks for reaching out!')
+        ->assertJsonPath('data.lead.preferred_channel.value', 'messenger')
+        ->assertJsonPath('data.lead.messenger_username', 'ana.reyes')
+        ->json('data');
+
+    $this->putJson(ws($agent)."/follow-ups/{$followUp['id']}", [
+        'type' => 'message',
+        'title' => 'Welcome Ana',
+        'due_at' => '2026-10-21T09:30:00+08:00',
+        'message' => 'Hi Ana!',
+    ])->assertOk()->assertJsonPath('data.message', 'Hi Ana!');
+});
+
 it('validates a follow-up', function () {
     $agent = User::factory()->create();
     $lead = Lead::factory()->for(workspaceOf($agent))->create();
