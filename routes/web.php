@@ -2,10 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Staff\PremiumLinkController;
 use App\Http\Controllers\Staff\StaffSessionController;
 use App\Http\Controllers\Staff\StaffTwoFactorChallengeController;
 use App\Http\Controllers\Staff\StaffTwoFactorController;
+use App\Http\Controllers\Staff\UserController;
 use App\Http\Controllers\Staff\WorkspaceController;
+use App\Http\Controllers\Staff\WorkspacePremiumController;
+use App\Http\Controllers\Staff\WorkspaceRestorationController;
 use App\Http\Middleware\EnsureStaffTwoFactor;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +35,13 @@ Route::prefix('staff')->name('staff.')->middleware(HandleInertiaRequests::class)
         Route::middleware(EnsureStaffTwoFactor::class)->group(function () {
             Route::redirect('/', '/staff/workspaces')->name('home');
             Route::get('workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
+            Route::get('workspaces/{workspace}', [WorkspaceController::class, 'show'])->withTrashed()->name('workspaces.show');
+            Route::post('workspaces/{workspace}/premium', [WorkspacePremiumController::class, 'store'])->name('workspaces.premium.store');
+            Route::delete('workspaces/{workspace}/premium', [WorkspacePremiumController::class, 'destroy'])->name('workspaces.premium.destroy');
+            Route::post('workspaces/{workspace}/restoration', [WorkspaceRestorationController::class, 'store'])->withTrashed()->name('workspaces.restoration.store');
+            Route::get('premium-links', [PremiumLinkController::class, 'index'])->name('premium-links.index');
+            Route::post('premium-links', [PremiumLinkController::class, 'store'])->name('premium-links.store');
+            Route::get('users', [UserController::class, 'index'])->name('users.index');
         });
     });
 });

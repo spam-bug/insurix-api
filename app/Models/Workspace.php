@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Storage;
@@ -190,6 +191,16 @@ class Workspace extends Model
     public function premiumGrants(): HasMany
     {
         return $this->hasMany(PremiumGrant::class);
+    }
+
+    /**
+     * What staff changed on this workspace in the console.
+     *
+     * @return MorphMany<StaffActivity, $this>
+     */
+    public function staffActivities(): MorphMany
+    {
+        return $this->morphMany(StaffActivity::class, 'subject');
     }
 
     /**
