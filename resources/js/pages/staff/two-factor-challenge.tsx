@@ -45,7 +45,9 @@ export default function StaffTwoFactorChallenge() {
 							Sign in
 						</Button>
 						<Button type="button" variant="link" onClick={() => setUseRecoveryCode(!useRecoveryCode)}>
-							{useRecoveryCode ? "Use a code from the app instead" : "Lost your phone? Use a recovery code"}
+							{useRecoveryCode
+								? "Use a code from the app instead"
+								: "Lost your phone? Use a recovery code"}
 						</Button>
 					</FieldGroup>
 				)}

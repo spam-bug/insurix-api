@@ -18,7 +18,12 @@ interface StaffTwoFactorSetupProps {
  * Required before the console opens: scan the code, confirm it with the first code from the
  * app, then save the recovery codes.
  */
-export default function StaffTwoFactorSetup({ confirmed, qr_code_svg, secret, recovery_codes }: StaffTwoFactorSetupProps) {
+export default function StaffTwoFactorSetup({
+	confirmed,
+	qr_code_svg,
+	secret,
+	recovery_codes,
+}: StaffTwoFactorSetupProps) {
 	if (confirmed) {
 		return (
 			<AuthLayout
@@ -26,7 +31,10 @@ export default function StaffTwoFactorSetup({ confirmed, qr_code_svg, secret, re
 				description="If you lose your phone, each of these signs you in once. Keep them somewhere safe, like a password manager."
 			>
 				<div className="flex flex-col gap-5">
-					<ul className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-3 font-mono text-sm" aria-label="Recovery codes">
+					<ul
+						className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-3 font-mono text-sm"
+						aria-label="Recovery codes"
+					>
 						{recovery_codes.map((code) => (
 							<li key={code}>{code}</li>
 						))}
@@ -57,7 +65,8 @@ export default function StaffTwoFactorSetup({ confirmed, qr_code_svg, secret, re
 						)}
 						{secret && (
 							<p className="text-center text-xs text-muted-foreground">
-								Can’t scan it? Enter this key: <span className="font-mono text-foreground select-all">{secret}</span>
+								Can’t scan it? Enter this key:{" "}
+								<span className="font-mono text-foreground select-all">{secret}</span>
 							</p>
 						)}
 						<Field data-invalid={errors.code ? true : undefined}>
