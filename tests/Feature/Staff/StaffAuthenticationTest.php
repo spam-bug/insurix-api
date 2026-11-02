@@ -83,11 +83,11 @@ it('signs out of the console without signing an agent out of the app', function 
 });
 
 it('adds staff from the command line, with a long enough password', function () {
-    $this->artisan('staff:create', ['email' => 'mark@insurix.test', '--name' => 'Mark', '--role' => 'support'])
+    $this->artisan('staff:create', ['email' => 'mark@suvvi.test', '--name' => 'Mark', '--role' => 'support'])
         ->expectsQuestion('Password (at least 12 characters)', 'short')
         ->assertFailed();
 
-    $this->artisan('staff:create', ['email' => 'mark@insurix.test', '--name' => 'Mark', '--role' => 'support'])
+    $this->artisan('staff:create', ['email' => 'mark@suvvi.test', '--name' => 'Mark', '--role' => 'support'])
         ->expectsQuestion('Password (at least 12 characters)', 'a long enough password')
         ->assertSuccessful();
 

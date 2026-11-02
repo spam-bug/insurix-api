@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * The Insurix team, who sign in to the staff console. Kept apart from users (the agents),
+     * The Suvvi team, who sign in to the staff console. Kept apart from users (the agents),
      * so nothing an agent can do, like signing up or resetting a password, reaches staff accounts.
      */
     public function up(): void
