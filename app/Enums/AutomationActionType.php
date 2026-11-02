@@ -8,7 +8,10 @@ namespace App\Enums;
 enum AutomationActionType: string
 {
     case AddFollowUp = 'add_follow_up';
+    case DraftMessage = 'draft_message';
+    case SendForm = 'send_form';
     case MoveToStage = 'move_to_stage';
     case AddNote = 'add_note';
     case NotifyTeam = 'notify_team';
+    case Wait = 'wait';
 }
