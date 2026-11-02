@@ -19,6 +19,10 @@ Schedule::command('leads:rescore')->dailyAt('05:15')->timezone('Asia/Manila');
 // count of follow-ups, so the follow-ups they add are in it.
 Schedule::command('automations:run-idle')->dailyAt('05:30')->timezone('Asia/Manila');
 
+// Automation runs paused at a wait carry on once it's over. Waits are counted in hours, so a
+// few minutes late doesn't matter.
+Schedule::command('automations:resume')->everyFiveMinutes()->withoutOverlapping();
+
 // After the reminders and scores are in: each member's morning count of follow-ups for today.
 Schedule::command('follow-ups:notify-due')->dailyAt('07:00')->timezone('Asia/Manila');
 Schedule::command('notifications:prune')->dailyAt('03:00')->timezone('Asia/Manila');
