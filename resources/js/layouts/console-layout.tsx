@@ -55,7 +55,7 @@ export function ConsoleLayout({ title, description, actions, children }: Console
 				<Head title={title} />
 				<Sidebar>
 					<SidebarHeader className="px-4 py-3">
-						<span className="text-sm font-semibold">Insurix</span>
+						<span className="text-sm font-semibold">Suvvi</span>
 						<span className="label-caps">Staff console</span>
 					</SidebarHeader>
 					<SidebarContent>
