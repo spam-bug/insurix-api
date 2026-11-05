@@ -15,10 +15,12 @@ use App\Enums\ContactChannel;
 use App\Enums\DocumentCategory;
 use App\Enums\FollowUpType;
 use App\Enums\FormTemplate;
+use App\Enums\LeadActivityType;
 use App\Enums\LeadInterest;
 use App\Enums\LeadSource;
 use App\Enums\LeadStatus;
 use App\Enums\PaymentFrequency;
+use App\Enums\PolicyEventType;
 use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
 use App\Enums\RenewalTerm;
@@ -60,7 +62,7 @@ class DemoSeeder extends Seeder
         Staff::factory()->create(['name' => 'Suvvi Staff', 'email' => 'staff@suvvi.test']);
 
         $products = $this->products($workspace);
-        $this->leads($workspace);
+        $this->leads($workspace, $agent);
         $clients = $this->clients($workspace, $agent, $products);
         $this->followUps($workspace, $clients);
         $this->serviceRequests($agent, $clients);
@@ -92,7 +94,7 @@ class DemoSeeder extends Seeder
         ]), $products);
     }
 
-    private function leads(Workspace $workspace): void
+    private function leads(Workspace $workspace, User $agent): void
     {
         $leads = [
             ['Liza Garcia', LeadStatus::MeetingScheduled, LeadSource::Referral, LeadInterest::Life, 1],
@@ -133,6 +135,11 @@ class DemoSeeder extends Seeder
                 'meeting_at' => $status === LeadStatus::MeetingScheduled ? now()->addDays(fake()->numberBetween(1, 5))->setTime(14, 0) : null,
             ]);
             $lead->forceFill(['created_at' => now()->subDays($daysAgo)])->save();
+            $this->leadActivity($lead, LeadActivityType::Created, $source === LeadSource::ShareableForm ? null : $agent, ['source' => $source->value], now()->subDays($daysAgo));
+
+            if ($status !== LeadStatus::Prospect) {
+                $this->leadActivity($lead, LeadActivityType::StatusChanged, $agent, ['from' => LeadStatus::Prospect->value, 'to' => $status->value], now()->subDays(intdiv($daysAgo, 2))->subHours(fake()->numberBetween(1, 8)));
+            }
 
             app(ScoreLead::class)->handle($lead);
         }
@@ -226,7 +233,7 @@ class DemoSeeder extends Seeder
     {
         $renewalDate = $renewsInDays === null ? null : now()->addDays($renewsInDays);
 
-        Policy::factory()->for($client)->create([
+        $policy = Policy::factory()->for($client)->create([
             'workspace_id' => $client->workspace_id,
             'product_id' => $product->id,
             'product_name' => $product->name,
@@ -242,6 +249,20 @@ class DemoSeeder extends Seeder
             'renewal_date' => $renewalDate?->toDateString(),
             'commission_received_at' => $status === PolicyStatus::InForce && fake()->boolean(60) ? now()->subDays(fake()->numberBetween(10, 200)) : null,
         ]);
+
+        $policy->events()->create(['type' => PolicyEventType::Recorded, 'properties' => ['status' => $status->value]])
+            ->forceFill(['created_at' => now()->subDays(fake()->numberBetween(1, 20))->subHours(fake()->numberBetween(1, 8))])
+            ->save();
+    }
+
+    /**
+     * @param  array<string, mixed>  $properties
+     */
+    private function leadActivity(Lead $lead, LeadActivityType $type, ?User $actor, array $properties, mixed $at): void
+    {
+        $lead->activities()->create(['user_id' => $actor?->id, 'type' => $type, 'properties' => $properties])
+            ->forceFill(['created_at' => $at])
+            ->save();
     }
 
     /**
