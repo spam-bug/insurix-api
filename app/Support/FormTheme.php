@@ -6,7 +6,7 @@ namespace App\Support;
 
 /**
  * A form's look: light or dark (or the visitor's choice), accent colour, corners, field style,
- * logo, and the Premium extras (font, page background, no "Powered by Suvvi"). The frontend
+ * logo, and the Premium extras (font, page background). The frontend
  * turns these into CSS variables; here they're validated and trimmed to what the plan allows.
  */
 class FormTheme
@@ -23,7 +23,7 @@ class FormTheme
     public const BACKGROUNDS = ['none', 'mist', 'sky', 'mint', 'sunrise', 'dusk'];
 
     /** Settings only Premium workspaces see on their public forms. */
-    private const PREMIUM = ['font' => 'default', 'background' => 'none', 'hide_branding' => false];
+    private const PREMIUM = ['font' => 'default', 'background' => 'none'];
 
     /**
      * @return array<string, mixed>
@@ -43,13 +43,14 @@ class FormTheme
     /**
      * The theme as visitors get it: missing settings take the defaults, and without Premium the
      * Premium settings fall back to theirs (the builder keeps them, so upgrading brings them back).
+     * Settings that no longer exist (such as an old hide_branding) are dropped.
      *
      * @param  array<string, mixed>|null  $theme
      * @return array<string, mixed>
      */
     public static function forVisitors(?array $theme, bool $premium): array
     {
-        $theme = [...self::defaults(), ...($theme ?? [])];
+        $theme = array_intersect_key([...self::defaults(), ...($theme ?? [])], self::defaults());
 
         return $premium ? $theme : [...$theme, ...self::PREMIUM];
     }
