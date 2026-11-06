@@ -73,6 +73,7 @@ use App\Http\Controllers\Api\V1\LeadStatusController;
 use App\Http\Controllers\Api\V1\LeadStatusCountController;
 use App\Http\Controllers\Api\V1\MentionSuggestionController;
 use App\Http\Controllers\Api\V1\NextActionController;
+use App\Http\Controllers\Api\V1\NextUpLeadController;
 use App\Http\Controllers\Api\V1\NoteController;
 use App\Http\Controllers\Api\V1\NotePinController;
 use App\Http\Controllers\Api\V1\NotificationController;
@@ -213,6 +214,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/form-responses/{formResponse}', [FormResponseController::class, 'destroy']);
 
             Route::get('/leads/status-counts', [LeadStatusCountController::class, 'index']);
+            Route::get('/leads/next-up', [NextUpLeadController::class, 'index']);
             Route::post('/leads/bulk/status', [BulkLeadStatusController::class, 'update']);
             Route::post('/leads/bulk/delete', [BulkLeadController::class, 'destroy']);
             Route::get('/leads', [LeadController::class, 'index']);
