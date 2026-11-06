@@ -142,7 +142,7 @@ it('shows visitors the published form, never a draft', function () {
         ->assertOk()
         ->assertJsonPath('data.form.status', 'published')
         ->assertJsonPath('data.form.document.settings.title', 'Get in touch')
-        ->assertJsonPath('data.agent.name', workspaceOf($agent)->name)
+        ->assertJsonPath('data.agent.name', $agent->name)
         ->assertJsonMissingPath('data.form.document.token');
 
     $this->postJson(ws($agent)."/forms/{$published->id}/publication", [])->assertOk();

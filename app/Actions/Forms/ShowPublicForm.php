@@ -14,7 +14,8 @@ class ShowPublicForm
 {
     /**
      * What a visitor's page needs: the document (the published one, or the draft for a preview;
-     * none once closed) with its theme trimmed to the workspace's plan, and who it's from.
+     * none once closed) with its theme trimmed to the workspace's plan, and who it's from:
+     * the owner by name (the workspace's name if it has no owner), with their photo and the logo.
      *
      * @param  array<string, mixed>|null  $document
      * @return array<string, mixed>
@@ -31,7 +32,7 @@ class ShowPublicForm
         return [
             'form' => ['token' => $form->token, 'status' => $form->status->value, 'document' => $document],
             'agent' => [
-                'name' => $workspace->name,
+                'name' => $owner?->name ?? $workspace->name,
                 'avatar_url' => $owner?->avatarUrl(),
                 'logo_url' => $workspace->logoUrl(),
             ],
