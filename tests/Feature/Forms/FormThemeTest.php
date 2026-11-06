@@ -8,7 +8,7 @@ use App\Support\FormTheme;
 
 function premiumTheme(): array
 {
-    return [...FormTheme::defaults(), 'mode' => 'dark', 'accent' => '#0f766e', 'font' => 'serif', 'background' => 'mint', 'hide_branding' => true];
+    return [...FormTheme::defaults(), 'mode' => 'dark', 'accent' => '#0f766e', 'font' => 'serif', 'background' => 'mint'];
 }
 
 /** The contact form with this theme saved to its draft and published. */
@@ -55,7 +55,7 @@ it('shows Free workspaces’ forms without the Premium theme settings', function
 
     $this->getJson('/api/v1/public/forms/form-token')
         ->assertOk()
-        ->assertJsonPath('data.form.document.theme', [...premiumTheme(), 'font' => 'default', 'background' => 'none', 'hide_branding' => false]);
+        ->assertJsonPath('data.form.document.theme', [...premiumTheme(), 'font' => 'default', 'background' => 'none']);
 });
 
 it('shows Premium workspaces’ forms with their whole theme', function () {
@@ -71,6 +71,16 @@ it('fills in a missing theme with the defaults', function () {
     $form = contactFormOf($agent);
     $published = $form->published;
     unset($published['theme']);
+    $form->update(['published' => $published]);
+
+    $this->getJson('/api/v1/public/forms/form-token')->assertJsonPath('data.form.document.theme', FormTheme::defaults());
+});
+
+it('drops theme settings that no longer exist', function () {
+    $agent = User::factory()->create();
+    $form = contactFormOf($agent);
+    $published = $form->published;
+    $published['theme'] = [...FormTheme::defaults(), 'hide_branding' => true];
     $form->update(['published' => $published]);
 
     $this->getJson('/api/v1/public/forms/form-token')->assertJsonPath('data.form.document.theme', FormTheme::defaults());
