@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Enums\NotificationType;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
+/** The morning reminder: bell, email, and a push notification on each device that turned them on. */
 class FollowUpsDueNotification extends WorkspaceNotification
 {
     public function __construct(string $workspaceId, public int $due, public int $overdue)
@@ -30,5 +33,28 @@ class FollowUpsDueNotification extends WorkspaceNotification
             'actor' => null,
             'subject' => null,
         ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function via(object $notifiable): array
+    {
+        $channels = parent::via($notifiable);
+
+        return $channels !== [] && $notifiable->pushSubscriptions()->exists() ? [...$channels, WebPushChannel::class] : $channels;
+    }
+
+    /** Tapping it opens the workspace's Follow-ups; the tag replaces yesterday's if it's still showing. */
+    public function toWebPush(object $notifiable): WebPushMessage
+    {
+        ['title' => $title, 'body' => $body] = $this->toArray($notifiable);
+
+        return (new WebPushMessage)
+            ->title($title)
+            ->body($body)
+            ->icon('/icons/icon-192.png')
+            ->tag('follow-ups-due')
+            ->data(['url' => "/w/{$this->workspaceId}/follow-ups"]);
     }
 }
