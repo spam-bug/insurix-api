@@ -139,7 +139,7 @@ enum FormTemplate: string
                 'title' => $title,
                 'description' => $description,
                 'submit_label' => 'Send',
-                'success_message' => 'Thank you! I’ll be in touch soon.',
+                'success_message' => null,
                 'auto_add_leads' => $addToLeads,
             ],
             'theme' => FormTheme::defaults(),
