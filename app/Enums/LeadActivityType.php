@@ -24,4 +24,14 @@ enum LeadActivityType: string
     {
         return [self::Note, self::MeetingScheduled, self::StatusChanged, self::FollowUpCompleted];
     }
+
+    /**
+     * What counts as being in touch with the lead, for "last contacted".
+     *
+     * @return list<string>
+     */
+    public static function contacts(): array
+    {
+        return [self::StatusChanged->value, self::MeetingScheduled->value, self::Note->value, self::FollowUpCompleted->value];
+    }
 }

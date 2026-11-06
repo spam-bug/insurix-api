@@ -44,6 +44,8 @@ class LeadResource extends JsonResource
                 default => 'cold',
             },
             'score_reasons' => $this->score_reasons ?? [],
+            'next_follow_up_at' => $this->whenHas('next_follow_up_at', fn () => $this->next_follow_up_at?->toIso8601String()),
+            'last_contacted_at' => $this->whenHas('last_contacted_at', fn () => $this->last_contacted_at?->toIso8601String()),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

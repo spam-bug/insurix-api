@@ -23,6 +23,7 @@ class ListLeads
         return Cache::tags("workspace:{$workspace->id}")->rememberForever("leads:{$workspace->id}:index:".md5(json_encode($filters)), function () use ($workspace, $filters) {
             $query = $workspace->leads()
                 ->with('client:id,lead_id')
+                ->withNextStep()
                 ->when($filters->search, function (Builder $query, string $search) {
                     $query->where(function (Builder $query) use ($search) {
                         $query->where('name', 'like', "%{$search}%")

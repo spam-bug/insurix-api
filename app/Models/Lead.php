@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Builders\LeadBuilder;
 use App\Casts\ChatUsername;
 use App\Enums\ContactChannel;
 use App\Enums\LeadInterest;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'phone', 'preferred_channel', 'messenger_username', 'telegram_username', 'address', 'source', 'interest', 'notes', 'status', 'meeting_at'])]
@@ -76,6 +78,14 @@ class Lead extends Model
     }
 
     /**
+     * @param  Builder  $query
+     */
+    public function newEloquentBuilder($query): LeadBuilder
+    {
+        return new LeadBuilder($query);
+    }
+
+    /**
      * Emails are compared and deduplicated case-insensitively, so they're stored lowercase.
      *
      * @return Attribute<string|null, string|null>
@@ -100,6 +110,8 @@ class Lead extends Model
             'telegram_username' => ChatUsername::class,
             'status' => LeadStatus::class,
             'meeting_at' => 'immutable_datetime',
+            'next_follow_up_at' => 'immutable_datetime',
+            'last_contacted_at' => 'immutable_datetime',
             'score_reasons' => 'array',
         ];
     }
