@@ -28,9 +28,11 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique(Product::class)->where('workspace_id', app(Workspace::class)->id)->ignore($this->route('product'))],
+            'insurer' => ['nullable', 'string', 'max:255'],
             'type' => ['required', Rule::enum(PolicyType::class)],
             'description' => ['nullable', 'string', 'max:2000'],
             'commission_rate' => ['required', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
+            'renewal_commission_rate' => ['sometimes', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'payment_frequency' => ['nullable', Rule::enum(PaymentFrequency::class)],
             'is_active' => ['sometimes', 'boolean'],
         ];

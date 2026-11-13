@@ -26,7 +26,7 @@ class ListPoliciesNeedingAttention
     public const PENDING_DAYS = 14;
 
     /**
-     * "Which policies need attention?": renewals coming up or past, premiums due soon, lapsed
+     * "Which policies need attention?": renewals coming up or past, premiums due soon or unpaid, lapsed
      * policies to reinstate, and applications stuck in underwriting. Most urgent first.
      *
      * @return Collection<int, array{policy: Policy, reasons: array<int, array{code: string, label: string, date: string|null}>, due: CarbonImmutable}>
@@ -38,6 +38,7 @@ class ListPoliciesNeedingAttention
 
             return $workspace->policies()
                 ->with(['client:id,name,lead_id', 'renewals:id,policy_id,due_on'])
+                ->withMax('payments as last_paid_due_on', 'due_on')
                 ->withCount(['requirements as outstanding_requirements' => fn ($query) => $query->whereNull('received_on')])
                 ->whereIn('status', [PolicyStatus::InForce, PolicyStatus::Lapsed, PolicyStatus::Pending])
                 ->get()
@@ -89,9 +90,16 @@ class ListPoliciesNeedingAttention
             }
         }
 
-        $nextPayment = $this->findNextPaymentDue->handle($policy, $today);
+        $nextPayment = $this->findNextPaymentDue->handle($policy);
         if ($nextPayment && $nextPayment->lessThanOrEqualTo($today->addDays(self::PAYMENT_WINDOW_DAYS))) {
-            $reasons[] = ['code' => 'payment_due', 'label' => 'Premium due soon', 'date' => $nextPayment->toDateString()];
+            // Due dates are plain dates, so they're compared with today's date, not its moment in the workspace's timezone.
+            $todayDate = CarbonImmutable::parse($today->toDateString());
+            $graceLeft = FindNextPaymentDue::GRACE_DAYS - (int) $nextPayment->diffInDays($todayDate);
+            $reasons[] = match (true) {
+                $nextPayment->greaterThanOrEqualTo($todayDate) => ['code' => 'payment_due', 'label' => 'Premium due soon', 'date' => $nextPayment->toDateString()],
+                $graceLeft >= 0 => ['code' => 'payment_overdue', 'label' => 'Premium unpaid: '.($graceLeft === 0 ? 'the grace period ends today' : "{$graceLeft} ".($graceLeft === 1 ? 'day' : 'days').' left in the grace period'), 'date' => $nextPayment->toDateString()],
+                default => ['code' => 'payment_lapse_risk', 'label' => 'Premium unpaid past the grace period: check if it lapsed', 'date' => $nextPayment->toDateString()],
+            };
             $dates[] = $nextPayment;
         }
 

@@ -6,6 +6,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
 use App\Models\Client;
 use App\Models\Policy;
+use App\Models\PolicyPayment;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -45,12 +46,12 @@ it('flags a renewal date that has passed', function () {
 it('summarizes commission received, receivable and expected', function () {
     $agent = User::factory()->create();
     $client = Client::factory()->for(workspaceOf($agent))->create();
-    // 2,000 a month at 25% is 6,000 a year in commission.
+    // Received and receivable come from recorded premiums; expected is 15% of the pending 40,000.
     $monthly = ['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25];
 
-    Policy::factory()->for($client)->create([...$monthly, 'commission_received_at' => '2026-03-10']);
-    Policy::factory()->for($client)->create([...$monthly, 'commission_received_at' => '2025-12-20']);
-    Policy::factory()->for($client)->create($monthly);
+    commissionReceived(Policy::factory()->for($client)->create($monthly), '2026-03-10');
+    commissionReceived(Policy::factory()->for($client)->create($monthly), '2025-12-20');
+    PolicyPayment::factory()->for(Policy::factory()->for($client)->create($monthly))->create(['commission_expected' => 500]);
     Policy::factory()->for($client)->status(PolicyStatus::Pending)->create(['premium' => 40000, 'payment_frequency' => PaymentFrequency::Annual, 'commission_rate' => 15]);
     Policy::factory()->for($client)->status(PolicyStatus::Cancelled)->create($monthly);
     Policy::factory()->create($monthly);
@@ -60,7 +61,7 @@ it('summarizes commission received, receivable and expected', function () {
         ->assertOk()
         ->assertExactJson(['data' => [
             'received_this_year' => 6000,
-            'receivable' => 6000,
+            'receivable' => 500,
             'expected' => 6000,
             'annual_premium_in_force' => 72000,
             'policies_in_force' => 3,

@@ -52,7 +52,7 @@ class MeasurePeriodFigures
             'won' => $won,
             'lost' => $closed - $won,
             'win_rate_percent' => $closed === 0 ? null : (int) round($won / $closed * 100),
-            'commission_received' => round((float) $workspace->policies()->whereBetween('commission_received_at', $days)->sum('commission'), 2),
+            'commission_received' => round((float) $workspace->policyPayments()->whereBetween('commission_received_on', $days)->sum('commission_received'), 2),
             'renewals_recorded' => $outcomes->count(),
             'renewal_rate_percent' => $outcomes->isEmpty() ? null : (int) round($renewed / $outcomes->count() * 100),
         ];

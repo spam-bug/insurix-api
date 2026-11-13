@@ -19,13 +19,13 @@ class ChartCommissionByMonth
     {
         $firstMonth = $lastMonth->startOfMonth()->subMonthsNoOverflow($months - 1);
 
-        $byMonth = $workspace->policies()
+        $byMonth = $workspace->policyPayments()
             ->toBase()
-            ->whereBetween('commission_received_at', [$firstMonth->toDateString(), $lastMonth->endOfMonth()->toDateTimeString()])
-            ->selectRaw('commission_received_at, sum(commission) as received, count(*) as policies')
-            ->groupBy('commission_received_at')
+            ->whereBetween('commission_received_on', [$firstMonth->toDateString(), $lastMonth->endOfMonth()->toDateTimeString()])
+            ->selectRaw('commission_received_on, sum(commission_received) as received, count(distinct policy_id) as policies')
+            ->groupBy('commission_received_on')
             ->get()
-            ->groupBy(fn (object $day) => substr((string) $day->commission_received_at, 0, 7));
+            ->groupBy(fn (object $day) => substr((string) $day->commission_received_on, 0, 7));
 
         return collect(range(0, $months - 1))
             ->map(function (int $offset) use ($firstMonth, $byMonth) {

@@ -8,6 +8,8 @@ use App\DataTransferObject\Forms\FormData;
 use App\Enums\FormTemplate;
 use App\Enums\WorkspaceRole;
 use App\Models\Form;
+use App\Models\Policy;
+use App\Models\PolicyPayment;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -120,4 +122,16 @@ function storeSession(User $agent, string $userAgent, int $lastActivity = 0): st
 function useSession(string $id): void
 {
     test()->withCredentials()->withCookie(config('session.cookie'), $id);
+}
+
+/**
+ * Records a paid premium on each policy whose commission the agent received on the given day.
+ *
+ * @param  Policy|iterable<int, Policy>  $policies
+ */
+function commissionReceived(Policy|iterable $policies, string $on, float $amount = 6000): void
+{
+    foreach ($policies instanceof Policy ? [$policies] : $policies as $policy) {
+        PolicyPayment::factory()->for($policy)->create(['due_on' => $on, 'paid_on' => $on, 'commission_received' => $amount, 'commission_received_on' => $on]);
+    }
 }

@@ -78,6 +78,7 @@ use App\Http\Controllers\Api\V1\NotePinController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PolicyAttentionController;
 use App\Http\Controllers\Api\V1\PolicyController;
+use App\Http\Controllers\Api\V1\PolicyPaymentController;
 use App\Http\Controllers\Api\V1\PolicyPremiumMixController;
 use App\Http\Controllers\Api\V1\PolicyRenewalController;
 use App\Http\Controllers\Api\V1\PolicyStatusCountController;
@@ -260,6 +261,9 @@ Route::prefix('v1')->group(function () {
             Route::put('/requirements/{requirement}', [RequirementController::class, 'update'])->withoutScopedBindings();
             Route::delete('/requirements/{requirement}', [RequirementController::class, 'destroy'])->withoutScopedBindings()->can('delete', 'requirement');
             Route::post('/policies/{policy}/renewals', [PolicyRenewalController::class, 'store']);
+            Route::post('/policies/{policy}/payments', [PolicyPaymentController::class, 'store']);
+            Route::put('/payments/{payment}', [PolicyPaymentController::class, 'update'])->withoutScopedBindings();
+            Route::delete('/payments/{payment}', [PolicyPaymentController::class, 'destroy'])->withoutScopedBindings()->can('delete', 'payment');
             Route::get('/commissions/summary', [CommissionSummaryController::class, 'index']);
             Route::get('/dashboard/trends', [DashboardTrendController::class, 'index']);
             Route::get('/activity', [WorkspaceActivityController::class, 'index']);

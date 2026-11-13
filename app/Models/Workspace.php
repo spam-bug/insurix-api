@@ -120,6 +120,14 @@ class Workspace extends Model
     }
 
     /**
+     * @return HasMany<PolicyPayment, $this>
+     */
+    public function policyPayments(): HasMany
+    {
+        return $this->hasMany(PolicyPayment::class);
+    }
+
+    /**
      * @return HasMany<FollowUp, $this>
      */
     public function followUps(): HasMany

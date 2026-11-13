@@ -17,9 +17,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder;
 
 /**
- * A product the agent sells, with the agent's usual commission rate for it.
+ * A product the agent sells, with the insurer behind it and the agent's usual commission rates
+ * for it: the first policy year, and the years after.
  */
-#[Fillable(['workspace_id', 'name', 'type', 'description', 'commission_rate', 'payment_frequency', 'is_active'])]
+#[Fillable(['workspace_id', 'name', 'insurer', 'type', 'description', 'commission_rate', 'renewal_commission_rate', 'payment_frequency', 'is_active'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -67,6 +68,7 @@ class Product extends Model
             'type' => PolicyType::class,
             'payment_frequency' => PaymentFrequency::class,
             'commission_rate' => 'decimal:2',
+            'renewal_commission_rate' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }

@@ -15,7 +15,7 @@ class ListPolicies
 {
     /**
      * The workspace's policies, newest first. Search matches the policy number,
-     * product or client name.
+     * product, insurer or client name.
      *
      * @return LengthAwarePaginator<int, Policy>
      */
@@ -24,6 +24,8 @@ class ListPolicies
         return Cache::tags("workspace:{$workspace->id}")->rememberForever("policies:{$workspace->id}:index:".md5(json_encode($filters)), function () use ($workspace, $filters) {
             return $workspace->policies()
                 ->with('client:id,name,lead_id')
+                ->withMax('payments as last_paid_due_on', 'due_on')
+                ->withSum('payments as commission_received_total', 'commission_received')
                 ->when($filters->clientId, fn (Builder $query, string $clientId) => $query->where('client_id', $clientId))
                 ->when($filters->productId, fn (Builder $query, string $productId) => $query->where('product_id', $productId))
                 ->when($filters->status, fn (Builder $query, $status) => $query->where('status', $status))
@@ -31,6 +33,7 @@ class ListPolicies
                     $query->where(function (Builder $query) use ($search) {
                         $query->where('policy_number', 'like', "%{$search}%")
                             ->orWhere('product_name', 'like', "%{$search}%")
+                            ->orWhere('insurer', 'like', "%{$search}%")
                             ->orWhereHas('client', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"));
                     });
                 })

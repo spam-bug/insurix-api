@@ -144,9 +144,9 @@ it('charts commission received over the twelve months up to the period', functio
     $agent = User::factory()->create();
     $client = Client::factory()->for(workspaceOf($agent))->create();
     $monthly = ['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25];
-    Policy::factory()->for($client)->count(2)->create([...$monthly, 'commission_received_at' => '2026-10-05']);
-    Policy::factory()->for($client)->create([...$monthly, 'commission_received_at' => '2025-12-20']);
-    Policy::factory()->for($client)->create([...$monthly, 'commission_received_at' => '2025-10-31']);
+    commissionReceived(Policy::factory()->for($client)->count(2)->create($monthly), '2026-10-05');
+    commissionReceived(Policy::factory()->for($client)->create($monthly), '2025-12-20');
+    commissionReceived(Policy::factory()->for($client)->create($monthly), '2025-10-31');
 
     $months = reports($agent)['commission_by_month'];
 
@@ -187,8 +187,9 @@ it('rejects an unknown period or a negative offset', function () {
 it('measures the period figures next to the period before, up to the same day while it is running', function () {
     $agent = User::factory()->create();
     $client = Client::factory()->for(workspaceOf($agent))->create();
-    $policy = Policy::factory()->for($client)->create(['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25, 'commission_received_at' => '2026-10-02']);
-    Policy::factory()->for($client)->create(['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25, 'commission_received_at' => '2026-09-30']);
+    $policy = Policy::factory()->for($client)->create(['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25]);
+    commissionReceived($policy, '2026-10-02');
+    commissionReceived(Policy::factory()->for($client)->create(['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25]), '2026-09-30');
     $lead = fn (string $addedAt) => Lead::factory()->for(workspaceOf($agent))->create(['created_at' => $addedAt]);
     $closed = fn (string $at, ?LeadStatus $lostTo = null) => LeadActivity::factory()->for($lead('2026-08-01'))->create($lostTo
         ? ['type' => LeadActivityType::StatusChanged, 'properties' => ['from' => 'contacted', 'to' => $lostTo->value], 'created_at' => $at]

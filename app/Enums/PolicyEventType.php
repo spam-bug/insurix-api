@@ -14,4 +14,6 @@ enum PolicyEventType: string
     case RequirementAdded = 'requirement_added';
     case RequirementReceived = 'requirement_received';
     case RenewalRecorded = 'renewal_recorded';
+    case PremiumPaid = 'premium_paid';
+    case CommissionReceived = 'commission_received';
 }

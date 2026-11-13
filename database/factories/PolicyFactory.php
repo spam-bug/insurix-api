@@ -37,7 +37,6 @@ class PolicyFactory extends Factory
             'effective_date' => now()->subMonths(3)->toDateString(),
             'renewal_term' => RenewalTerm::Custom,
             'renewal_date' => now()->addMonths(9)->toDateString(),
-            'commission_received_at' => null,
             'notes' => null,
         ];
     }

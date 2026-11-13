@@ -49,6 +49,7 @@ class QueuePolicyFollowUps
 
         $policies = $workspace->policies()
             ->with('client.lead', 'followUps:id,policy_id,reminder_key', 'renewals:id,policy_id,due_on')
+            ->withMax('payments as last_paid_due_on', 'due_on')
             ->where('status', PolicyStatus::InForce)
             ->get();
 
@@ -105,7 +106,7 @@ class QueuePolicyFollowUps
             ];
         }
 
-        $premium = $this->findNextPaymentDue->handle($policy, $today);
+        $premium = $this->findNextPaymentDue->handle($policy);
         if ($premium && $premium->lessThanOrEqualTo($today->addDays(ListPoliciesNeedingAttention::PAYMENT_WINDOW_DAYS))) {
             $reminders[] = [
                 "premium:{$premium->toDateString()}",
