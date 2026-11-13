@@ -7,6 +7,7 @@ namespace Database\Seeders;
 use App\Actions\Forms\CreateForm;
 use App\Actions\Forms\PublishForm;
 use App\Actions\Leads\ScoreLead;
+use App\Actions\Payments\EstimatePaymentCommission;
 use App\DataTransferObject\Forms\FormData;
 use App\Enums\ApplicationStage;
 use App\Enums\AutomationMatch;
@@ -36,6 +37,7 @@ use App\Models\Product;
 use App\Models\Staff;
 use App\Models\User;
 use App\Models\Workspace;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -78,17 +80,19 @@ class DemoSeeder extends Seeder
     private function products(Workspace $workspace): array
     {
         $products = [
-            'life' => ['Family Protect Life', PolicyType::Life, 25, PaymentFrequency::Annual],
-            'vul' => ['Wealth Builder VUL', PolicyType::Life, 35, PaymentFrequency::Monthly],
-            'health' => ['HealthGuard Plus', PolicyType::Health, 20, PaymentFrequency::Annual],
-            'education' => ['Bright Future Education Plan', PolicyType::Life, 30, PaymentFrequency::Quarterly],
-            'auto' => ['DriveSafe Comprehensive', PolicyType::Auto, 15, PaymentFrequency::Annual],
+            'life' => ['Family Protect Life', PolicyType::Life, 25, PaymentFrequency::Annual, 'Bayanihan Life', 5],
+            'vul' => ['Wealth Builder VUL', PolicyType::Life, 35, PaymentFrequency::Monthly, 'Bayanihan Life', 5],
+            'health' => ['HealthGuard Plus', PolicyType::Health, 20, PaymentFrequency::Annual, 'Kalinga Health', 20],
+            'education' => ['Bright Future Education Plan', PolicyType::Life, 30, PaymentFrequency::Quarterly, 'Bayanihan Life', 5],
+            'auto' => ['DriveSafe Comprehensive', PolicyType::Auto, 15, PaymentFrequency::Annual, 'Lakbay General', 15],
         ];
 
         return array_map(fn (array $product) => Product::factory()->for($workspace)->create([
             'name' => $product[0],
             'type' => $product[1],
+            'insurer' => $product[4],
             'commission_rate' => $product[2],
+            'renewal_commission_rate' => $product[5],
             'payment_frequency' => $product[3],
             'description' => null,
         ]), $products);
@@ -237,6 +241,7 @@ class DemoSeeder extends Seeder
             'workspace_id' => $client->workspace_id,
             'product_id' => $product->id,
             'product_name' => $product->name,
+            'insurer' => $product->insurer,
             'type' => $product->type,
             'status' => $status,
             'application_stage' => $status === PolicyStatus::Pending ? fake()->randomElement([ApplicationStage::Underwriting, ApplicationStage::RequirementsNeeded]) : null,
@@ -244,15 +249,50 @@ class DemoSeeder extends Seeder
             'premium' => $premium,
             'payment_frequency' => $product->payment_frequency,
             'commission_rate' => $product->commission_rate,
+            'renewal_commission_rate' => $product->renewal_commission_rate,
             'effective_date' => $renewalDate?->copy()->subYear()->toDateString() ?? now()->toDateString(),
             'renewal_term' => RenewalTerm::Custom,
             'renewal_date' => $renewalDate?->toDateString(),
-            'commission_received_at' => $status === PolicyStatus::InForce && fake()->boolean(60) ? now()->subDays(fake()->numberBetween(10, 200)) : null,
         ]);
+
+        if ($status === PolicyStatus::InForce) {
+            $this->payments($policy);
+        }
 
         $policy->events()->create(['type' => PolicyEventType::Recorded, 'properties' => ['status' => $status->value]])
             ->forceFill(['created_at' => now()->subDays(fake()->numberBetween(1, 20))->subHours(fake()->numberBetween(1, 8))])
             ->save();
+    }
+
+    /**
+     * The policy's premiums so far, as if it had been tracked since it took effect: paid on time,
+     * with commission received on all but the latest. A premium due in the last ten days is left
+     * unpaid, so the demo shows one inside its grace period.
+     */
+    private function payments(Policy $policy): void
+    {
+        $policy->forceFill(['created_at' => $policy->effective_date])->save();
+        $months = $policy->payment_frequency->monthsBetweenPayments();
+        $today = CarbonImmutable::today();
+
+        for ($period = 0; ($dueOn = $policy->effective_date->addMonthsNoOverflow($period * ($months ?? 0)))->lessThan($today->subDays(10)); $period++) {
+            $expected = app(EstimatePaymentCommission::class)->handle($policy, $dueOn, (float) $policy->premium);
+            $received = $dueOn->lessThan($today->subDays(45));
+
+            $policy->payments()->create([
+                'workspace_id' => $policy->workspace_id,
+                'due_on' => $dueOn,
+                'paid_on' => $dueOn,
+                'amount' => $policy->premium,
+                'commission_expected' => $expected,
+                'commission_received' => $received ? $expected : null,
+                'commission_received_on' => $received ? $dueOn->addDays(20) : null,
+            ]);
+
+            if ($months === null) {
+                break;
+            }
+        }
     }
 
     /**
