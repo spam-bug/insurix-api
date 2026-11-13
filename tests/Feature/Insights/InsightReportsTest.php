@@ -166,11 +166,11 @@ it('describes the chosen period and steps back to earlier ones', function () {
     $agent = User::factory()->create();
 
     expect(reports($agent)['period'])->toBe([
-        'value' => 'month', 'offset' => 0, 'label' => 'October 2026', 'previous_label' => 'September 2026',
+        'value' => 'month', 'offset' => 0, 'label' => 'October 2026', 'previous_label' => 'September 2026', 'previous_to_date' => true,
         'starts_on' => '2026-10-01', 'ends_on' => '2026-10-31',
     ])
         ->and(reports($agent, '?period=quarter&offset=1')['period'])->toBe([
-            'value' => 'quarter', 'offset' => 1, 'label' => 'Q3 2026', 'previous_label' => 'Q2 2026',
+            'value' => 'quarter', 'offset' => 1, 'label' => 'Q3 2026', 'previous_label' => 'Q2 2026', 'previous_to_date' => false,
             'starts_on' => '2026-07-01', 'ends_on' => '2026-09-30',
         ])
         ->and(reports($agent, '?period=year&offset=2')['period']['label'])->toBe('2024');
@@ -184,7 +184,7 @@ it('rejects an unknown period or a negative offset', function () {
         ->assertJsonValidationErrors(['period', 'offset']);
 });
 
-it('measures the period figures next to the period before', function () {
+it('measures the period figures next to the period before, up to the same day while it is running', function () {
     $agent = User::factory()->create();
     $client = Client::factory()->for(workspaceOf($agent))->create();
     $policy = Policy::factory()->for($client)->create(['premium' => 2000, 'payment_frequency' => PaymentFrequency::Monthly, 'commission_rate' => 25, 'commission_received_at' => '2026-10-02']);
@@ -211,8 +211,9 @@ it('measures the period figures next to the period before', function () {
 
     expect(reports($agent)['figures'])->toEqual([
         'current' => ['new_leads' => 2, 'won' => 2, 'lost' => 1, 'win_rate_percent' => 67, 'commission_received' => 6000, 'renewals_recorded' => 2, 'renewal_rate_percent' => 50],
-        'previous' => ['new_leads' => 1, 'won' => 0, 'lost' => 1, 'win_rate_percent' => 0, 'commission_received' => 6000, 'renewals_recorded' => 0, 'renewal_rate_percent' => null],
-    ]);
+        'previous' => ['new_leads' => 1, 'won' => 0, 'lost' => 0, 'win_rate_percent' => null, 'commission_received' => 0, 'renewals_recorded' => 0, 'renewal_rate_percent' => null],
+    ])
+        ->and(reports($agent, '?offset=1')['figures']['current'])->toMatchArray(['new_leads' => 1, 'lost' => 1, 'commission_received' => 6000]);
 });
 
 it('builds a funnel of how far the leads added in the period got, lost leads included', function () {

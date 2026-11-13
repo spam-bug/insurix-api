@@ -29,7 +29,7 @@ class BuildInsightReport
     /**
      * Every report on the Insights page, in one response. Figures, the funnel, pipeline speed and
      * the commission chart follow the chosen period; figures come with the period before, for
-     * trends. The rest describes the workspace as it is now.
+     * trends. A period still running is compared with the same number of days of the one before. The rest describes the workspace as it is now.
      *
      * @return array<string, mixed>
      */
@@ -41,6 +41,11 @@ class BuildInsightReport
             $today = CarbonImmutable::now($workspace->timezone);
             [$start, $end] = $filters->period->range($today, $filters->offset);
             [$previousStart, $previousEnd] = $filters->period->range($today, $filters->offset + 1);
+            $previousToDate = $filters->offset === 0;
+
+            if ($previousToDate) {
+                $previousEnd = $previousEnd->min($previousStart->addDays((int) $start->diffInDays($today))->endOfDay());
+            }
             $stalled = $this->listStalledLeads->handle($workspace);
 
             return [
@@ -49,6 +54,7 @@ class BuildInsightReport
                     'offset' => $filters->offset,
                     'label' => $filters->period->label($start),
                     'previous_label' => $filters->period->label($previousStart),
+                    'previous_to_date' => $previousToDate,
                     'starts_on' => $start->toDateString(),
                     'ends_on' => $end->toDateString(),
                 ],
