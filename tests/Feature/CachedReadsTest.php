@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use App\Actions\Leads\ListLeadActivities;
 use App\Actions\Notes\ListNotes;
+use App\Actions\Policies\GetPolicy;
 use App\Actions\ServiceRequests\ListServiceRequests;
 use App\DataTransferObject\Notes\NoteFiltersData;
 use App\DataTransferObject\ServiceRequests\ServiceRequestFiltersData;
 use App\Models\Client;
 use App\Models\Lead;
+use App\Models\Policy;
+use App\Models\PolicyPayment;
 use App\Models\ServiceRequest;
 use App\Models\User;
 
@@ -37,4 +40,15 @@ it('reads cached notes, lead activities and service requests back whole', functi
         ->and($activities->items()[0]->note->body)->toBe('Prefers calls after 6 PM')
         ->and($requests->items()[0]->title)->toBe('Change beneficiary')
         ->and($requests->items()[0]->client->name)->not->toBeEmpty();
+});
+
+it('reads a cached policy back with its payments', function () {
+    $agent = User::factory()->create();
+    $policy = Policy::factory()->for(Client::factory()->for(workspaceOf($agent)))->create();
+    PolicyPayment::factory()->for($policy)->create(['amount' => 2500]);
+
+    $cached = readBackFromCache(app(GetPolicy::class)->handle($policy));
+
+    expect($cached->payments[0])->toBeInstanceOf(PolicyPayment::class)
+        ->and((float) $cached->payments[0]->amount)->toBe(2500.0);
 });

@@ -14,6 +14,7 @@ use App\Models\LeadActivity;
 use App\Models\Note;
 use App\Models\Policy;
 use App\Models\PolicyEvent;
+use App\Models\PolicyPayment;
 use App\Models\PolicyRenewal;
 use App\Models\Product;
 use App\Models\ServiceRequest;
@@ -177,6 +178,7 @@ return [
         Note::class,
         Policy::class,
         PolicyEvent::class,
+        PolicyPayment::class,
         PolicyRenewal::class,
         Product::class,
         ServiceRequest::class,
