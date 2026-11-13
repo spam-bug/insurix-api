@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Builders\ClientBuilder;
 use App\Models\Client;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -38,7 +39,7 @@ class ClientResource extends JsonResource
             'in_force_policies' => $this->whenHas('in_force_policies'),
             'annual_premium' => $this->whenHas('annual_premium', fn () => round((float) $this->annual_premium, 2)),
             'next_renewal_on' => $this->whenHas('next_renewal_on', fn () => $this->next_renewal_on?->toDateString()),
-            'last_contact_at' => $this->whenHas('last_contact_at', fn () => $this->last_contact_at ? CarbonImmutable::parse($this->last_contact_at)->toIso8601String() : null),
+            'last_contact_at' => $this->whenHas('last_contact_at', fn () => $this->last_contact_at > ClientBuilder::NEVER_CONTACTED ? CarbonImmutable::parse($this->last_contact_at)->toIso8601String() : null),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

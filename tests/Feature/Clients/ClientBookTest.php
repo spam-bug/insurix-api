@@ -6,6 +6,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PolicyStatus;
 use App\Models\Client;
 use App\Models\FollowUp;
+use App\Models\Note;
 use App\Models\Policy;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -25,6 +26,18 @@ it('lists each client’s policies, premium and next renewal in force, and last 
         ->assertJsonPath('data.0.annual_premium', 18000)
         ->assertJsonPath('data.0.next_renewal_on', '2026-12-05')
         ->assertJsonPath('data.0.last_contact_at', '2026-10-10T03:00:00+00:00');
+});
+
+it('counts a note as contact, and null for a client nobody has been in touch with', function () {
+    $agent = User::factory()->create();
+    $noted = Client::factory()->for(workspaceOf($agent))->create(['name' => 'Noted']);
+    Client::factory()->for(workspaceOf($agent))->create(['name' => 'Quiet']);
+    FollowUp::factory()->forClient($noted)->create(['completed_at' => '2026-10-10 03:00:00']);
+    Note::factory()->for(workspaceOf($agent))->for($noted)->create(['created_at' => '2026-10-12 05:00:00']);
+
+    $this->actingAs($agent)->getJson(ws($agent).'/clients?sort=name')
+        ->assertJsonPath('data.0.last_contact_at', '2026-10-12T05:00:00+00:00')
+        ->assertJsonPath('data.1.last_contact_at', null);
 });
 
 it('sorts clients by premium or by who was contacted longest ago', function () {

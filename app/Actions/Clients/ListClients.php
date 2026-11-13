@@ -9,7 +9,6 @@ use App\DataTransferObject\Clients\ClientFiltersData;
 use App\Enums\ClientSort;
 use App\Enums\PolicyStatus;
 use App\Models\Client;
-use App\Models\FollowUp;
 use App\Models\Policy;
 use App\Models\Workspace;
 use Carbon\CarbonImmutable;
@@ -24,7 +23,7 @@ class ListClients
 
     /**
      * The workspace's clients with what the agent compares them by: policies and annual premium
-     * in force, the next renewal and the last completed follow-up. Kept for an hour, since the
+     * in force, the next renewal and the last contact. Kept for an hour, since the
      * next renewal moves with the date.
      *
      * @return LengthAwarePaginator<int, Client>
@@ -38,7 +37,7 @@ class ListClients
             $query = $workspace->clients()
                 ->withCount(['policies as in_force_policies' => $inForce])
                 ->withSum(['policies as annual_premium' => $inForce], 'annual_premium')
-                ->withMax('followUps as last_contact_at', 'completed_at')
+                ->withLastContact()
                 ->with(['policies' => fn (HasMany $query) => $inForce($query)->select('id', 'client_id', 'status', 'renewal_term', 'effective_date', 'renewal_date')])
                 ->when($filters->search, function (Builder $query, string $search) {
                     $query->where(function (Builder $query) use ($search) {
@@ -54,9 +53,7 @@ class ListClients
                 ClientSort::Premium => $query->orderByDesc(
                     Policy::query()->selectRaw('coalesce(sum(annual_premium), 0)')->whereColumn('client_id', 'clients.id')->where('status', PolicyStatus::InForce),
                 ),
-                ClientSort::LastContact => $query->orderBy(
-                    FollowUp::query()->selectRaw("coalesce(max(completed_at), '1970-01-01')")->whereColumn('client_id', 'clients.id'),
-                ),
+                ClientSort::LastContact => $query->orderByLastContact(),
             };
 
             return $query->latest('id')
