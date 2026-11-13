@@ -102,10 +102,11 @@ it('updates and deletes a policy', function () {
     $policy = Policy::factory()->for(Client::factory()->for(workspaceOf($agent)))->status(PolicyStatus::Pending)->create();
     $this->actingAs($agent);
 
-    $this->putJson(ws($agent)."/policies/{$policy->id}", policyPayload(['commission_received_at' => '2026-10-01']))
+    $this->putJson(ws($agent)."/policies/{$policy->id}", policyPayload(['insurer' => 'Bayanihan Life', 'renewal_commission_rate' => 5]))
         ->assertOk()
         ->assertJsonPath('data.status.value', 'in_force')
-        ->assertJsonPath('data.commission_received_at', '2026-10-01');
+        ->assertJsonPath('data.insurer', 'Bayanihan Life')
+        ->assertJsonPath('data.renewal_commission_rate', 5);
 
     $this->deleteJson(ws($agent)."/policies/{$policy->id}")->assertNoContent();
     expect(Policy::count())->toBe(0);
