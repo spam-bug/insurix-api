@@ -11,10 +11,13 @@ use Illuminate\Support\Facades\Cache;
 class GetPolicy
 {
     /**
-     * The policy with everything its detail page shows: client, checklist, renewals and timeline.
+     * The policy with everything its detail page shows: client, checklist, renewals, payments and timeline.
      */
     public function handle(Policy $policy): Policy
     {
-        return Cache::tags("workspace:{$policy->workspace_id}")->rememberForever("policies:{$policy->workspace_id}:{$policy->id}", fn () => $policy->load(PolicyResource::DETAIL_RELATIONS));
+        return Cache::tags("workspace:{$policy->workspace_id}")->rememberForever("policies:{$policy->workspace_id}:{$policy->id}", fn () => $policy
+            ->load(PolicyResource::DETAIL_RELATIONS)
+            ->loadMax('payments as last_paid_due_on', 'due_on')
+            ->loadSum('payments as commission_received_total', 'commission_received'));
     }
 }

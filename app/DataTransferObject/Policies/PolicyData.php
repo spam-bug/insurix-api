@@ -26,7 +26,8 @@ class PolicyData extends Data
         public readonly ?CarbonImmutable $effectiveDate = null,
         public readonly ?RenewalTerm $renewalTerm = null,
         public readonly ?CarbonImmutable $renewalDate = null,
-        public readonly ?CarbonImmutable $commissionReceivedAt = null,
+        public readonly ?string $insurer = null,
+        public readonly string $renewalCommissionRate = '0',
         public readonly ?string $notes = null,
     ) {}
 }

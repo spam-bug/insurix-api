@@ -18,13 +18,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * An insurance policy sold to a client, kept by hand from the insurer's documents.
+ * An insurance policy sold to a client, kept by hand from the insurer's documents. The
+ * commission rates are the agent's own: one for the first policy year, one for the years after.
  * Amounts are in pesos.
  */
 #[Fillable([
-    'workspace_id', 'client_id', 'product_id', 'product_name', 'policy_number', 'type', 'status', 'application_stage', 'stage_changed_at',
-    'premium', 'coverage_amount', 'payment_frequency', 'commission_rate', 'effective_date', 'renewal_term', 'renewal_date',
-    'commission_received_at', 'notes',
+    'workspace_id', 'client_id', 'product_id', 'product_name', 'insurer', 'policy_number', 'type', 'status', 'application_stage', 'stage_changed_at',
+    'premium', 'coverage_amount', 'payment_frequency', 'commission_rate', 'renewal_commission_rate', 'effective_date', 'renewal_term', 'renewal_date',
+    'notes',
 ])]
 class Policy extends Model
 {
@@ -127,6 +128,16 @@ class Policy extends Model
     }
 
     /**
+     * The premiums recorded as paid, each with the commission it earns.
+     *
+     * @return HasMany<PolicyPayment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(PolicyPayment::class);
+    }
+
+    /**
      * @return HasMany<PolicyEvent, $this>
      */
     public function events(): HasMany
@@ -150,12 +161,12 @@ class Policy extends Model
             'premium' => 'decimal:2',
             'coverage_amount' => 'decimal:2',
             'commission_rate' => 'decimal:2',
+            'renewal_commission_rate' => 'decimal:2',
             'annual_premium' => 'decimal:2',
             'commission' => 'decimal:2',
             'effective_date' => 'immutable_date',
             'renewal_term' => RenewalTerm::class,
             'renewal_date' => 'immutable_date',
-            'commission_received_at' => 'immutable_date',
         ];
     }
 }

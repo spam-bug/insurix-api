@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Actions\Renewals;
 
 use App\Actions\Notifications\AnnounceWorkspaceChange;
+use App\Actions\Payments\RecordPolicyPayment;
+use App\Actions\Policies\FindNextPaymentDue;
 use App\Actions\Policies\FindRenewalAwaitingOutcome;
 use App\Actions\Policies\RecordPolicyEvent;
+use App\DataTransferObject\Payments\PolicyPaymentData;
 use App\DataTransferObject\Renewals\RenewalData;
 use App\DataTransferObject\Workspaces\WorkspaceChangeData;
 use App\Enums\ChangeAction;
@@ -27,11 +30,15 @@ class RecordRenewalOutcome
         private AnnounceWorkspaceChange $announceWorkspaceChange,
         private RecordPolicyEvent $recordPolicyEvent,
         private FindRenewalAwaitingOutcome $findRenewalAwaitingOutcome,
+        private FindNextPaymentDue $findNextPaymentDue,
+        private RecordPolicyPayment $recordPolicyPayment,
     ) {}
 
     /**
      * Records what happened at a renewal date and updates the policy to match: still in force,
-     * lapsed, or cancelled. A renewed custom-date policy moves on to its next renewal date.
+     * lapsed, or cancelled. A renewed custom-date policy moves on to its next renewal date. When the
+     * premium due on the renewal date is the one waiting, renewing counts as paying it, so the
+     * agent doesn't record the same thing twice.
      */
     public function handle(Policy $policy, RenewalData $data, User $actor): PolicyRenewal
     {
@@ -41,7 +48,10 @@ class RecordRenewalOutcome
             throw ValidationException::withMessages(['due_on' => 'This renewal isn’t waiting for an outcome.']);
         }
 
-        $renewal = DB::transaction(function () use ($policy, $data, $actor) {
+        $renewalPaysPremium = $data->outcome === RenewalOutcome::Renewed
+            && $this->findNextPaymentDue->handle($policy)?->toDateString() === $data->dueOn->toDateString();
+
+        $renewal = DB::transaction(function () use ($policy, $data, $actor, $renewalPaysPremium) {
             $renewal = $policy->renewals()->create([
                 'workspace_id' => $policy->workspace_id,
                 'due_on' => $data->dueOn,
@@ -61,6 +71,10 @@ class RecordRenewalOutcome
                 'outcome' => $data->outcome->value,
                 'next_renewal_date' => $data->nextRenewalDate?->toDateString(),
             ]);
+
+            if ($renewalPaysPremium) {
+                $this->recordPolicyPayment->handle($policy, new PolicyPaymentData(paidOn: CarbonImmutable::today($policy->workspace->timezone)), $actor);
+            }
 
             return $renewal;
         });

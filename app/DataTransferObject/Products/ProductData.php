@@ -14,6 +14,8 @@ class ProductData extends Data
         public readonly string $name,
         public readonly PolicyType $type,
         public readonly string $commissionRate,
+        public readonly ?string $insurer = null,
+        public readonly string $renewalCommissionRate = '0',
         public readonly ?string $description = null,
         public readonly ?PaymentFrequency $paymentFrequency = null,
         public readonly bool $isActive = true,

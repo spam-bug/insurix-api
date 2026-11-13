@@ -40,7 +40,8 @@ class StorePolicyRequest extends FormRequest
             // Set terms count from the effective date, so it's needed for them; a custom term needs its date.
             'effective_date' => ['nullable', 'required_if:renewal_term,monthly,quarterly,annual', 'date'],
             'renewal_date' => ['nullable', 'required_if:renewal_term,custom', 'date', 'after_or_equal:effective_date'],
-            'commission_received_at' => ['nullable', 'date', 'before_or_equal:today'],
+            'insurer' => ['nullable', 'string', 'max:255'],
+            'renewal_commission_rate' => ['sometimes', 'numeric', 'min:0', 'max:100', 'decimal:0,2'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }

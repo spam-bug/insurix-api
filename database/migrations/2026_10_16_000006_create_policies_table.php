@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignUuid('client_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('product_id')->nullable()->constrained()->nullOnDelete();
             $table->string('product_name');
+            $table->string('insurer')->nullable();
             $table->string('policy_number', 100)->nullable();
             $table->string('type', 30);
             $table->string('status', 30)->default(PolicyStatus::Pending->value);
@@ -32,18 +33,17 @@ return new class extends Migration
             $table->decimal('coverage_amount', 14, 2)->nullable();
             $table->string('payment_frequency', 30);
             $table->decimal('commission_rate', 5, 2)->default(0);
+            $table->decimal('renewal_commission_rate', 5, 2)->default(0);
             $table->decimal('annual_premium', 14, 2)->default(0);
             $table->decimal('commission', 14, 2)->default(0);
             $table->date('effective_date')->nullable();
             $table->string('renewal_term', 20)->nullable();
             $table->date('renewal_date')->nullable();
-            $table->date('commission_received_at')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
 
             $table->index(['workspace_id', 'status']);
             $table->index(['workspace_id', 'renewal_date']);
-            $table->index(['workspace_id', 'commission_received_at']);
             $table->index('client_id');
             $table->index('product_id');
         });

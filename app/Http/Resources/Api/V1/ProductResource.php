@@ -24,9 +24,11 @@ class ProductResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'insurer' => $this->insurer,
             'type' => ['value' => $this->type->value, 'label' => $this->type->label()],
             'description' => $this->description,
             'commission_rate' => (float) $this->commission_rate,
+            'renewal_commission_rate' => (float) $this->renewal_commission_rate,
             'payment_frequency' => $this->payment_frequency ? ['value' => $this->payment_frequency->value, 'label' => $this->payment_frequency->label()] : null,
             'is_active' => $this->is_active,
             'policies_count' => $this->whenCounted('policies_count'),

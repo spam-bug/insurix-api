@@ -17,9 +17,11 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
             $table->string('name');
+            $table->string('insurer')->nullable();
             $table->string('type', 30);
             $table->text('description')->nullable();
             $table->decimal('commission_rate', 5, 2)->default(0);
+            $table->decimal('renewal_commission_rate', 5, 2)->default(0);
             $table->string('payment_frequency', 30)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();

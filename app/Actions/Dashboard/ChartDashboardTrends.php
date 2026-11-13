@@ -42,7 +42,7 @@ class ChartDashboardTrends
                 'new_leads' => array_map(intval(...), array_values($newLeads)),
                 'commission_received' => array_column($commission, 'received'),
                 'new_leads_last_month_to_date' => $workspace->leads()->whereBetween('created_at', [$lastMonth->utc(), $sameDayLastMonth->utc()])->count(),
-                'commission_received_last_month_to_date' => round((float) $workspace->policies()->whereBetween('commission_received_at', [$lastMonth->toDateString(), $sameDayLastMonth->toDateString()])->sum('commission'), 2),
+                'commission_received_last_month_to_date' => round((float) $workspace->policyPayments()->whereBetween('commission_received_on', [$lastMonth->toDateString(), $sameDayLastMonth->toDateString()])->sum('commission_received'), 2),
             ];
         });
     }

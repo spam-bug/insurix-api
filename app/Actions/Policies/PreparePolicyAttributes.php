@@ -14,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 class PreparePolicyAttributes
 {
     /**
-     * A picked catalog product sets the product name and type. An inactive product can't be
+     * A picked catalog product sets the product name, insurer and type. An inactive product can't be
      * picked, though a policy already on it keeps it. Only a custom term keeps a fixed renewal
      * date; set terms are worked out from the effective date.
      *
@@ -31,6 +31,7 @@ class PreparePolicyAttributes
         return [
             ...$data->toArray(),
             'product_name' => $product->name ?? $data->productName,
+            'insurer' => $product->insurer ?? $data->insurer,
             'type' => $product->type ?? $data->type ?? PolicyType::Other,
             'renewal_date' => $data->renewalTerm === RenewalTerm::Custom ? $data->renewalDate : null,
         ];
