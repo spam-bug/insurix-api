@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use NotificationChannels\WebPush\PushSubscription;
+
+return new class extends Migration
+{
+    /**
+     * Each browser or installed app a user turned push notifications on in (the web push
+     * package's table). Users have UUIDs, so the owner is a UUID morph.
+     */
+    public function up(): void
+    {
+        Schema::create('push_subscriptions', function (Blueprint $table) {
+            $table->id();
+            $table->uuidMorphs('subscribable', 'push_subscriptions_subscribable_morph_idx');
+            $table->string('endpoint', PushSubscription::ENDPOINT_MAX_LENGTH)->charset('ascii')->unique();
+            $table->string('public_key')->nullable();
+            $table->string('auth_token')->nullable();
+            $table->string('content_encoding')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('push_subscriptions');
+    }
+};

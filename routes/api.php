@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Account\OtherSessionsController;
 use App\Http\Controllers\Api\V1\Account\PasswordController;
 use App\Http\Controllers\Api\V1\Account\PhotoController;
 use App\Http\Controllers\Api\V1\Account\ProfileController;
+use App\Http\Controllers\Api\V1\Account\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\Account\RecoveryCodeController;
 use App\Http\Controllers\Api\V1\Account\SessionController;
 use App\Http\Controllers\Api\V1\Account\TwoFactorConfirmationController;
@@ -148,6 +149,8 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/notification-preferences', [NotificationPreferenceController::class, 'index']);
             Route::patch('/notification-preferences', [NotificationPreferenceController::class, 'update']);
+            Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store']);
+            Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy']);
 
             Route::post('/two-factor', [TwoFactorController::class, 'store']);
             Route::post('/two-factor/confirm', [TwoFactorConfirmationController::class, 'store']);
